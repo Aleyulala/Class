@@ -1,6 +1,8 @@
 // Class — tarayıcıda çalışan, kaynaklarla sohbet eden yerel yapay zekâ arayüzü.
-// Model: wllama (llama.cpp'nin WASM/WebGPU sürümü). Hiçbir veri sunucuya gönderilmez.
+// Motor: tarayıcıda wllama (WASM/WebGPU), kendi bilgisayarındaki yerel sunucu ya da seçtiğin OpenAI uyumlu API.
+// Veriler bu cihazda saklanır; yalnızca seçtiğin motora/sunucuya gönderilir.
 
+import { readDoc, toWav16k, DOC_RX, MEDIA_RX } from './extract.js';
 import { TYPES, parseJson, normalize, demo } from './rich.js';
 import { renderOutput } from './viewers.js';
 
@@ -140,7 +142,26 @@ async function readPdf(file) {
   }
   return out;
 }
+/* Yerel sunucu Whisper: ses/video → yazı (gerekirse konuşma motorunu başlatır) */
+async function srvJSON(url, opt) { const r = await fetch(url, opt); const t = await r.text(); let j = {}; try { j = JSON.parse(t || '{}'); } catch { throw new Error('Yerel sunucu yok ya da geçersiz yanıt (Class’ı başlatıcıyla açın).'); } if (!r.ok || j.ok === false) throw new Error(j.error || `HTTP ${r.status}`); return j; }
+async function transcribe(blob, { language = 'auto', name = 'ses.wav', onPhase } = {}) {
+  onPhase?.('Ses çözülüyor…'); const wav = await toWav16k(blob);
+  let st = {}; try { st = await srvJSON('/api/speech/status'); } catch (e) { throw new Error('Ses ve video için yerel sunucu gerekir (Whisper). Class’ı windows.bat / linux.sh / mac.sh ile açın.'); }
+  let model = st.settings?.model || '';
+  if (!st.ready) {
+    const ms = (await srvJSON('/api/speech/models')).models || []; const m = ms.find((x) => x.installed !== false) || ms[0];
+    if (!m) throw new Error('Sunucuda konuşma (Whisper) modeli yok. Stüdyolar > Modeller’den indirin.');
+    model = m.filename || m.id || m.name; onPhase?.('Konuşma motoru başlatılıyor…');
+    await srvJSON('/api/speech/start', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ model, language }) });
+  }
+  onPhase?.('Yazıya dökülüyor…');
+  const q = new URLSearchParams({ language, filename: name.replace(/\.[^.]+$/, '') + '.wav', ...(model ? { model } : {}) });
+  const j = await srvJSON('/api/speech/transcribe?' + q, { method: 'POST', headers: { 'Content-Type': 'audio/wav' }, body: wav });
+  return String(j.transcription?.text || '').trim();
+}
 async function readFile(file) {
+  if (DOC_RX.test(file.name)) return readDoc(file);
+  if (MEDIA_RX.test(file.name) || /^(audio|video)\//.test(file.type)) return transcribe(file, { name: file.name, onPhase: (t) => toast(`${file.name}: ${t}`) });
   if (/\.pdf$/i.test(file.name) || file.type === 'application/pdf') return readPdf(file);
   const t = await file.text();
   if (/\.html?$/i.test(file.name)) { const d = new DOMParser().parseFromString(t, 'text/html'); d.querySelectorAll('script,style,nav,footer').forEach((n) => n.remove()); return d.body.textContent.replace(/\n{3,}/g, '\n\n'); }
@@ -155,6 +176,30 @@ const PRESETS = [
   { id: 'q7', name: 'Qwen2.5 7B', note: '≈4.7 GB · en akıllısı, 8 GB ekran kartı ister', repo: 'Qwen/Qwen2.5-7B-Instruct-GGUF', file: 'qwen2.5-7b-instruct-q4_k_m-00001-of-00002.gguf' },
 ];
 const engine = { kind: 'none', wllama: null, label: '', nctx: 4096 };
+/* Ayarlar (Ayarlar panelinden değişir; yalnızca bu tarayıcıda saklanır) */
+const CFG_DEF = { temperature: 0.3, maxTokens: 700, sys: '', enterSend: true, engine: 'wllama', ctx: 8192, api: { base: '', key: '', model: '' } };
+const CFG = (() => { try { const c = JSON.parse(localStorage.getItem('class-cfg') || '{}'); return { ...CFG_DEF, ...c, api: { ...CFG_DEF.api, ...(c.api || {}) } }; } catch { return { ...CFG_DEF }; } })();
+function saveCfg() { try { localStorage.setItem('class-cfg', JSON.stringify(CFG)); } catch {} }
+/* OpenAI uyumlu akış (yerel sunucu /api/llm/chat, LM Studio, Ollama, OpenRouter…): SSE "data:" satırları */
+async function streamSSE(url, headers, body, { signal, onToken }) {
+  const res = await fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json', ...headers }, body: JSON.stringify(body), signal });
+  if (!res.ok) { let m = `HTTP ${res.status}`; try { const j = await res.json(); m = j.error?.message || j.error || j.message || m; } catch {} throw new Error(m); }
+  if (!res.body) { const j = await res.json(); const t = j?.choices?.[0]?.message?.content; if (t) onToken(t); return; }
+  const rd = res.body.getReader(), dec = new TextDecoder(); let buf = '';
+  const take = (ev) => {
+    const data = ev.split(/\r?\n/).filter((l) => l.startsWith('data:')).map((l) => l.slice(5).trimStart()).join('\n').trim();
+    if (!data) return false; if (data === '[DONE]') return true;
+    try { const j = JSON.parse(data); const c = j.choices?.[0]; const t = c?.delta?.content ?? c?.message?.content ?? c?.text ?? j.content ?? j.response ?? ''; if (t) onToken(typeof t === 'string' ? t : ''); } catch {}
+    return false;
+  };
+  for (;;) {
+    const { done, value } = await rd.read(); buf += dec.decode(value || new Uint8Array(), { stream: !done });
+    const evs = buf.split(/\r?\n\r?\n/); buf = evs.pop() || '';
+    for (const ev of evs) if (take(ev)) { try { rd.cancel(); } catch {} return; }
+    if (done) break;
+  }
+  if (buf.trim()) take(buf);
+}
 
 /** Cihaz / tarayıcı uygunluğu: model yüklemeden önce anlaşılır bir uyarı için */
 const NO_WASM = 'Bu tarayıcıda WebAssembly çalışmıyor, bu yüzden model yüklenemez. Sık nedenler: tarayıcıda "JavaScript JIT / V8 optimizasyonu" kapalı (Chrome: Ayarlar → Site ayarları → JavaScript JIT; Android\'in Gelişmiş Koruma modu), iOS\'ta Lockdown (Kilitleme) modu, sertleştirilmiş tarayıcılar (Vanadium, Cromite, Tor gibi) ya da uygulama içi tarayıcılar. Güncel Chrome/Edge/Firefox\'u normal modda dene. Arayüzü modelsiz görmek için "Demo (model yok)" çalışır.';
@@ -173,7 +218,12 @@ async function getWllama() {
   return engine.wllama;
 }
 
-async function chatStream(messages, { maxTokens = 700, temperature = 0.3, signal, onToken, demo, responseFormat }) {
+async function chatStream(messages, { maxTokens = CFG.maxTokens, temperature = CFG.temperature, signal, onToken, demo, responseFormat }) {
+  if (engine.kind === 'server') return streamSSE('/api/llm/chat', {}, { messages, stream: true, temperature, max_tokens: maxTokens, ...(responseFormat ? { response_format: responseFormat } : {}) }, { signal, onToken });
+  if (engine.kind === 'openai') {
+    const base = CFG.api.base.replace(/\/+$/, '');
+    return streamSSE(base + '/chat/completions', CFG.api.key ? { Authorization: 'Bearer ' + CFG.api.key } : {}, { model: CFG.api.model || undefined, messages, stream: true, temperature, max_tokens: maxTokens, ...(responseFormat ? { response_format: responseFormat } : {}) }, { signal, onToken });
+  }
   if (engine.kind === 'demo') {
     const text = demo || 'Demo kipi: model yüklü değil.';
     for (let i = 0; i < text.length; i += 6) { if (signal?.aborted) break; onToken(text.slice(i, i + 6)); await new Promise((r) => setTimeout(r, 12)); }
@@ -314,7 +364,11 @@ function msgNode(m, i) {
   const d = el('div', { className: `msg c ${me ? 'me' : ''} ${m.err ? 'err' : ''}` }); d.dataset.mid = m.id;
   d.append(msgHead(m, me, i));
   const bd = el('div', { className: 'mBd' }); d.append(bd);
+  if (m.audio) bd.append(el('figure', { className: 'mImg' }, el('audio', { controls: true, src: m.audio, preload: 'none' }), m.text ? el('figcaption', { textContent: m.text }) : ''));
+  if (m.video) bd.append(el('figure', { className: 'mImg' }, el('video', { controls: true, src: m.video, preload: 'metadata', playsInline: true }), m.text ? el('figcaption', { textContent: m.text }) : ''));
+  if (m.img) bd.append(el('figure', { className: 'mImg' }, el('img', { src: m.img, alt: m.text || 'Görsel', loading: 'lazy' }), m.text ? el('figcaption', { textContent: m.text }) : ''));
   if (m.kind === 'slides') bd.append(slidesNode(m));
+  else if (m.img || m.audio || m.video) {}
   else if (me) { if (m.reply) bd.append(quoteRef(m.reply)); if (m.text) bd.append(el('span', { className: 'mTx', textContent: m.text })); if (m.atts?.length) bd.append(el('div', { className: 'atts' }, ...m.atts.map((a) => attCard(a)))); }
   else bd.innerHTML = md(m.text);
   if (m.live || m.err || !m.text && !m.atts?.length) return d;
@@ -371,7 +425,7 @@ function setModelUi(state, label) {
 
 /* ---------------- Üretim akışı ---------------- */
 function needModel() {
-  if (engine.kind === 'wllama' || engine.kind === 'demo') return false;
+  if (['wllama', 'demo', 'server', 'openai'].includes(engine.kind)) return false;
   $('#modelDlg').showModal(); return true;
 }
 async function persistChat() { if (nb) { await DB.set('chat:' + nb.id, chat.filter((m) => !m.live).slice(-60)); touchNb(); } }
@@ -395,14 +449,15 @@ async function run({ userText, shownText, messages, cites, title, maxTokens, dem
 
 function buildChatMessages(question) {
   const on = enabledSources(); const hist = chat.filter((m) => !m.err).slice(-6).map((m) => ({ role: m.role === 'user' ? 'user' : 'assistant', content: m.text.slice(0, 1200) }));
-  if (!on.length) return { messages: [{ role: 'system', content: 'Yardımsever bir asistansın. Türkçe, kısa ve net cevap ver.' }, ...hist, { role: 'user', content: question }], cites: [] };
+  const extra = CFG.sys.trim() ? `\n\nKullanıcının ek talimatı: ${CFG.sys.trim().slice(0, 1200)}` : '';
+  if (!on.length) return { messages: [{ role: 'system', content: 'Yardımsever bir asistansın. Türkçe, kısa ve net cevap ver.' + extra }, ...hist, { role: 'user', content: question }], cites: [] };
   const histChars = hist.reduce((n, h) => n + h.content.length, 0);
   let hits = search(question, on, 8); let used = 0; const picked = [];
   for (const h of hits) { if (used + h.text.length > budgetChars(histChars + question.length + 500)) break; picked.push(h); used += h.text.length; }
   const cites = picked.map((h, i) => ({ n: i + 1, title: h.src.title, text: h.text }));
   const ctx = cites.map((c) => `[${c.n}] (${c.title})\n${c.text}`).join('\n\n');
   const sys = 'Sen kullanıcının kaynaklarıyla çalışan bir araştırma yardımcısısın. Yalnızca aşağıdaki kaynak parçalarına dayanarak Türkçe cevap ver. Kullandığın her bilginin sonuna parça numarasını köşeli parantezle yaz, örneğin [1] veya [2][3]. Kaynaklarda cevap yoksa bunu açıkça söyle, uydurma.\n\nKAYNAK PARÇALARI:\n' + ctx;
-  return { messages: [{ role: 'system', content: sys }, ...hist, { role: 'user', content: question }], cites };
+  return { messages: [{ role: 'system', content: sys + extra }, ...hist, { role: 'user', content: question }], cites };
 }
 function demoAnswer(cites) {
   if (!cites.length) return 'Demo kipi: model yüklü değil. Gerçek cevap için üstten bir model yükle.';
@@ -413,7 +468,7 @@ async function ask(question, { reply: rq, atts } = {}) {
   const full = rq ? `(${rq.who} mesajına yanıt: "${(chat.find((m) => m.id === rq.id)?.text || rq.text).slice(0, 600)}")\n\n${question}` : question;
   const { messages, cites } = buildChatMessages(full);
   $('#ctxInfo').textContent = cites.length ? `${cites.length} kaynak parçası kullanıldı · bağlam ${engine.nctx}` : '';
-  await run({ userText: question, messages, cites, maxTokens: 700, demo: demoAnswer(cites), reply: rq, atts });
+  await run({ userText: question, messages, cites, maxTokens: CFG.maxTokens, demo: demoAnswer(cites), reply: rq, atts });
 }
 
 const STUDIO = [
@@ -450,7 +505,7 @@ async function addSource(title, text, kind) {
 }
 $('#addFile').onclick = () => $('#srcDlg').showModal();
 async function ingestFiles(files) {
-  for (const f of files) { try { toast(`${f.name} okunuyor…`); await addSource(f.name, await readFile(f), /\.pdf$/i.test(f.name) ? 'PDF' : 'Dosya'); toast(''); } catch (err) { toast(`${f.name} okunamadı: ${err.message || err}`); } }
+  for (const f of files) { try { toast(`${f.name} okunuyor…`); await addSource(f.name, await readFile(f), /\.pdf$/i.test(f.name) ? 'PDF' : DOC_RX.test(f.name) ? f.name.split('.').pop().toUpperCase() : (MEDIA_RX.test(f.name) || /^(audio|video)\//.test(f.type)) ? 'Ses/Video' : 'Dosya'); toast(''); } catch (err) { toast(`${f.name} okunamadı: ${err.message || err}`); } }
 }
 $('#fileInput').onchange = async (e) => { const files = [...e.target.files]; e.target.value = ''; await ingestFiles(files); };
 let noteMode = false;
@@ -491,7 +546,7 @@ $('#loadBtn').onclick = async () => {
 /* ---------------- Sohbet formu / sekmeler / dışa aktarım ---------------- */
 const q = $('#q');
 q.addEventListener('input', () => { q.style.height = 'auto'; q.style.height = Math.min(q.scrollHeight, 140) + 'px'; });
-q.addEventListener('keydown', (e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); $('#composer').requestSubmit(); } });
+q.addEventListener('keydown', (e) => { if (e.key === 'Enter' && !e.shiftKey && (CFG.enterSend || e.ctrlKey || e.metaKey)) { e.preventDefault(); $('#composer').requestSubmit(); } });
 $('#composer').onsubmit = async (e) => {
   e.preventDefault(); const t = q.value.trim();
   if (t.startsWith('/') && runSlash(t)) return;
@@ -814,5 +869,15 @@ const CK = 'defter_cookie_ok_v1';
 })();
 
 /* kabuk (shell.js) için köprü */
-window.defterApp = { setTab, searchData: async () => ({ notebooks, sources: await DB.all('sources'), notes: await DB.all('notes') }), notebooks: () => notebooks, current: () => nb, openNb, createNb, goHome, showMenu, closeMenu, setTheme, getTheme, IC, openModel: () => $('#modelDlg').showModal() };
+async function exportAll() { const o = { app: 'Class', version: 1, at: new Date().toISOString() }; for (const s of ['notebooks', 'sources', 'notes', 'outputs', 'kv']) o[s] = await DB.all(s); return o; }
+async function importAll(o) {
+  if (!o || o.app !== 'Class') throw new Error('Bu bir Class yedeği değil.');
+  let n = 0; for (const s of ['notebooks', 'sources', 'notes', 'outputs', 'kv']) for (const v of o[s] || []) { await DB.put(s, v); n++; }
+  notebooks = await DB.all('notebooks'); goHome(); return n;
+}
+async function complete(messages, opts = {}) { if (needModel()) throw new Error('Önce bir model ya da motor seçin.'); let t = ''; await chatStream(messages, { ...opts, onToken: (x) => { t += x; } }); return t; }
+async function addSourceExt(title, text, kind) { if (!nb) throw new Error('Önce bir not defteri açın.'); await addSource(title, text, kind); }
+async function addChatMedia(m) { if (!nb) throw new Error('Önce bir not defteri açın.'); chat.push({ id: uid(), role: 'assistant', at: Date.now(), ...m }); renderChat(); await persistChat(); }
+function setEngine(kind, label, nctx) { engine.kind = kind; engine.label = label; if (nctx) engine.nctx = nctx; setModelUi(kind === 'none' ? '' : 'ok', label || 'Model yüklenmedi'); }
+window.defterApp = { putOutput: async (o) => { await DB.put('outputs', o); }, openOutput, complete, addSource: addSourceExt, addChatMedia, transcribe, enabledSources: () => enabledSources(), toast, CFG, saveCfg, engine, setEngine, exportAll, importAll, diagnose, setTab, searchData: async () => ({ notebooks, sources: await DB.all('sources'), notes: await DB.all('notes') }), notebooks: () => notebooks, current: () => nb, openNb, createNb, goHome, showMenu, closeMenu, setTheme, getTheme, IC, openModel: () => $('#modelDlg').showModal() };
 document.dispatchEvent(new Event('defter-ready'));

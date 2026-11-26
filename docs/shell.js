@@ -39,72 +39,12 @@ function maybeAsk() {
 }
 if (isIOS()) setTimeout(maybeAsk, 3000);
 
-/* ---------- Pencere düzeni ---------- */
-const WM_KEY = 'defter-wm';
-let wm = lsGet(WM_KEY, { on: false, r: {} });
+/* ---------- Pencere düzeni: dock.js (Dockview, Krita tarzı sekmeli ve yüzen pencereler) ---------- */
 const cols = () => $('#cols');
-const PANELS = ['panelSources', 'panelChat', 'panelStudio'];
-let zTop = 10;
-const save = () => lsSet(WM_KEY, wm);
 const wide = () => innerWidth > 900;
-function defaults() {
-  const W = cols().clientWidth, H = cols().clientHeight, g = 12;
-  const sw = Math.min(320, Math.round(W * .24)), tw = Math.min(360, Math.round(W * .26));
-  return {
-    panelSources: { x: g, y: g, w: sw, h: H - 2 * g },
-    panelChat: { x: sw + 2 * g, y: g, w: W - sw - tw - 4 * g, h: H - 2 * g },
-    panelStudio: { x: W - tw - g, y: g, w: tw, h: H - 2 * g },
-  };
-}
-function apply(id) {
-  const p = document.getElementById(id), r = wm.r[id]; if (!p || !r) return;
-  const W = cols().clientWidth, H = cols().clientHeight;
-  r.w = Math.max(240, Math.min(r.w, W)); r.h = Math.max(120, Math.min(r.h, H));
-  r.x = Math.max(0, Math.min(r.x, W - 80)); r.y = Math.max(0, Math.min(r.y, H - 44));
-  p.style.setProperty('--x', r.x + 'px'); p.style.setProperty('--y', r.y + 'px'); p.style.setProperty('--w', r.w + 'px'); p.style.setProperty('--h', (r.min ? 46 : r.h) + 'px');
-  p.style.setProperty('--z', r.z || 1); p.classList.toggle('wmMin', !!r.min); p.classList.toggle('wmMax', !!r.max);
-}
-function layoutAll(reset) {
-  if (!wm.on || cols().hidden || !wide()) return;
-  const d = defaults();
-  for (const id of PANELS) { if (reset || !wm.r[id]) wm.r[id] = { ...d[id], z: ++zTop }; apply(id); }
-  save();
-}
-function front(id) { wm.r[id].z = ++zTop; apply(id); }
-function setupWindow(id) {
-  const p = document.getElementById(id); if (!p || p.dataset.wm) return; p.dataset.wm = '1';
-  const head = $('.ph', p);
-  const bm = el('button', { className: 'wmB', type: 'button', title: 'Küçült', 'aria-label': 'Küçült', innerHTML: ic('min') });
-  const bx = el('button', { className: 'wmB', type: 'button', title: 'Büyüt / geri al', 'aria-label': 'Büyüt', innerHTML: ic('max') });
-  const bw = el('span', { className: 'wmBtns' }, bm, bx); head.append(bw);
-  bm.onclick = () => { const r = wm.r[id]; r.min = !r.min; apply(id); save(); };
-  const toggleMax = () => { const r = wm.r[id]; if (r.max) { Object.assign(r, r.prev, { max: false }); delete r.prev; } else { r.prev = { x: r.x, y: r.y, w: r.w, h: r.h }; r.x = 0; r.y = 0; r.w = cols().clientWidth; r.h = cols().clientHeight; r.max = true; r.min = false; } front(id); apply(id); save(); };
-  bx.onclick = toggleMax; head.addEventListener('dblclick', (e) => { if (wm.on && wide() && !e.target.closest('button')) toggleMax(); });
-  for (const k of ['e', 's', 'se']) p.append(el('div', { className: 'wmR wmR' + k, 'data-k': k }));
-  p.addEventListener('pointerdown', () => { if (wm.on && wide() && wm.r[id]) front(id); }, true);
-  const drag = (e, mode) => {
-    if (!wm.on || !wide() || e.button > 0) return; const r = wm.r[id]; if (r.max && mode === 'move') return;
-    e.preventDefault(); front(id); document.body.classList.add('wmDrag');
-    const sx = e.clientX, sy = e.clientY, o = { ...r }; const tgt = e.currentTarget; tgt.setPointerCapture(e.pointerId);
-    const mv = (ev) => {
-      const dx = ev.clientX - sx, dy = ev.clientY - sy;
-      if (mode === 'move') { r.x = o.x + dx; r.y = o.y + dy; }
-      else { if (mode.includes('e')) r.w = o.w + dx; if (mode.includes('s')) r.h = o.h + dy; r.max = false; r.min = false; }
-      apply(id);
-    };
-    const up = () => { tgt.removeEventListener('pointermove', mv); tgt.removeEventListener('pointerup', up); tgt.removeEventListener('pointercancel', up); document.body.classList.remove('wmDrag'); save(); };
-    tgt.addEventListener('pointermove', mv); tgt.addEventListener('pointerup', up); tgt.addEventListener('pointercancel', up);
-  };
-  head.addEventListener('pointerdown', (e) => { if (!e.target.closest('button')) drag(e, 'move'); });
-  p.querySelectorAll('.wmR').forEach((h) => h.addEventListener('pointerdown', (e) => drag(e, h.dataset.k)));
-}
-function setWm(on) {
-  wm.on = on; save(); cols().dataset.wm = on ? 'on' : 'off';
-  if (on) { PANELS.forEach(setupWindow); requestAnimationFrame(() => layoutAll(false)); }
-}
-function resetWm() { wm.r = {}; save(); layoutAll(true); }
-new ResizeObserver(() => wm.on && PANELS.forEach(apply)).observe(document.body);
-new MutationObserver(() => { if (wm.on && !cols().hidden) requestAnimationFrame(() => layoutAll(false)); }).observe(cols(), { attributes: true, attributeFilter: ['hidden'] });
+const D = () => window.defterDock;
+const dockOn = () => !!D()?.enabled();
+const setWm = (on) => D()?.setOn(on);
 
 /* ---------- Sol çekmece ---------- */
 let drawer = null;
@@ -143,7 +83,7 @@ const DI = {
   speed: SVG('<circle cx="12" cy="12" r="9"/><circle cx="12" cy="14" r="2"/><path d="m13.4 12.6 3-3"/>'),
   verifyf: '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l2.4 1.8 3-.2 1 2.8 2.5 1.7-.9 2.9.9 2.9-2.5 1.7-1 2.8-3-.2L12 22l-2.4-1.8-3 .2-1-2.8L3.1 15.9 4 13l-.9-2.9 2.5-1.7 1-2.8 3 .2z"/><path d="m8.6 12 2.3 2.3 4.5-4.6" fill="none" stroke="#1e1e1e" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>',
 };
-const ico = (k) => DI[k] || ic(k);
+const ico = (k) => (String(k).startsWith('<svg') ? k : DI[k] || ic(k));
 const FKEY = 'defter-folders';
 function folder(id, icon, title, badge, items) {
   const open = (lsGet(FKEY, {}))[id] !== false;
@@ -275,8 +215,9 @@ function railGroups(app) {
       ...(recent.length ? recent.map((n) => ['note', n.title, () => app.openNb(n.id)]) : [['note', 'Henüz başka defter yok', null]])] },
     { id: 'tools', icon: 'flash', title: 'Araçlar', badge: 'Canlı', items: [
       ['cpu', 'Model seç', () => app.openModel()],
-      ['win', 'Pencere düzeni', () => setWm(!wm.on), wm.on],
+      ...(D()?.wide() ? [['win', 'Pencere düzeni', () => setWm(!dockOn()), dockOn()]] : []),
       ['gamepad', 'Klavye ve oyun kolu', () => window.defterHelp?.()]] },
+    { id: 'studio', icon: 'foldercode', title: 'Stüdyolar', items: (window.defterHub?.PANELS || []).map((p) => [p.icon, p.title, () => window.defterHub.open(p.id)]) },
     { id: 'look', icon: 'tools', title: 'Görünüm', items: [
       ['sun', 'Açık mod', () => app.setTheme('light'), th === 'light'],
       ['moon', 'Koyu mod', () => app.setTheme('dark'), th === 'dark'],
@@ -313,7 +254,7 @@ function renderRail() {
   rail.replaceChildren(el('nav', { className: 'rlList', 'aria-label': 'Kenar menüsü' }, home, el('div', { className: 'rlBr' }), ...groups), tog);
   $('#menuBtn')?.setAttribute('aria-expanded', String(open));
 }
-function toggleRail() { closeFly(); lsSet(RKEY, !railOpen()); renderRail(); setTimeout(() => layoutAll(false), 260); }
+function toggleRail() { closeFly(); lsSet(RKEY, !railOpen()); renderRail(); }
 function syncRail() {
   const on = wide();
   document.body.classList.toggle('hasRail', on);
@@ -330,13 +271,12 @@ function boot() {
   syncRail(); addEventListener('resize', () => { if (wide() && drawer) closeDrawer(); syncRail(); });
   new MutationObserver(() => renderRail()).observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
   new MutationObserver(() => renderRail()).observe(cols(), { attributes: true, attributeFilter: ['hidden'] });
-  if (wm.on) setWm(true); else cols().dataset.wm = 'off';
   window.defterShell = {
-    toggleWm: () => setWm(!wm.on), install: () => installSheet(true), standalone, wide,
+    toggleWm: () => setWm(!dockOn()), install: () => installSheet(true), standalone, wide,
     menuItems: () => [
       '-',
-      ...(wide() ? [{ icon: 'win', label: 'Pencere düzeni', sub: wm.on ? 'Açık: sürükle, boyutlandır' : 'Panelleri serbest pencere yap', check: wm.on, run: () => setWm(!wm.on) }] : []),
-      ...(wm.on && wide() ? [{ icon: 'win', label: 'Pencere düzenini sıfırla', run: resetWm }] : []),
+      ...(D()?.wide() ? [{ icon: 'win', label: 'Pencere düzeni', sub: dockOn() ? 'Açık: sekmeleri sürükle, yüzdür, yerleştir' : 'Krita gibi sekmeli ve yüzen pencereler', check: dockOn(), run: () => setWm(!dockOn()) }] : []),
+      ...(dockOn() && D()?.wide() ? Object.entries(D()?.WS || {}).map(([k, w]) => ({ icon: 'win', label: 'Çalışma alanı: ' + w.t, sub: w.d, check: D().ws() === k, run: () => D().setWs(k) })) : []),
       ...(standalone() ? [] : [{ icon: 'install', label: 'Uygulama olarak kur', run: () => installSheet(true) }]),
     ],
   };

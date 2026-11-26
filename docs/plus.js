@@ -55,7 +55,7 @@ function openThemeColors(anchor) {
   pop.style.left = Math.max(8, Math.min(innerWidth - w - 8, r.right - w)) + 'px'; pop.style.top = Math.max(8, Math.min(innerHeight - h - 8, r.top - h - 8)) + 'px';
   document.addEventListener('pointerdown', outPop, true); document.addEventListener('keydown', keyPop, true); pop.querySelector('button')?.focus();
 }
-window.defterTheme = { open: openThemeColors, apply: applyAccent };
+window.defterTheme = { open: openThemeColors, apply: applyAccent, colors: COLORS };
 const isDark = () => { const t = A().getTheme(); return t === 'dark' || (t === 'system' && matchMedia('(prefers-color-scheme:dark)').matches); };
 const nbView = () => $('#cols') && !$('#cols').hidden;
 
@@ -70,6 +70,8 @@ function items() {
     L.push({ t: 'Sohbeti indir (.md)', i: 'doc', run: () => $('#expChat')?.click() });
     L.push({ t: 'Tüm not defterleri', i: 'home', run: () => a.goHome() });
   }
+  L.push({ t: 'Stüdyolar', i: 'palette', run: () => window.defterHub?.open() });
+  L.push({ t: 'Ayarlar', i: 'gear', run: () => window.defterSettings?.open() });
   L.push({ t: 'Model seç', i: 'cpu', run: () => a.openModel() });
   L.push({ t: isDark() ? 'Açık mod' : 'Koyu mod', i: isDark() ? 'sun' : 'moon', run: () => a.setTheme(isDark() ? 'light' : 'dark') });
   if (s.wide?.()) L.push({ t: 'Pencere düzeni', i: 'layout', run: () => s.toggleWm?.() });
@@ -149,7 +151,7 @@ function buildFooter() {
   const privacy = L('Gizlilik', 'https://aleyulala.github.io/saved/?view=privacy');
   const cookie = el('a', { href: '#cerez', textContent: 'Çerez politikası', onclick: (e) => { e.preventDefault(); document.getElementById('cookieDlg')?.showModal(); } });
   const f = el('footer', { className: 'ftr', id: 'ftr' },
-    el('div', { className: 'ftrBrand' }, el('span', { className: 'ftrAv', textContent: 'C' }), el('div', {}, el('b', { textContent: 'Class' }), el('small', { innerHTML: svg(P.home) + 'NotebookLM tarzı yerel yapay zekâ' }))),
+    el('div', { className: 'ftrBrand' }, el('span', { className: 'ftrAv', textContent: 'C' }), el('div', {}, el('b', { textContent: 'Class' }), el('small', { title: 'NotebookLM tarzı yerel yapay zekâ', innerHTML: svg(P.doc) + 'Yerel AI' }))),
     el('p', { className: 'ftrLinks' }, L('GitHub', 'https://github.com/Aleyulala/Class'), ' / ', L('Saved', 'https://aleyulala.github.io/saved/'), ' / ', L('Blog', 'https://aleyulala.blogspot.com/')),
     sec('Proje', [L('Hakkında', 'https://github.com/Aleyulala/Class#readme'), L('İstekler', 'https://github.com/Aleyulala/Class/issues'), L('Topluluk', 'https://github.com/Aleyulala/saved/discussions')]),
     sec('Servis', [L('Öneriler', 'https://github.com/Aleyulala/Class/issues/new'), L('İçerikler', 'https://aleyulala.github.io/saved/'), L('Döküman', 'https://github.com/Aleyulala/Class/blob/main/docs/README.md')]),
@@ -158,5 +160,16 @@ function buildFooter() {
   home.append(f);
 }
 
-function boot() { applyAccent(); buildThemeBtn(); buildChips(); moveFilter(); buildNtf(); buildFooter(); buildFab(); }
+
+/* ---------- Yukarı çık düğmesi (Saved/Blogger .tTb): hangi alan kaydırıldıysa onu başa alır ---------- */
+function buildToTop() {
+  if ($('.tTb')) return;
+  const b = el('button', { type: 'button', className: 'tTb', title: 'Yukarı çık', 'aria-label': 'Yukarı çık', innerHTML: svg('<path d="m6 15 6-6 6 6"/>') });
+  let tgt = null;
+  document.addEventListener('scroll', (e) => { const t = e.target === document ? document.scrollingElement : e.target; if (!(t instanceof Element) || t.closest('dialog,.drawer,.sldTrack,.cmdTrack,.spPills,#panelChat')) return; if (t.scrollTop > 320) { tgt = t; b.classList.add('on'); } else if (t === tgt) b.classList.remove('on'); }, { capture: true, passive: true });
+  b.onclick = () => { tgt?.scrollTo({ top: 0, behavior: matchMedia('(prefers-reduced-motion:reduce)').matches ? 'auto' : 'smooth' }); b.classList.remove('on'); };
+  document.body.append(b);
+}
+
+function boot() { applyAccent(); buildThemeBtn(); buildChips(); moveFilter(); buildNtf(); buildFooter(); buildFab(); buildToTop(); }
 if (window.defterApp) boot(); else document.addEventListener('defter-ready', boot, { once: true });
