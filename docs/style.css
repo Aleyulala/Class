@@ -233,3 +233,46 @@ a:focus-visible,button:focus-visible,input:focus-visible,select:focus-visible,te
 .nbCard:focus-visible{outline-offset:-2px}
 .srOnly{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
 .helpT{border-collapse:collapse;width:100%;font-size:14px}.helpT th{text-align:left;font-weight:600;padding:7px 10px 7px 0;color:var(--ac);white-space:nowrap;vertical-align:top}.helpT td{padding:7px 0;color:var(--tx)}.helpT tr+tr{border-top:1px solid var(--line)}
+
+/* ---- Plus UI kabuğu: menüler, çekmece, kurulum sorusu ---- */
+.menuScrim{position:fixed;inset:0;z-index:59;background:rgba(0,0,0,.25);-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px);animation:fsIn .18s ease both}
+.menu{animation:menuIn .2s cubic-bezier(.16,1,.3,1) both;transform-origin:top right;box-shadow:0 14px 40px rgba(0,0,0,.45)}
+:root[data-theme="dark"] .menu,:root:not([data-theme="light"]) .menu{background:#111}
+@media (prefers-color-scheme:light){:root:not([data-theme="dark"]) .menu{background:#fff}}
+:root[data-theme="light"] .menu{background:#fff}
+@keyframes menuIn{from{opacity:0;transform:scale(.96) translateY(-4px)}to{opacity:1;transform:none}}
+@keyframes fsIn{from{opacity:0}to{opacity:1}}
+.drWrap{position:fixed;inset:0;z-index:80}
+.drScrim{position:absolute;inset:0;background:rgba(0,0,0,.35);-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px);opacity:0;transition:opacity .2s}
+.drawer{position:absolute;left:0;top:0;bottom:0;width:min(312px,86vw);background:var(--bg);border-right:1px solid var(--line);display:flex;flex-direction:column;transform:translateX(-102%);transition:transform .22s cubic-bezier(.16,1,.3,1);padding-top:env(safe-area-inset-top,0)}
+.drWrap.in .drScrim{opacity:1}.drWrap.in .drawer{transform:none}
+.drHead{display:flex;align-items:center;gap:10px;padding:12px 14px;border-bottom:1px solid var(--line)}.drHead b{flex:1;font-size:17px}
+.drBody{flex:1;overflow-y:auto;padding:8px;overscroll-behavior:contain}
+.dwItem{display:flex;align-items:center;gap:14px;width:100%;background:none;border:0;border-radius:var(--rb);padding:11px 12px;color:var(--tx);font-size:15px;text-align:left;cursor:pointer}
+.dwItem:hover,.dwItem:focus-visible{background:var(--btnh)}.dwItem.on{background:var(--btn)}
+.dwItem .mi{display:inline-flex;width:22px;justify-content:center;color:var(--mu)}.dwItem .ml{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.dwItem .mc{color:var(--ac)}
+.dwSec{margin:14px 12px 4px;font-size:12px;font-weight:700;color:var(--mu);letter-spacing:.4px;text-transform:uppercase}.dwEmpty{margin:4px 12px}
+.sheetWrap{position:fixed;inset:0;z-index:90;display:flex;align-items:flex-end;justify-content:center}
+.sheetScrim{position:absolute;inset:0;background:rgba(0,0,0,.35);-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px);animation:fsIn .2s both}
+.sheet{position:relative;width:min(440px,100%);background:var(--p);border:1px solid var(--line);border-radius:var(--rp) var(--rp) 0 0;padding:20px 18px calc(18px + env(safe-area-inset-bottom,0px));display:flex;flex-direction:column;gap:10px;animation:sheetIn .25s cubic-bezier(.16,1,.3,1) both}
+.sheet h3{margin:0;font-size:17px}.sheet p{margin:0}.sheetIcon img{border-radius:12px;display:block}
+@media (min-width:600px){.sheetWrap{align-items:center}.sheet{border-radius:var(--rp)}}
+@keyframes sheetIn{from{transform:translateY(24px);opacity:0}to{transform:none;opacity:1}}
+.btn.primary{background:var(--ac);color:var(--acfg)}
+
+/* ---- Pencere düzeni (geniş ekranlarda): sürüklenebilir, boyutlandırılabilir paneller ---- */
+.wmBtns,.wmR{display:none}
+@media (min-width:901px){
+ .cols[data-wm=on]{display:block;position:relative;overflow:hidden;padding:0}
+ .cols[data-wm=on]>.panel{position:absolute;left:var(--x,12px);top:var(--y,12px);width:var(--w,320px);height:var(--h,400px);z-index:var(--z,1);box-shadow:0 10px 32px rgba(0,0,0,.35);background:var(--p);border:1px solid var(--line)}
+ .cols[data-wm=on]>.panel>.ph:first-child{cursor:grab;touch-action:none;user-select:none;margin:-14px -14px 8px;padding:10px 12px 10px 14px;background:var(--p2);border-bottom:1px solid var(--line);border-radius:var(--rp) var(--rp) 0 0}
+ .cols[data-wm=on]>.panel>.ph:first-child:active{cursor:grabbing}
+ .cols[data-wm=on] .wmBtns{display:inline-flex;gap:4px;margin-left:8px}
+ .wmB{width:26px;height:26px;display:inline-grid;place-items:center;border:0;border-radius:8px;background:var(--btn);color:var(--mu);cursor:pointer;padding:0}.wmB:hover{background:var(--btnh);color:var(--tx)}.wmB svg{width:14px;height:14px}
+ .cols[data-wm=on] .wmR{display:block;position:absolute;z-index:2;touch-action:none}
+ .wmRe{right:-4px;top:16px;bottom:16px;width:10px;cursor:ew-resize}.wmRs{left:16px;right:16px;bottom:-4px;height:10px;cursor:ns-resize}.wmRse{right:-4px;bottom:-4px;width:18px;height:18px;cursor:nwse-resize}
+ .cols[data-wm=on]>.panel.wmMin{overflow:hidden}.cols[data-wm=on]>.panel.wmMin>*:not(.ph:first-child):not(.wmR){display:none}
+ .cols[data-wm=on]>.panel.wmMax{border-radius:0;box-shadow:none}
+}
+@media (prefers-reduced-motion:reduce){.drawer,.sheet,.menu,.menuScrim,.sheetScrim,.drScrim{animation:none;transition:none}}
+body.wmDrag,body.wmDrag *{user-select:none!important;-webkit-user-select:none!important}

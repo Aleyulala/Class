@@ -6,11 +6,16 @@
 <title>Defter — Tarayıcıda Yerel Yapay Zekâ</title>
 <meta name="description" content="Kaynaklarını yükle, onlarla sohbet et, özet ve çalışma rehberi çıkar. Her şey tarayıcında çalışır, hiçbir veri dışarı gitmez.">
 <link rel="stylesheet" href="style.css">
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="theme-color" content="#1e1e1e">
+<link rel="icon" href="icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="icon-192.png">
 <script src="coi-sw.js"></script>
 </head>
 <body>
 <header class="top" id="top">
   <div class="tl">
+    <button class="ib" id="menuBtn" aria-label="Menü" title="Menü" data-ic="menu"></button>
     <button class="ib" id="backBtn" hidden aria-label="Not defterlerine dön" title="Not defterlerine dön" data-ic="back"></button>
     <a class="logoLink" href="#" id="homeLink" aria-label="Defter ana ekran"><span class="logo">D</span></a>
     <button class="pillBtn" id="filterBtn" aria-haspopup="menu"><span id="filterLabel">Tümü</span><i data-ic="caret"></i></button>
@@ -161,5 +166,6 @@
 
 <script type="module" src="app.js"></script>
 <script type="module" src="nav.js"></script>
+<script type="module" src="shell.js"></script>
 </body>
 </html>

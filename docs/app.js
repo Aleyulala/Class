@@ -12,6 +12,7 @@ const params = new URLSearchParams(location.search);
 /* ---------------- Simgeler, açılır menü, tema ---------------- */
 const svg = (d, extra = '') => `<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" ${extra}>${d}</svg>`;
 const IC = {
+  menu: svg('<path d="M4 6h16M4 12h16M4 18h16"/>'), install: svg('<path d="M12 3v12M7 10l5 5 5-5M5 19h14"/>'), win: svg('<rect x="3" y="4" width="18" height="16" rx="3"/><path d="M3 9h18"/>'), min: svg('<path d="M6 12h12"/>'), max: svg('<rect x="5" y="5" width="14" height="14" rx="2"/>'),
   back: svg('<path d="M19 12H5M12 19l-7-7 7-7"/>'), search: svg('<circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/>'), plus: svg('<path d="M12 5v14M5 12h14"/>'),
   share: svg('<path d="M12 16V4M7 9l5-5 5 5M5 14v5a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-5"/>'), more: svg('<circle cx="12" cy="5" r="1.4" fill="currentColor"/><circle cx="12" cy="12" r="1.4" fill="currentColor"/><circle cx="12" cy="19" r="1.4" fill="currentColor"/>'),
   gear: svg('<circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/>'),
@@ -33,7 +34,7 @@ const setTheme = (t) => { try { localStorage.setItem('defter-theme', t); } catch
 applyTheme(getTheme());
 
 let openMenu = null;
-function closeMenu() { if (openMenu) { openMenu.el.remove(); openMenu.anchor.setAttribute('aria-expanded', 'false'); document.removeEventListener('pointerdown', openMenu.out, true); document.removeEventListener('keydown', openMenu.key, true); openMenu = null; } }
+function closeMenu() { document.querySelector('.menuScrim')?.remove(); if (openMenu) { openMenu.el.remove(); openMenu.anchor.setAttribute('aria-expanded', 'false'); document.removeEventListener('pointerdown', openMenu.out, true); document.removeEventListener('keydown', openMenu.key, true); openMenu = null; } }
 function showMenu(anchor, items, { align = 'right' } = {}) {
   const same = openMenu && openMenu.anchor === anchor; closeMenu(); if (same) return;
   const m = el('div', { className: 'menu', role: 'menu' });
@@ -42,7 +43,7 @@ function showMenu(anchor, items, { align = 'right' } = {}) {
     const b = el('button', { type: 'button', role: 'menuitem', className: it.danger ? 'danger' : '' }, el('span', { className: 'mi', innerHTML: it.icon ? IC[it.icon] : '' }), el('span', { className: 'ml' }, it.label, it.sub ? el('small', { textContent: it.sub }) : ''), it.check ? el('span', { className: 'mc', innerHTML: IC.check }) : '');
     b.onclick = () => { closeMenu(); it.run(); }; m.append(b);
   });
-  document.body.append(m);
+  document.body.append(el('div', { className: 'menuScrim' }), m);
   const r = anchor.getBoundingClientRect(); const w = m.offsetWidth;
   m.style.top = Math.min(r.bottom + 6, innerHeight - m.offsetHeight - 8) + 'px';
   m.style.left = Math.max(8, Math.min(align === 'right' ? r.right - w : r.left, innerWidth - w - 8)) + 'px';
@@ -464,6 +465,7 @@ $('#gearBtn').onclick = () => {
     { icon: 'auto', label: 'Cihaz', check: th === 'system', run: () => setTheme('system') },
     '-',
     { icon: 'tune', label: 'Klavye ve oyun kolu', sub: 'Kısayollar ve düğme eşleşmeleri', run: () => window.defterHelp?.() },
+    ...(window.defterShell?.menuItems() || []),
   ]);
 };
 $('#moreBtn').onclick = () => showMenu($('#moreBtn'), [
@@ -568,3 +570,7 @@ $('#loadBtn').addEventListener('click', () => { if (typeof WebAssembly === 'unde
   if (cap.blocked) { $('#dlText').textContent = cap.text; $('#loadBtn').disabled = true; $('#loadBtn').title = 'Bu tarayıcıda WebAssembly kapalı'; }
   else navigator.storage?.estimate?.().then((e) => { if (e?.quota) $('#dlText').textContent = [cap.text, `Tarayıcı depolama kotası: ≈${(e.quota / 1e9).toFixed(1)} GB`].filter(Boolean).join(' '); });
 })();
+
+/* kabuk (shell.js) için köprü */
+window.defterApp = { notebooks: () => notebooks, current: () => nb, openNb, createNb, goHome, showMenu, closeMenu, setTheme, getTheme, IC, openModel: () => $('#modelDlg').showModal() };
+document.dispatchEvent(new Event('defter-ready'));
