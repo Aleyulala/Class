@@ -1,0 +1,112 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Defter — Tarayıcıda Yerel Yapay Zekâ</title>
+<meta name="description" content="Kaynaklarını yükle, onlarla sohbet et, özet ve çalışma rehberi çıkar. Her şey tarayıcında çalışır, hiçbir veri dışarı gitmez.">
+<link rel="stylesheet" href="style.css">
+<script src="coi-sw.js"></script>
+</head>
+<body>
+<header class="top">
+  <div class="brand"><span class="logo">D</span><div><b>Defter</b><small>Tarayıcıda yerel yapay zekâ</small></div></div>
+  <div class="model" id="modelBar">
+    <span class="dot" id="modelDot"></span>
+    <span id="modelLabel">Model yüklenmedi</span>
+    <button id="modelBtn" class="btn primary">Model seç</button>
+  </div>
+</header>
+
+<main class="cols" id="cols" data-tab="chat">
+  <!-- KAYNAKLAR -->
+  <section class="panel" id="panelSources" aria-label="Kaynaklar">
+    <div class="ph"><h2>Kaynaklar</h2><span class="muted" id="srcCount">0</span></div>
+    <div class="row">
+      <button class="btn" id="addFile">+ Dosya ekle</button>
+      <button class="btn" id="addText">+ Metin yapıştır</button>
+      <input type="file" id="fileInput" accept=".pdf,.txt,.md,.markdown,.csv,.html,.htm,.json,text/*" multiple hidden>
+    </div>
+    <div class="selall"><label><input type="checkbox" id="selAll" checked> Tümünü seç</label></div>
+    <ul class="list" id="srcList"></ul>
+    <p class="hint" id="srcHint">PDF, TXT, MD ya da yapıştırdığın metin. Dosyalar yalnızca bu tarayıcıda saklanır.</p>
+  </section>
+
+  <!-- SOHBET -->
+  <section class="panel chat" id="panelChat" aria-label="Sohbet">
+    <div class="ph"><h2>Sohbet</h2>
+      <div class="row tight"><button class="btn sm" id="expChat">.md indir</button><button class="btn sm" id="clearChat">Temizle</button></div>
+    </div>
+    <div class="msgs" id="msgs" aria-live="polite"></div>
+    <form class="composer" id="composer">
+      <textarea id="q" rows="1" placeholder="Seçili kaynaklara bir soru sor…" autocomplete="off"></textarea>
+      <button class="btn primary" id="send" type="submit">Gönder</button>
+      <button class="btn" id="stop" type="button" hidden>Durdur</button>
+    </form>
+    <div class="hint small" id="ctxInfo"></div>
+  </section>
+
+  <!-- STÜDYO + NOTLAR -->
+  <section class="panel" id="panelStudio" aria-label="Stüdyo">
+    <div class="ph"><h2>Stüdyo</h2></div>
+    <div class="grid" id="studioBtns"></div>
+    <div class="ph mt"><h2>Notlar</h2><div class="row tight"><button class="btn sm" id="expNotes">.md indir</button></div></div>
+    <ul class="list notes" id="noteList"></ul>
+    <p class="hint" id="noteHint">Cevapları ve stüdyo çıktılarını “Nota kaydet” ile buraya ekle.</p>
+  </section>
+</main>
+
+<nav class="tabs" id="tabs">
+  <button data-tab="sources">Kaynaklar</button>
+  <button data-tab="chat" class="on">Sohbet</button>
+  <button data-tab="studio">Stüdyo</button>
+</nav>
+
+<!-- Model penceresi -->
+<dialog id="modelDlg">
+  <form method="dialog" class="dlg">
+    <h3>Model seç</h3>
+    <p class="muted">Model Hugging Face'ten indirilir ve tarayıcının depolamasında kalır; bir daha indirilmez. Büyük model daha akıllı ama daha yavaştır.</p>
+    <div class="presets" id="presets"></div>
+    <details><summary>Kendi GGUF dosyam / bağlantım</summary>
+      <label>Hugging Face deposu <input id="hfRepo" placeholder="kullanici/depo-GGUF"></label>
+      <label>Dosya adı <input id="hfFile" placeholder="model-Q4_K_M.gguf"></label>
+      <label>veya doğrudan bağlantı <input id="hfUrl" placeholder="https://…/model.gguf"></label>
+      <label>veya diskten seç <input type="file" id="ggufFile" accept=".gguf"></label>
+    </details>
+    <label>Bağlam uzunluğu
+      <select id="nctx"><option value="2048">2048 (hafif)</option><option value="4096" selected>4096</option><option value="8192">8192 (daha çok RAM)</option></select>
+    </label>
+    <label class="chk"><input type="checkbox" id="useGpu" checked> Ekran kartını (WebGPU) kullan</label>
+    <div class="bar" id="dlBar" hidden><div id="dlFill"></div></div>
+    <div class="muted" id="dlText"></div>
+    <div class="row end">
+      <button class="btn" value="cancel" id="dlgCancel">Kapat</button>
+      <button class="btn" type="button" id="demoBtn" title="Model indirmeden arayüzü dene">Demo (model yok)</button>
+      <button class="btn primary" type="button" id="loadBtn">Yükle</button>
+    </div>
+  </form>
+</dialog>
+
+<!-- Metin ekle -->
+<dialog id="textDlg">
+  <form method="dialog" class="dlg">
+    <h3>Metin yapıştır</h3>
+    <label>Başlık <input id="textTitle" placeholder="Not başlığı"></label>
+    <label>Metin <textarea id="textBody" rows="10"></textarea></label>
+    <div class="row end"><button class="btn" value="cancel">Vazgeç</button><button class="btn primary" type="button" id="textSave">Ekle</button></div>
+  </form>
+</dialog>
+
+<!-- Atıf penceresi -->
+<dialog id="citeDlg">
+  <form method="dialog" class="dlg">
+    <h3 id="citeTitle"></h3>
+    <pre class="cite" id="citeBody"></pre>
+    <div class="row end"><button class="btn primary" value="close">Kapat</button></div>
+  </form>
+</dialog>
+
+<script type="module" src="app.js"></script>
+</body>
+</html>
