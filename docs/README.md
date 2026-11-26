@@ -114,3 +114,22 @@ Diğer ayarlar: tema ve tema rengi, yazı/arayüz boyutu, animasyonlar, ayna (RT
 **Kaynak türleri:** `.docx .pptx .xlsx .odt .odp .ods .epub` tarayıcıda, kütüphanesiz okunur (`docs/extract.js`). Ses ve video dosyaları 16 kHz WAV'a çevrilip yerel sunucunun Whisper motoruyla yazıya dökülür. Web sayfaları adresle eklenir.
 
 **Pencere düzeni** (geniş ekran: masaüstü, el konsolu, yatay/dikey tablet; ≥ 901 × 520 px): Kaynaklar, Sohbet, Stüdyo ve tüm stüdyo panelleri Krita'daki gibi sekmeli bölmelere dönüşür. Sekmeyi sürükleyip başka bölmeye bırak, kenara bırakarak böl, başlıktaki düğmeyle **yüzen pencere** yap ya da **büyüt**; sağ tıkla menü. Hazır **çalışma alanları**: Araştırma, Odak, Medya, Laboratuvar. Düzen yatay ve dikey yön için ayrı saklanır. Aç/kapat: Ayarlar > Görünüm, kenar menüsü > Araçlar, ⋮ menüsü ya da arama. Telefonda klasik sekmeler kalır.
+
+## Dönüştürücü ve telefonda kayan paneller (v26)
+
+**Dönüştürücü** (Stüdyolar > Dönüştür; ZenConverter'dan esinlenildi, kod alınmadı). Dosyalar internete gönderilmez; aşağıdakiler tarayıcıda çalışır (telefon, el konsolu, PC, GitHub Pages):
+
+| Araç | Ne yapar |
+|---|---|
+| Görsel | JPG / PNG / WEBP / ICO (16–256 px) / PDF; %25–%75 küçültme, en fazla 1920/1280/720 px, ×2–×4 büyütme, kalite; saydamlığı beyaza çevirme |
+| PDF | görsellerden PDF (görsel boyutu ya da A4), birleştir, sayfa seç, her sayfayı ayrı PDF, döndür, sayfa sil, sıkıştır (görüntüye çevirerek), metne (TXT / MD) ve görsele (PNG / JPG) çevir, başlık/yazar/tarih/XMP temizle (`docs/vendor/pdf-lib`, pdf.js) |
+| Ses | ses ya da videodan WAV; kırp, açılış/kapanış, ses düzeyi, normalleştir, ters çevir, mono, örnekleme hızı |
+| Video | kontak sayfası (ızgara, zaman damgası, başlık, koyu/açık/saydam), GIF (5–15 fps, 240–640 px, en fazla 15 sn), kare yakala, sesi çıkar |
+| Altyazı | SRT ⇄ VTT ⇄ LRC ⇄ ASS, zaman kaydırma, Türkçe (Windows-1254 / ISO-8859-9) ve diğer kodlamaları UTF-8'e çevirme |
+| Yazı tipi | TTF / OTF ⇄ WOFF (WOFF2 henüz yok) |
+| Belge | DOCX / PPTX / XLSX / ODT / EPUB / PDF / HTML → Markdown, TXT, HTML, yazdır (PDF olarak kaydet); istenirse kaynak olarak ekle |
+| Gizlilik | fotoğraftaki konum, çekim zamanı, cihaz bilgisini gösterir; JPG / PNG / WEBP'de yeniden kodlamadan siler |
+
+Birden çok çıktı **tek ZIP** olarak indirilebilir. **Gelişmiş** araç yerel sunucu ve bilgisayardaki **ffmpeg** ile çalışır (`winget install Gyan.FFmpeg`, `brew install ffmpeg`, `sudo apt install ffmpeg`): MP4 (H.264 / H.265), MKV, MOV, WEBM (VP9); MP3, M4A, FLAC, OPUS, WAV; kalite, çözünürlük, kare hızı, kırpma, sesi kaldırma, video meta verisini silme; ilerleme ve iptal. Uç noktalar: `GET /api/convert/status`, `GET /api/convert/progress`, `POST /api/convert/media?name=&opts=` (gövde: dosya), `POST /api/convert/cancel`; çıktılar `app/convert-outputs/` içinde 24 saat tutulur. ffmpeg argümanları yalnızca izinli seçeneklerden kurulur, kabuk kullanılmaz.
+
+**Telefonda kayan paneller** (Krita mobil tarzı, `docs/slide.js`): sohbet ana alanda kalır; **Kaynaklar** soldan, **Stüdyo** sağdan kayar (alt menü düğmesi ya da ekran kenarından kaydır; kenarına doğru kaydırınca, arka plana dokununca, Esc ya da oyun kolu B ile kapanır). Stüdyolar alttan açılan, tutamaçla yarım / tam boy yapılan sekmeli bir sayfada açılır. Ayarlar > Görünüm > *Telefonda paneller*: Kayan / Sekmeler.

@@ -952,3 +952,60 @@ dialog.hub>.hbWrap{max-width:860px;padding:14px 14px 28px;gap:12px}
 .dlg label.hbRes{flex-direction:row;color:var(--tx);font-size:inherit}
 .dlg label.hbF{color:var(--tx)}
 @media (min-width:901px){.hbStrip{flex-wrap:wrap;overflow:visible}}
+
+/* ---- Telefonda Krita mobil tarzı kayan paneller (slide.js) ---- */
+@media (max-width:900px){
+ #cols[data-slide=on]>#panelSources,#cols[data-slide=on]>#panelStudio{display:flex!important;position:fixed;z-index:60;top:var(--slTop,56px);bottom:var(--slBot,60px);width:min(88vw,380px);box-sizing:border-box;margin:0;padding:12px 14px 16px!important;background:var(--p)!important;border:1px solid var(--line)!important;box-shadow:0 18px 40px rgba(0,0,0,.45);overflow-y:auto;overscroll-behavior:contain;visibility:hidden;transition:transform .3s cubic-bezier(.2,.8,.2,1),visibility 0s linear .3s;will-change:transform}
+ #cols[data-slide=on]>#panelSources{left:0;border-left:0!important;border-radius:0 var(--rp) var(--rp) 0!important;transform:translateX(-104%)}
+ #cols[data-slide=on]>#panelStudio{right:0;border-right:0!important;border-radius:var(--rp) 0 0 var(--rp)!important;transform:translateX(104%)}
+ #cols[data-slide=on][data-sheet=sources]>#panelSources,#cols[data-slide=on][data-sheet=studio]>#panelStudio{transform:none;visibility:visible;transition:transform .3s cubic-bezier(.2,.8,.2,1),visibility 0s}
+ #cols[data-slide=on]>#panelSources>*,#cols[data-slide=on]>#panelStudio>*{flex-shrink:0}
+ #cols[data-slide=on]>.panel.slDrag{transition:none!important;visibility:visible}
+ #cols[data-slide=on]>#panelChat{display:flex}
+ .slScrim{position:fixed;inset:0;z-index:59;background:rgba(0,0,0,.42);backdrop-filter:blur(3px);-webkit-backdrop-filter:blur(3px);opacity:0;pointer-events:none;transition:opacity .25s}
+ .slScrim.on{opacity:1;pointer-events:auto}.slScrim.slDrag{transition:none}
+ /* kenar ipucu: panelin olduğunu gösteren ince tutamaçlar */
+ #cols[data-slide=on]:not([data-sheet])::before,#cols[data-slide=on]:not([data-sheet])::after{content:"";position:fixed;top:50%;width:4px;height:44px;margin-top:-22px;border-radius:4px;background:var(--mu);opacity:.22;z-index:5;pointer-events:none}
+ #cols[data-slide=on]:not([data-sheet])::before{left:3px}#cols[data-slide=on]:not([data-sheet])::after{right:3px}
+}
+/* Stüdyolar docker sayfası (alttan) */
+.hubSheet{position:fixed;left:0;right:0;bottom:0;z-index:70;height:var(--hsH,92dvh);max-height:calc(100dvh - 12px);display:flex;flex-direction:column;background:var(--bg);border-top:1px solid var(--line);border-radius:18px 18px 0 0;box-shadow:0 -18px 40px rgba(0,0,0,.4);transform:translateY(105%);visibility:hidden;transition:transform .32s cubic-bezier(.2,.8,.2,1),height .25s ease,visibility 0s linear .32s}
+.hubSheet.on{transform:none;visibility:visible;transition:transform .32s cubic-bezier(.2,.8,.2,1),height .25s ease,visibility 0s}
+.hubSheet.slDrag{transition:none}
+.hsScrim{z-index:69}
+.hsGrip{flex:none;height:22px;border:0;background:transparent;display:grid;place-items:center;cursor:ns-resize;touch-action:none;padding:0}
+.hsGrip span{width:44px;height:5px;border-radius:5px;background:var(--mu);opacity:.5}.hsGrip:hover span,.hsGrip:focus-visible span{opacity:.9;background:var(--ac)}
+.hsTabs{flex:none;display:flex;gap:6px;overflow-x:auto;scrollbar-width:none;padding:2px 12px 10px;border-bottom:1px solid var(--line)}.hsTabs::-webkit-scrollbar{display:none}
+.hsBody{flex:1;min-height:0;overflow-y:auto;overscroll-behavior:contain}
+.hsIn{max-width:720px;margin:0 auto;padding:14px 14px 24px}
+.hsBar{border-top:1px solid var(--line)}
+@media (prefers-reduced-motion:reduce){#cols[data-slide=on]>.panel,.hubSheet,.slScrim{transition:none!important}}
+
+/* ---- Dönüştürücü (convert.js) ---- */
+.cvP{display:flex;flex-direction:column;gap:12px}
+.cvNav.hbTabs{position:static;flex-wrap:wrap;padding:0;background:transparent}
+.cvNav .hbTab{min-height:36px;padding:0 12px;font-size:13px}
+@media (max-width:600px){.cvNav.hbTabs{flex-wrap:nowrap}}
+.cvBody,.cvTool{display:flex;flex-direction:column;gap:12px}
+.cvIntro{margin:0;font-size:13.5px;line-height:1.6}
+.cvPick{display:flex;flex-direction:column;gap:8px}
+.cvDrop{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;min-height:112px;padding:16px;border:1.5px dashed color-mix(in srgb,var(--ac) 45%,var(--line));border-radius:14px;background:var(--btn);color:var(--tx);text-align:center;cursor:pointer;transition:background .15s,border-color .15s}
+.cvDrop:hover,.cvDrop:focus-visible,.cvDrop.over{background:color-mix(in srgb,var(--ac) 10%,var(--btn));border-color:var(--ac);outline:none}
+.cvDrop b{font-size:14px}.cvDrop small{color:var(--mu);font-size:12.5px}.cvDropI{color:var(--ac);display:grid}
+.cvList,.cvOut{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:6px}
+.cvItem{display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:10px;background:var(--p);min-width:0;flex-wrap:wrap}
+.cvItem>small{color:var(--mu);font-size:12px;white-space:nowrap}
+.cvName{flex:1 1 160px;min-width:0;font-size:13.5px;font-weight:600;overflow-wrap:anywhere;display:flex;flex-direction:column;gap:2px}.cvName small{font-weight:400;color:var(--mu);font-size:12px}
+.cvMini{width:30px;height:30px;display:inline-grid;place-items:center;border:0;border-radius:8px;background:var(--btn);color:var(--mu);cursor:pointer;padding:0;flex:none}.cvMini:hover:not(:disabled){color:var(--tx);background:var(--btnh)}.cvMini:disabled{opacity:.35;cursor:default}
+.cvRes .btn.sm{min-height:32px}
+.cvThumb{width:56px;height:56px;object-fit:cover;border-radius:8px;background:var(--btn);flex:none}
+.cvRes audio{width:100%;height:36px;order:9}
+.cvResults{display:flex;flex-direction:column;gap:8px}.cvResults>.btn{align-self:flex-start}
+.cvRow2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.cvSub{display:flex;flex-direction:column;gap:10px}.cvSub:empty{display:none}
+.cvChk{background:transparent!important;padding:2px 0!important;align-items:center}
+.cvMeta{display:flex;flex-direction:column;gap:8px}.cvMeta:empty::before{content:"Fotoğraf seçince konum, tarih ve cihaz bilgisi burada görünür.";color:var(--mu);font-size:13px}
+.cvMetaF{padding:10px 12px;border-radius:10px;background:var(--p);display:flex;flex-direction:column;gap:6px}.cvMetaF b{font-size:13.5px;overflow-wrap:anywhere}.cvMetaF small{color:var(--mu)}
+.cvMetaF dl{display:grid;grid-template-columns:auto 1fr;gap:4px 12px;margin:0;font-size:13px}.cvMetaF dt{color:var(--mu)}.cvMetaF dt.risk{color:var(--er);font-weight:600}.cvMetaF dd{margin:0;overflow-wrap:anywhere}
+.cvClr{align-self:flex-end;font-size:12.5px}
+.cvRow2{align-items:end}.cvRow2 .hbF>span{flex-wrap:wrap;row-gap:0}

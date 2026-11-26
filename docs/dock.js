@@ -49,8 +49,8 @@ const WS = {
   odak: { t: 'Odak', i: 'focus', d: 'Geniş sohbet, yanda sekmeli kaynak ve stüdyo',
     build: (a) => { a('chat'); a('sources', { direction: 'right', ref: 'chat', w: 330 }); a('studio', { direction: 'within', ref: 'sources', inactive: true }); },
     dikey: (a) => { a('chat'); a('sources', { direction: 'below', ref: 'chat', h: Math.round(innerHeight * 0.3) }); a('studio', { direction: 'within', ref: 'sources', inactive: true }); } },
-  medya: { t: 'Medya', i: 'image', d: 'Görsel, ses, müzik ve video stüdyoları açık',
-    build: (a) => { a('chat'); a('sources', { direction: 'left', ref: 'chat', w: 270 }); a('hub:image', { direction: 'right', ref: 'chat', w: 430 }); ['hub:tts', 'hub:music', 'hub:video', 'hub:stt'].forEach((k) => a(k, { direction: 'within', ref: 'hub:image', inactive: true })); a('studio', { direction: 'below', ref: 'sources', h: 280 }); } },
+  medya: { t: 'Medya', i: 'image', d: 'Görsel, ses, müzik, video stüdyoları ve Dönüştürücü açık',
+    build: (a) => { a('chat'); a('sources', { direction: 'left', ref: 'chat', w: 270 }); a('hub:image', { direction: 'right', ref: 'chat', w: 430 }); ['hub:tts', 'hub:music', 'hub:video', 'hub:stt', 'hub:convert'].forEach((k) => a(k, { direction: 'within', ref: 'hub:image', inactive: true })); a('studio', { direction: 'below', ref: 'sources', h: 280 }); } },
   lab: { t: 'Laboratuvar', i: 'cpu', d: 'Modeller, sistem ve web araştırması',
     build: (a) => { a('chat'); a('sources', { direction: 'left', ref: 'chat', w: 280 }); a('studio', { direction: 'within', ref: 'sources', inactive: true }); a('hub:models', { direction: 'right', ref: 'chat', w: 460 }); ['hub:web', 'hub:system'].forEach((k) => a(k, { direction: 'within', ref: 'hub:models', inactive: true })); } },
 };

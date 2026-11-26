@@ -2,6 +2,7 @@
    Görsel (Stable Diffusion), Ses (Kokoro/EMA TTS), Yazıya dök (Whisper), Müzik, Video, Web (arama + adres), Modeller, Sistem.
    Her panel bir kez oluşturulur; hem "Stüdyolar" penceresinde hem çalışma alanında (dock) aynı öğe kullanılır. */
 import { pi } from './icons.js';
+import { pConvert, ICON as CONVERT_ICON } from './convert.js';
 
 const $ = (s, r = document) => r.querySelector(s);
 const el = (t, p = {}, ...k) => { const e = document.createElement(t); for (const [n, v] of Object.entries(p)) { if (v == null || v === false) continue; if (n.includes('-') || n === 'list' || n === 'for') e.setAttribute(n, v === true ? '' : v); else e[n] = v; } e.append(...k.filter((x) => x != null && x !== false)); return e; };
@@ -266,6 +267,7 @@ export const PANELS = [
   { id: 'stt', title: 'Yazıya dök', icon: IC.mic, make: pStt },
   { id: 'music', title: 'Müzik', icon: IC.music, make: pMusic },
   { id: 'video', title: 'Video', icon: IC.video, make: pVideo },
+  { id: 'convert', title: 'Dönüştür', icon: CONVERT_ICON, make: pConvert },
   { id: 'web', title: 'Web', icon: IC.web, make: pWeb },
   { id: 'models', title: 'Modeller', icon: IC.models, make: pModels },
   { id: 'system', title: 'Sistem', icon: IC.system, make: pSystem },
@@ -288,6 +290,7 @@ function hubDialog() {
 export function openHub(id) {
   let t = id; if (!t) { try { t = localStorage.getItem('class-hub-tab'); } catch {} } if (!PANELS.some((p) => p.id === t)) t = 'image';
   if (window.defterDock?.openHub(t)) { try { localStorage.setItem('class-hub-tab', t); } catch {} return; } /* pencere düzeni açıksa sekme olarak açılır */
+  if (window.defterSlide?.openHub(t)) return; /* telefonda kayan modda alttan docker sayfası */
   const h = hubDialog(); h.show(t); if (!h.d.open) h.d.showModal();
 }
 window.defterHub = { open: openHub, panelEl, PANELS, speak, server, ttsVoices };
