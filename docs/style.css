@@ -711,6 +711,43 @@ dialog.ct .fsBar b{font-weight:800;font-size:17px}
 :root #composer .sendBtn{height:30px;padding:0 10px;font-size:12.5px;gap:8px;border-radius:8px;background:rgba(0,0,0,.18)}
 :root #composer .sendBtn svg{width:16px;height:16px}
 
+/* ---- İletişim ölçüleri: Blogger ekran görüntüsünden (dp) — boşluklar, hizalar, oranlar ---- */
+dialog.ct>.ctBody{padding:13px 15px 24px;gap:0}
+dialog.ct .chSearch{height:36px;padding:0 13px;border-radius:10px;margin:0 0 18px;gap:9px}
+dialog.ct .chSearch svg{width:16px;height:16px}dialog.ct .chSearch input{font-size:13.5px}
+.ctMsgs{margin:0 0 42px}
+.ctM{gap:8px;padding:5px 0 8px 11px;margin:0 0 0;align-items:flex-start}
+.ctM+.ctM{margin-top:18px}
+.ctAv{width:25px;height:25px;margin-top:0;font-size:10px;font-weight:600}
+.ctMc{padding-top:0}
+.ctNm{height:25px;min-height:25px;align-items:center;gap:0 8px;flex-wrap:nowrap;white-space:nowrap}
+.ctNm b{font-size:13.5px;font-weight:500}
+.ctBadge{padding:1px 8px;font-size:11px;line-height:16px;border-radius:6px}
+.ctVer svg{width:12px;height:12px}
+.ctWho{font-size:11px;overflow:hidden;text-overflow:ellipsis}
+.ctTx{margin-top:-5px;font-size:13.5px;line-height:1.52}
+.ctAct{margin-top:6px;margin-inline-end:-3px}
+.ctGh{width:32px;height:30px;border-radius:8px}.ctGh svg{width:15px;height:15px}
+.ctForm{padding:5px 0 0 11px!important;margin:0!important}
+.ctFh{min-height:26px}.ctFh h3{font-size:14px;font-weight:600;line-height:1.2}
+.ctFh .btn{min-height:26px!important;height:26px;padding:0 13px!important;font-size:11.5px!important;border-radius:7px}
+.ctForm .muted{margin:10px 0 0;font-size:11.5px;line-height:1.3}
+.ctProg{width:19px;height:5px;border-radius:3px;margin:10px 0 12px}
+.ctBox{border-radius:6px;padding:0 12px 14px;background:rgba(0,0,0,.26)}
+.ctInRow{gap:21px;padding:16px 0 20px;align-items:center}
+.ctIc{width:21px;height:21px;border:1px solid var(--line)}.ctIc svg{width:12px;height:12px}
+.ctInRow input,.ctInRow textarea{font-size:13px;padding:0;line-height:1.4}
+.ctSteps{padding-top:9px;gap:6px;align-items:center}
+:root dialog.ct .ctStep{height:25px;min-height:25px;padding:0 9px;font-size:11.5px;border-radius:6px}
+:root dialog.ct .ctSend{height:30px;min-height:30px;padding:0 11px;font-size:12px;gap:9px;border-radius:7px}
+dialog.ct .ctSend svg{width:14px;height:14px}
+.ctForm{padding-left:15.5px!important}.ctBox{padding-bottom:12px}
+
+/* ---- Sonsuz kaydırma: sayfa boyu zıplamasın; altta aynı boyda iskelet kartlar, kaydırdıkça yenileri belirir ---- */
+.nbSent{display:contents}
+.nbCard.sk{pointer-events:none;border:1px solid var(--line);background:linear-gradient(100deg,var(--p) 30%,var(--p2) 50%,var(--p) 70%);background-size:300% 100%;animation:skel 1.4s ease-in-out infinite}
+@keyframes skel{from{background-position:100% 0}to{background-position:0 0}}
+@media (prefers-reduced-motion:reduce){.nbCard.sk{animation:none}}
 /* ---- Aşağı kaydırdıkça belirme (Blogger yorumları gibi) ---- */
 .rv{opacity:0;transform:translateY(22px);transition:opacity .5s cubic-bezier(.16,1,.3,1) var(--rvd,0ms),transform .5s cubic-bezier(.16,1,.3,1) var(--rvd,0ms);will-change:opacity,transform}
 .rv.in{opacity:1;transform:none}
