@@ -337,3 +337,17 @@ dialog.fs::backdrop{background:var(--bg)}
 .menu button:hover,.menu button:focus-visible{background:none;color:var(--ac)}
 .menu button{border-radius:8px}
 @media (prefers-reduced-motion:reduce){.dwSub .dwItem,.plSlide{transition:none}}
+
+/* ---- Mobil menü: Blogger XML .mobM/.mobC (alt çubuk, üst köşeler 12px, 55px, simge + etiket) ---- */
+.mobM{display:none}
+@media (max-width:900px){
+ .mobM{display:block;flex:none;width:100%;z-index:35;animation:fsIn .3s both}
+ .mobC{list-style:none;margin:0;padding:0 12px env(safe-area-inset-bottom,0);height:calc(55px + env(safe-area-inset-bottom,0px));display:flex;align-items:center;background:#1e1e1e;color:#fffdfc;border-top:1px solid #252526;border-start-start-radius:12px;border-start-end-radius:12px;box-shadow:0 -20px 30px rgba(30,30,30,.1)}
+ .mobC li{display:flex;justify-content:center;flex:1 0 20%;min-width:0}
+ .mobB{display:inline-flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;min-width:44px;height:44px;padding:0 6px;border:0;border-radius:12px;background:transparent;color:inherit;cursor:pointer;font:inherit;font-size:11px;opacity:.8;transition:color .15s,opacity .15s,background .15s;position:relative}
+ .mobB svg{width:20px;height:20px;display:block}.mobB span{opacity:.85;white-space:nowrap;max-width:68px;overflow:hidden;text-overflow:ellipsis}
+ .mobB:hover,.mobB:focus-visible{background:rgba(255,255,255,.08);opacity:1}.mobB:focus-visible{outline:2px solid var(--ac);outline-offset:-2px}
+ .mobB.on{color:var(--linkC,#60cdff);opacity:1}.mobB.on::after{content:"";position:absolute;bottom:-2px;width:4px;height:4px;border-radius:50%;background:var(--linkC,#60cdff)}
+ #tabs:not([hidden]){display:none!important}
+ .panel{padding-bottom:6px}
+}

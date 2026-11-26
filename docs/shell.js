@@ -1,6 +1,6 @@
 /* Class kabuğu: sol çekmece, pencere düzeni (Krita tarzı), uygulama kurulumu */
 const $ = (s, r = document) => r.querySelector(s);
-const el = (t, p = {}, ...k) => { const e = Object.assign(document.createElement(t), p); e.append(...k); return e; };
+const el = (t, p = {}, ...k) => { const e = document.createElement(t); for (const [n, v] of Object.entries(p)) { if (v == null) continue; if (n.includes('-')) e.setAttribute(n, v); else e[n] = v; } e.append(...k); return e; };
 const lsGet = (k, d) => { try { return JSON.parse(localStorage.getItem(k)) ?? d; } catch { return d; } };
 const lsSet = (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); } catch {} };
 const A = () => window.defterApp;
@@ -209,7 +209,54 @@ function openDrawer() {
   requestAnimationFrame(() => drawer?.classList.add('in'));
   document.addEventListener('keydown', drawerKey, true); setTimeout(() => drawer?.querySelector('.dwItem')?.focus(), 60);
 }
+
+/* ---------- Mobil menü (XML: sec_Mobile_Menu / .mobM .mobC) ---------- */
+const MI = {
+  home: SVG('<path d="M9 2.8 3.6 7C2.7 7.7 2 9.2 2 10.4v7.4C2 20.1 3.9 22 6.2 22h11.6c2.3 0 4.2-1.9 4.2-4.2v-7.3c0-1.2-.8-2.8-1.8-3.5l-6.2-4.3c-1.4-1-3.7-1-5 .1z"/><path d="M12 17.5v-3"/>'),
+  search: SVG('<circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/>'),
+  menu: SVG('<path d="M4 6h16M4 12h16M4 18h16"/>'),
+  top: SVG('<path d="M12 19V5M5 12l7-7 7 7"/>'),
+  src: SVG('<path d="M5 4h11l3 3v13H5z"/><path d="M8 11h8M8 15h5"/>'),
+  chat: SVG('<path d="M21 12a8 8 0 0 1-11.6 7.1L4 20l1-4.6A8 8 0 1 1 21 12z"/>'),
+  studio: SVG('<path d="M12 3l1.8 4.7L18.5 9.5l-4.7 1.8L12 16l-1.8-4.7L5.5 9.5l4.7-1.8z"/><path d="M19 15l.8 2.2L22 18l-2.2.8L19 21l-.8-2.2L16 18l2.2-.8z"/>'),
+  sun: SVG('<circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/>'),
+  moon: SVG('<path d="M21 13a8 8 0 1 1-10-10 7 7 0 0 0 10 10z"/>'),
+  back: SVG('<path d="M19 12H5M12 19l-7-7 7-7"/>'),
+};
+function buildMobileMenu() {
+  if ($('#mobM')) return;
+  const bar = el('nav', { className: 'mobM', id: 'mobM', 'aria-label': 'Mobil menü' }, el('ul', { className: 'mobC' }));
+  document.body.append(bar);
+  const isDark = () => { const t = A().getTheme(); return t === 'dark' || (t === 'system' && matchMedia('(prefers-color-scheme:dark)').matches); };
+  const view = () => (cols().hidden ? 'home' : 'nb');
+  const tab = () => cols().dataset.tab;
+  const press = (t) => $(`#tabs [data-tab="${t}"]`)?.click();
+  const defs = () => view() === 'nb'
+    ? [{ k: 'back', i: 'back', t: 'Defterler', run: () => A().goHome() },
+       { k: 'sources', i: 'src', t: 'Kaynaklar', on: tab() === 'sources', run: () => press('sources') },
+       { k: 'chat', i: 'chat', t: 'Sohbet', on: tab() === 'chat', run: () => press('chat') },
+       { k: 'studio', i: 'studio', t: 'Stüdyo', on: tab() === 'studio', run: () => press('studio') },
+       { k: 'menu', i: 'menu', t: 'Menü', run: openDrawer }]
+    : [{ k: 'home', i: 'home', t: 'Ana sayfa', on: true, run: () => scrollTo({ top: 0 }) || $('#home').scrollTo?.({ top: 0, behavior: 'smooth' }) },
+       { k: 'search', i: 'search', t: 'Ara', run: () => $('#searchBtn').click() },
+       { k: 'menu', i: 'menu', t: 'Menü', run: openDrawer },
+       { k: 'mode', i: isDark() ? 'sun' : 'moon', t: isDark() ? 'Açık' : 'Koyu', run: () => { A().setTheme(isDark() ? 'light' : 'dark'); render(); } },
+       { k: 'top', i: 'top', t: 'Yukarı', run: () => { $('#home').scrollTo?.({ top: 0, behavior: 'smooth' }); } }];
+  function render() {
+    const ul = bar.firstChild; ul.replaceChildren();
+    for (const d of defs()) {
+      const b = el('button', { type: 'button', className: 'mobB' + (d.on ? ' on' : ''), 'aria-label': d.t, 'aria-current': d.on ? 'page' : null, innerHTML: MI[d.i] }, el('span', { textContent: d.t }));
+      b.onclick = d.run; ul.append(el('li', {}, b));
+    }
+  }
+  render();
+  new MutationObserver(render).observe(cols(), { attributes: true, attributeFilter: ['hidden', 'data-tab'] });
+  new MutationObserver(render).observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
+  matchMedia('(prefers-color-scheme:dark)').addEventListener?.('change', render);
+}
+
 function boot() {
+  buildMobileMenu();
   $('#menuBtn').onclick = openDrawer;
   if (wm.on) setWm(true); else cols().dataset.wm = 'off';
   window.defterShell = {
