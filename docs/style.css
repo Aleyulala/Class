@@ -310,17 +310,44 @@ dialog.fs::backdrop{background:var(--bg)}
 .top .pillBtn{background:#282828;color:#fffdfc;border-color:transparent}.top .pillBtn:hover{background:#333}
 .top .nbTitle{color:#fffdfc}.top .nbTitle:hover,.top .nbTitle:focus{background:#282828;border-color:rgba(255,255,255,.08)}
 
-/* ---- Plus UI çekmece ölçüleri (Blogger XML: .mnMen / .mnMn / .mnMob) ---- */
+/* ---- Plus UI çekmece (Blogger XML: .mnMn klasörleri, .mnMob slider'ları) ---- */
 .drawer{width:min(260px,86vw)}
 .drBody{padding:20px 15px 8px}
-.dwItem{padding:10px 5px;border-radius:8px;gap:12px;font-size:14.5px;background:none!important;transition:color .15s}
-.dwItem:hover,.dwItem:focus-visible{color:var(--ac)}.dwItem:focus-visible{outline:2px solid var(--ac);outline-offset:-2px}
-.dwItem .mi svg{width:18px;height:18px;opacity:.8}.dwItem.on{font-weight:700}
+.dwList{list-style:none;margin:0;padding:0;display:flex;flex-direction:column}
+.dwItem{display:flex;align-items:center;gap:12px;width:100%;padding:10px 5px;border:0;border-radius:8px;background:none!important;color:var(--tx);font:inherit;font-size:14.5px;text-align:left;cursor:pointer;transition:color .15s;min-height:40px;box-sizing:border-box}
+.dwItem:hover,.dwItem:focus-visible,.dwGroup input:checked+.dwFolder{color:var(--ac)}.dwItem:focus-visible{outline:2px solid var(--ac);outline-offset:-2px}
+.dwItem[disabled]{opacity:.5;cursor:default}.dwItem[disabled]:hover{color:var(--tx)}
+.dwItem .mi{display:inline-flex;width:22px;justify-content:center;color:var(--mu);margin:0 5px}.dwItem .mi svg{width:18px;height:18px;opacity:.8}.dwItem.on{font-weight:700}
+.dwItem .ml{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.dwItem .mc{color:var(--ac)}
+.dwFolder::after{content:"";flex:none;width:14px;height:14px;margin-inline:auto 5px;background:no-repeat center/contain url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23989b9f' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'><path d='m6 9 6 6 6-6'/></svg>");transition:transform .25s}
+.dwGroup input:checked+.dwFolder::after{transform:rotate(180deg)}
+.dwBadge{margin-inline-start:6px;font-size:12px;font-weight:500;color:var(--ac)}
+.dwSub{position:relative;overflow:hidden;padding-inline-start:14px}
+.dwSub .dwItem{position:relative;max-height:0;min-height:0;padding-block:0;opacity:0;visibility:hidden;transition:max-height .3s ease,opacity .3s ease,visibility .3s ease,color .15s}
+.dwGroup input:checked~.dwSub .dwItem{max-height:40px;min-height:40px;padding-block:10px;opacity:1;visibility:visible}
+.dwSub .dwItem::before{content:"";position:absolute;inset-inline-start:-9px;bottom:50%;width:14px;height:60px;border-end-start-radius:8px;border-inline-start:1px solid var(--line);border-block-end:1px solid var(--line);pointer-events:none}
 .dwBr{border-bottom:1px solid var(--line);margin:12px 5px}
-.dwSec{margin:10px 5px 2px;font-size:13px;font-weight:400;letter-spacing:0;text-transform:none;opacity:.7}
-.drFoot{flex:none;position:sticky;bottom:0;background:var(--bg);border-top:1px solid var(--line);padding:15px 20px calc(18px + env(safe-area-inset-bottom,0px));text-align:center}
-.drFoot p{margin:0 0 6px;font-size:12px}
-.drLinks{display:flex;justify-content:center;flex-wrap:wrap;gap:2px 14px;font-size:12.5px}
-.drLinks button{background:none;border:0;color:var(--tx);opacity:.75;cursor:pointer;padding:3px 2px;font:inherit}.drLinks button:hover{text-decoration:underline;opacity:1}
+.drFoot{flex:none;position:sticky;bottom:0;background:var(--bg);border-top:1px solid var(--line);padding:12px 15px calc(14px + env(safe-area-inset-bottom,0px));display:flex;flex-direction:column;gap:6px}
+.plSl{position:relative;height:36px;border:1px solid var(--line);border-radius:9px;background:rgba(127,127,127,.06);overflow:hidden}
+.plSlide{position:absolute;inset:0;display:flex;align-items:center;justify-content:space-between;padding:0 8px 0 10px;opacity:0;transform:translateX(-18px);pointer-events:none;transition:all .28s cubic-bezier(.16,1,.3,1)}
+.plSlide.active{opacity:1;transform:none;pointer-events:auto}
+.plLink{display:flex;align-items:center;gap:8px;min-width:0;font-size:12px;font-weight:600;color:var(--tx);text-decoration:none}.plLink span:last-child{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.plLink:hover,.plLink:focus-visible{color:var(--ac)}.plIc svg{width:16px;height:16px;display:block}
+.plNext{flex:none;width:20px;height:20px;border:0;border-radius:4px;background:transparent;color:var(--mu);cursor:pointer;display:grid;place-items:center;padding:0}.plNext:hover{background:rgba(127,127,127,.18);color:var(--tx)}.plNext svg{width:13px;height:13px}
 .menu button:hover,.menu button:focus-visible{background:none;color:var(--ac)}
 .menu button{border-radius:8px}
+@media (prefers-reduced-motion:reduce){.dwSub .dwItem,.plSlide{transition:none}}
+
+/* ---- Mobil menü: Blogger XML .mobM/.mobC (alt çubuk, üst köşeler 12px, 55px, simge + etiket) ---- */
+.mobM{display:none}
+@media (max-width:900px){
+ .mobM{display:block;flex:none;width:100%;z-index:35;animation:fsIn .3s both}
+ .mobC{list-style:none;margin:0;padding:0 12px env(safe-area-inset-bottom,0);height:calc(55px + env(safe-area-inset-bottom,0px));display:flex;align-items:center;background:#1e1e1e;color:#fffdfc;border-top:1px solid #252526;border-start-start-radius:12px;border-start-end-radius:12px;box-shadow:0 -20px 30px rgba(30,30,30,.1)}
+ .mobC li{display:flex;justify-content:center;flex:1 0 20%;min-width:0}
+ .mobB{display:inline-flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;min-width:44px;height:44px;padding:0 6px;border:0;border-radius:12px;background:transparent;color:inherit;cursor:pointer;font:inherit;font-size:11px;opacity:.8;transition:color .15s,opacity .15s,background .15s;position:relative}
+ .mobB svg{width:20px;height:20px;display:block}.mobB span{opacity:.85;white-space:nowrap;max-width:68px;overflow:hidden;text-overflow:ellipsis}
+ .mobB:hover,.mobB:focus-visible{background:rgba(255,255,255,.08);opacity:1}.mobB:focus-visible{outline:2px solid var(--ac);outline-offset:-2px}
+ .mobB.on{color:var(--linkC,#60cdff);opacity:1}.mobB.on::after{content:"";position:absolute;bottom:-2px;width:4px;height:4px;border-radius:50%;background:var(--linkC,#60cdff)}
+ #tabs:not([hidden]){display:none!important}
+ .panel{padding-bottom:6px}
+}

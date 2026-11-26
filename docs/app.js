@@ -29,7 +29,7 @@ const IC = {
 };
 document.querySelectorAll('[data-ic]').forEach((n) => (n.innerHTML = IC[n.dataset.ic] || ''));
 function applyTheme(t) { const r = document.documentElement; if (t === 'light' || t === 'dark') r.setAttribute('data-theme', t); else r.removeAttribute('data-theme'); }
-const getTheme = () => { try { return localStorage.getItem('defter-theme') || 'system'; } catch { return 'system'; } };
+const getTheme = () => { try { return localStorage.getItem('defter-theme') || 'dark'; } catch { return 'dark'; } };
 const setTheme = (t) => { try { localStorage.setItem('defter-theme', t); } catch {} applyTheme(t); };
 applyTheme(getTheme());
 
