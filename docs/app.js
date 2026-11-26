@@ -590,7 +590,7 @@ window.addEventListener('popstate', () => { const m = location.hash.match(/^#nb-
 // üst çubuk menüleri
 $('#filterBtn').onclick = () => showMenu($('#filterBtn'), Object.entries(FILTERS).map(([k, v]) => ({ label: v, check: home.filter === k, run: () => { home.filter = k; home.more = false; renderHome(); } })), { align: 'left' });
 $('#sortBtn').onclick = () => showMenu($('#sortBtn'), Object.entries(SORTS).map(([k, v]) => ({ label: v, check: home.sort === k, run: () => { home.sort = k; renderHome(); } })));
-$('#searchBtn').onclick = () => { $('#searchBar').hidden = false; $('#nbSearch').focus(); };
+$('#searchBtn').onclick = () => { if (window.defterSearch) window.defterSearch.open(); else { $('#searchBar').hidden = false; $('#nbSearch').focus(); } };
 $('#searchClose').onclick = () => { $('#searchBar').hidden = true; $('#nbSearch').value = ''; home.query = ''; renderHome(); };
 $('#nbSearch').oninput = (e) => { home.query = e.target.value.trim(); home.more = false; renderHome(); };
 $('#nbSearch').onkeydown = (e) => { if (e.key === 'Escape') $('#searchClose').click(); };
@@ -729,5 +729,5 @@ const CK = 'defter_cookie_ok_v1';
 })();
 
 /* kabuk (shell.js) için köprü */
-window.defterApp = { notebooks: () => notebooks, current: () => nb, openNb, createNb, goHome, showMenu, closeMenu, setTheme, getTheme, IC, openModel: () => $('#modelDlg').showModal() };
+window.defterApp = { setTab, searchData: async () => ({ notebooks, sources: await DB.all('sources'), notes: await DB.all('notes') }), notebooks: () => notebooks, current: () => nb, openNb, createNb, goHome, showMenu, closeMenu, setTheme, getTheme, IC, openModel: () => $('#modelDlg').showModal() };
 document.dispatchEvent(new Event('defter-ready'));
