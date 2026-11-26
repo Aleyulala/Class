@@ -10,8 +10,8 @@ const params = new URLSearchParams(location.search);
 const DB = (() => {
   let p;
   const open = () => (p ||= new Promise((res, rej) => {
-    const r = indexedDB.open('defter', 1);
-    r.onupgradeneeded = () => { const d = r.result; d.createObjectStore('sources', { keyPath: 'id' }); d.createObjectStore('notes', { keyPath: 'id' }); d.createObjectStore('kv', { keyPath: 'key' }); };
+    const r = indexedDB.open('defter', 2);
+    r.onupgradeneeded = () => { const d = r.result; for (const n of ['sources', 'notes', 'notebooks']) if (!d.objectStoreNames.contains(n)) d.createObjectStore(n, { keyPath: 'id' }); if (!d.objectStoreNames.contains('kv')) d.createObjectStore('kv', { keyPath: 'key' }); };
     r.onsuccess = () => res(r.result); r.onerror = () => rej(r.error);
   }));
   const tx = async (s, mode, fn) => { const d = await open(); return new Promise((res, rej) => { const t = d.transaction(s, mode); const out = fn(t.objectStore(s)); t.oncomplete = () => res(out && 'result' in out ? out.result : undefined); t.onerror = () => rej(t.error); }); };
@@ -120,7 +120,7 @@ async function chatStream(messages, { maxTokens = 700, temperature = 0.3, signal
 }
 
 /* ---------------- Durum ---------------- */
-let sources = [], notes = [], chat = [], busy = false, abortCtl = null;
+let notebooks = [], nb = null, sources = [], notes = [], chat = [], busy = false, abortCtl = null;
 const enabledSources = () => sources.filter((s) => s.enabled !== false);
 const budgetChars = (reserve = 0) => Math.max(1500, Math.round((engine.nctx - 900) * 2.4) - reserve);
 
@@ -165,7 +165,7 @@ function msgNode(m, i) {
   }
   return d;
 }
-async function saveNote(title, text) { const n = { id: uid(), title, text, addedAt: Date.now() }; notes.push(n); await DB.put('notes', n); renderNotes(); toast('Nota kaydedildi'); }
+async function saveNote(title, text) { const n = { id: uid(), nbId: nb.id, title, text, addedAt: Date.now() }; notes.push(n); await DB.put('notes', n); renderNotes(); touchNb(); toast('Nota kaydedildi'); }
 function toast(t) { $('#ctxInfo').textContent = t; }
 function setModelUi(state, label) {
   $('#modelDot').className = `dot ${state}`; $('#modelLabel').textContent = label; $('#modelBtn').textContent = state === 'ok' ? 'Modeli değiştir' : 'Model seç';
@@ -176,7 +176,7 @@ function needModel() {
   if (engine.kind === 'wllama' || engine.kind === 'demo') return false;
   $('#modelDlg').showModal(); return true;
 }
-async function persistChat() { await DB.set('chat', chat.filter((m) => !m.live).slice(-60)); }
+async function persistChat() { if (nb) { await DB.set('chat:' + nb.id, chat.filter((m) => !m.live).slice(-60)); touchNb(); } }
 
 async function run({ userText, shownText, messages, cites, title, maxTokens, demo }) {
   if (busy) return;
@@ -249,13 +249,13 @@ function showCite(c) {
 /* ---------------- Kaynak ekleme ---------------- */
 async function addSource(title, text, kind) {
   text = text.replace(/\u0000/g, '').trim(); if (!text) { toast(`"${title}" içinde okunabilir metin bulunamadı.`); return; }
-  const s = { id: uid(), title, text, kind, enabled: true, addedAt: Date.now() }; sources.push(s); await DB.put('sources', s); renderSources();
+  if (!nb) return; const s = { id: uid(), nbId: nb.id, title, text, kind, enabled: true, addedAt: Date.now() }; sources.push(s); await DB.put('sources', s); renderSources(); touchNb();
 }
 $('#addFile').onclick = () => $('#fileInput').click();
-$('#fileInput').onchange = async (e) => {
-  for (const f of e.target.files) { try { toast(`${f.name} okunuyor…`); await addSource(f.name, await readFile(f), /\.pdf$/i.test(f.name) ? 'PDF' : 'Dosya'); toast(''); } catch (err) { toast(`${f.name} okunamadı: ${err.message || err}`); } }
-  e.target.value = '';
-};
+async function ingestFiles(files) {
+  for (const f of files) { try { toast(`${f.name} okunuyor…`); await addSource(f.name, await readFile(f), /\.pdf$/i.test(f.name) ? 'PDF' : 'Dosya'); toast(''); } catch (err) { toast(`${f.name} okunamadı: ${err.message || err}`); } }
+}
+$('#fileInput').onchange = async (e) => { const files = [...e.target.files]; e.target.value = ''; await ingestFiles(files); };
 $('#addText').onclick = () => { $('#textTitle').value = ''; $('#textBody').value = ''; $('#textDlg').showModal(); };
 $('#textSave').onclick = async () => { await addSource($('#textTitle').value.trim() || 'Yapıştırılan metin', $('#textBody').value, 'Metin'); $('#textDlg').close(); };
 $('#selAll').onchange = async (e) => { for (const s of sources) { s.enabled = e.target.checked; await DB.put('sources', s); } renderSources(); };
@@ -293,7 +293,7 @@ q.addEventListener('input', () => { q.style.height = 'auto'; q.style.height = Ma
 q.addEventListener('keydown', (e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); $('#composer').requestSubmit(); } });
 $('#composer').onsubmit = (e) => { e.preventDefault(); const t = q.value.trim(); if (!t || busy || needModel()) return; q.value = ''; q.style.height = 'auto'; ask(t); };
 $('#stop').onclick = () => abortCtl?.abort();
-$('#clearChat').onclick = async () => { if (busy) return; chat = []; await DB.set('chat', []); renderChat(); };
+$('#clearChat').onclick = async () => { if (busy) return; chat = []; await DB.set('chat:' + nb.id, []); renderChat(); };
 function download(name, text) { const a = el('a', { href: URL.createObjectURL(new Blob([text], { type: 'text/markdown' })), download: name }); document.body.append(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(a.href), 2000); }
 $('#expChat').onclick = () => download('defter-sohbet.md', '# Defter sohbeti\n\n' + chat.map((m) => (m.role === 'user' ? `**Sen:** ${m.text}` : `**Defter:**\n\n${m.text}`)).join('\n\n---\n\n') + '\n');
 $('#expNotes').onclick = () => download('defter-notlar.md', '# Defter notları\n\n' + notes.slice().sort((a, b) => a.addedAt - b.addedAt).map((n) => `## ${n.title}\n\n${n.text}`).join('\n\n---\n\n') + '\n');
@@ -301,12 +301,74 @@ function setTab(t) { $('#cols').dataset.tab = t; document.querySelectorAll('#tab
 document.querySelectorAll('#tabs button').forEach((b) => (b.onclick = () => setTab(b.dataset.tab)));
 STUDIO.forEach((t) => { const b = el('button', { className: 'btn' }, el('b', { textContent: t.label }), el('small', { textContent: t.sub })); b.onclick = () => studio(t); $('#studioBtns').append(b); });
 
+/* ---------------- Not defterleri (ana ekran) ---------------- */
+const ICONS = ['📘', '🔬', '📚', '🧪', '🌍', '💡', '📊', '🎓'];
+async function touchNb() { if (!nb) return; nb.updatedAt = Date.now(); await DB.put('notebooks', nb); }
+function fmtDate(t) { return new Date(t).toLocaleDateString('tr-TR', { day: 'numeric', month: 'short', year: 'numeric' }); }
+
+async function renderHome() {
+  const grid = $('#nbGrid'); grid.replaceChildren();
+  const add = el('button', { className: 'nbNew', type: 'button', ariaLabel: 'Yeni not defteri oluştur' }, el('span', { className: 'nbPlus', textContent: '+' }), el('b', { textContent: 'Yeni not defteri' }));
+  add.onclick = createNb; grid.append(add);
+  const counts = {}; (await DB.all('sources')).forEach((x) => (counts[x.nbId] = (counts[x.nbId] || 0) + 1));
+  notebooks.slice().sort((a, b) => b.updatedAt - a.updatedAt).forEach((n) => {
+    const card = el('div', { className: 'nbCard', role: 'button', tabIndex: 0, ariaLabel: `${n.title} not defterini aç` },
+      el('span', { className: 'nbIco', textContent: n.icon || '📘' }), el('b', { textContent: n.title }), el('small', { textContent: `${counts[n.id] || 0} kaynak · ${fmtDate(n.updatedAt)}` }));
+    const del = el('button', { className: 'nbDel', type: 'button', title: 'Sil', ariaLabel: `${n.title} not defterini sil`, textContent: '✕' });
+    del.onclick = (e) => { e.stopPropagation(); deleteNb(n); };
+    card.append(del); card.onclick = () => openNb(n.id);
+    card.onkeydown = (e) => { if (e.target === card && (e.key === 'Enter' || e.key === ' ')) { e.preventDefault(); openNb(n.id); } };
+    grid.append(card);
+  });
+}
+async function createNb() {
+  const n = { id: uid(), title: 'Başlıksız not defteri', icon: ICONS[notebooks.length % ICONS.length], createdAt: Date.now(), updatedAt: Date.now() };
+  notebooks.push(n); await DB.put('notebooks', n); await openNb(n.id); $('#srcDlg').showModal();
+}
+async function deleteNb(n) {
+  if (!confirm(`"${n.title}" not defteri, kaynakları ve notlarıyla birlikte silinsin mi?`)) return;
+  for (const x of (await DB.all('sources')).filter((x) => x.nbId === n.id)) await DB.del('sources', x.id);
+  for (const x of (await DB.all('notes')).filter((x) => x.nbId === n.id)) await DB.del('notes', x.id);
+  await DB.del('notebooks', n.id); await DB.set('chat:' + n.id, []); notebooks = notebooks.filter((x) => x.id !== n.id); renderHome();
+}
+async function openNb(id) {
+  const n = notebooks.find((x) => x.id === id); if (!n) return goHome();
+  if (busy) return; nb = n;
+  [sources, notes, chat] = await Promise.all([DB.all('sources').then((a) => a.filter((x) => x.nbId === id).sort((a, b) => a.addedAt - b.addedAt)), DB.all('notes').then((a) => a.filter((x) => x.nbId === id)), DB.get('chat:' + id).then((c) => c || [])]);
+  $('#home').hidden = true; $('#cols').hidden = false; $('#backBtn').hidden = false; $('#appName').hidden = true; $('#appSub').hidden = true;
+  $('#nbTitle').hidden = false; $('#nbTitle').value = n.title; document.title = `${n.title} — Defter`;
+  if (location.hash !== '#nb-' + id) history.pushState(null, '', '#nb-' + id);
+  setTab('chat'); renderSources(); renderNotes(); renderChat();
+}
+function goHome() {
+  if (busy) return; nb = null; sources = []; notes = []; chat = [];
+  $('#cols').hidden = true; $('#home').hidden = false; $('#backBtn').hidden = true; $('#appName').hidden = false; $('#appSub').hidden = false; $('#nbTitle').hidden = true; document.title = 'Defter — Tarayıcıda Yerel Yapay Zekâ';
+  if (location.hash) history.pushState(null, '', location.pathname + location.search);
+  renderHome();
+}
+$('#backBtn').onclick = goHome;
+$('#homeLink').onclick = (e) => { e.preventDefault(); goHome(); };
+$('#nbTitle').onchange = async (e) => { if (!nb) return; nb.title = e.target.value.trim() || 'Başlıksız not defteri'; e.target.value = nb.title; document.title = `${nb.title} — Defter`; await touchNb(); };
+$('#nbTitle').onkeydown = (e) => { if (e.key === 'Enter') e.target.blur(); };
+window.addEventListener('popstate', () => { const m = location.hash.match(/^#nb-(.+)$/); if (m) openNb(m[1]); else { busy = false; goHome(); } });
+
+// kaynak ekle penceresi
+const drop = $('#drop');
+drop.onclick = () => $('#fileInput').click();
+drop.onkeydown = (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); $('#fileInput').click(); } };
+['dragenter', 'dragover'].forEach((ev) => drop.addEventListener(ev, (e) => { e.preventDefault(); drop.classList.add('over'); }));
+['dragleave', 'drop'].forEach((ev) => drop.addEventListener(ev, (e) => { e.preventDefault(); drop.classList.remove('over'); }));
+drop.addEventListener('drop', (e) => ingestFiles([...e.dataTransfer.files]));
+$('#dlgFile').onclick = () => $('#fileInput').click();
+$('#dlgText').onclick = () => { $('#srcDlg').close(); $('#addText').click(); };
+
 /* ---------------- Başlangıç ---------------- */
 (async () => {
-  [sources, notes, chat] = await Promise.all([DB.all('sources'), DB.all('notes'), DB.get('chat').then((c) => c || [])]);
-  sources.sort((a, b) => a.addedAt - b.addedAt); renderSources(); renderNotes(); renderChat();
+  notebooks = await DB.all('notebooks');
   const last = await DB.get('lastModel'); if (last) $('#modelLabel').textContent = `Son model: ${last.label} (yüklemek için "Model seç")`;
   if (params.has('demo')) { engine.kind = 'demo'; setModelUi('ok', 'Demo kipi (model yok)'); }
-  if (!crossOriginIsolated && !params.has('nocoi')) $('#ctxInfo').textContent = 'Not: çok çekirdekli mod için sayfa bir kez yenilenebilir (service worker).';
+  const m = location.hash.match(/^#nb-(.+)$/);
+  if (m && notebooks.some((x) => x.id === m[1])) await openNb(m[1]); else { await renderHome(); }
+  if (!crossOriginIsolated && !params.has('nocoi')) toast('Not: çok çekirdekli mod için sayfa bir kez yenilenebilir (service worker).');
   navigator.storage?.estimate?.().then((e) => { if (e?.quota) $('#dlText').textContent = `Tarayıcı depolama kotası: ≈${(e.quota / 1e9).toFixed(1)} GB`; });
 })();

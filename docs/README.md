@@ -13,6 +13,8 @@ Hiçbir derleme adımı yok; `docs/` klasörü olduğu gibi yayınlanır. wllama
 
 ## Nasıl kullanılır
 
+Açılışta **Not defterlerin** ekranı gelir: **Yeni not defteri** karosuna bas, kaynak ekleme penceresi açılır (dosyaları sürükle-bırak ya da seç), sonra not defteri sayfası açılır. Her not defterinin kaynakları, sohbeti ve notları ayrı tutulur; başlığa basıp adını değiştirebilir, ana ekranda karttaki ✕ ile silebilirsin. Not defteri adresi `#nb-…` ile kaydedilir, sayfayı yenileyince kaldığın yerden açılır.
+
 1. Sağ üstten **Model seç** → bir model seç → **Yükle**. İlk seferde Hugging Face'ten iner (birkaç yüz MB – birkaç GB), sonra tarayıcı depolamasında kalır ve bir daha indirilmez.
 2. Soldan **Dosya ekle** / **Metin yapıştır** ile kaynak ekle. Kutuyu işaretleyip kaldırarak hangi kaynakların kullanılacağını seç.
 3. Sohbete soru yaz. Cevaptaki `[1]`, `[2]` atıflarına basınca ilgili kaynak parçası açılır. Kaynak seçili değilse normal sohbet olur.
