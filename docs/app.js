@@ -149,7 +149,17 @@ const PRESETS = [
 ];
 const engine = { kind: 'none', wllama: null, label: '', nctx: 4096 };
 
+/** Cihaz / tarayıcı uygunluğu: model yüklemeden önce anlaşılır bir uyarı için */
+const NO_WASM = 'Bu tarayıcıda WebAssembly çalışmıyor, bu yüzden model yüklenemez. Sık nedenler: tarayıcıda "JavaScript JIT / V8 optimizasyonu" kapalı (Chrome: Ayarlar → Site ayarları → JavaScript JIT; Android\'in Gelişmiş Koruma modu), iOS\'ta Lockdown (Kilitleme) modu, sertleştirilmiş tarayıcılar (Vanadium, Cromite, Tor gibi) ya da uygulama içi tarayıcılar. Güncel Chrome/Edge/Firefox\'u normal modda dene. Arayüzü modelsiz görmek için "Demo (model yok)" çalışır.';
+function capabilityNote() {
+  if (typeof WebAssembly === 'undefined') return { blocked: true, text: NO_WASM };
+  const notes = [];
+  if (!navigator.gpu) notes.push('Bu tarayıcıda WebGPU yok; model yalnızca işlemciyle çalışır ve yavaş olur.');
+  if (navigator.deviceMemory && navigator.deviceMemory <= 4) notes.push('Cihaz belleği düşük görünüyor (≈' + navigator.deviceMemory + ' GB). "Qwen2.5 1.5B" gibi küçük bir model seç.');
+  return { blocked: false, text: notes.join(' ') };
+}
 async function getWllama() {
+  if (typeof WebAssembly === 'undefined') throw new Error(NO_WASM);
   if (engine.wllama) return engine.wllama;
   const mod = await import('./vendor/wllama/index.js');
   engine.wllama = new mod.Wllama({ default: new URL('./vendor/wllama/wllama.wasm', location.href).href }, mod.LoggerWithoutDebug ? { logger: mod.LoggerWithoutDebug } : {});
@@ -322,6 +332,7 @@ $('#loadBtn').onclick = async () => {
   const btn = $('#loadBtn'); const nctx = +$('#nctx').value; const useGpu = $('#useGpu').checked;
   const file = $('#ggufFile').files[0]; const url = $('#hfUrl').value.trim(); const repo = $('#hfRepo').value.trim(); const hfile = $('#hfFile').value.trim();
   const preset = PRESETS.find((p) => p.id === document.querySelector('input[name=preset]:checked')?.value);
+  { const cap = capabilityNote(); if (cap.blocked) { $('#dlText').textContent = cap.text; return; } }
   btn.disabled = true; $('#dlBar').hidden = false; $('#dlFill').style.width = '0%'; $('#dlText').textContent = 'Hazırlanıyor…'; setModelUi('busy', 'Model yükleniyor…');
   try {
     try { await navigator.storage?.persist?.(); } catch {}
@@ -335,7 +346,7 @@ $('#loadBtn').onclick = async () => {
     else { await w.loadModelFromHF({ repo: preset.repo, file: preset.file }, opts); label = preset.name; }
     engine.kind = 'wllama'; engine.nctx = nctx; engine.label = label; setModelUi('ok', label); $('#dlText').textContent = 'Hazır.'; $('#modelDlg').close();
     DB.set('lastModel', { label, nctx, useGpu, preset: preset?.id, repo, file: hfile, url });
-  } catch (e) { setModelUi(engine.kind === 'wllama' ? 'ok' : '', engine.kind === 'wllama' ? engine.label : 'Model yüklenmedi'); $('#dlText').textContent = `Yüklenemedi: ${e.message || e}`; }
+  } catch (e) { setModelUi(engine.kind === 'wllama' ? 'ok' : '', engine.kind === 'wllama' ? engine.label : 'Model yüklenmedi'); $('#dlText').textContent = /WebAssembly/i.test(String(e && e.message || e)) ? NO_WASM : `Yüklenemedi: ${e.message || e}`; }
   finally { btn.disabled = false; }
 };
 
@@ -534,5 +545,7 @@ $('#vwDlg').addEventListener('close', () => { vwCleanup?.(); vwCleanup = null; }
   const m = location.hash.match(/^#nb-(.+)$/);
   if (m && notebooks.some((x) => x.id === m[1])) await openNb(m[1]); else { setView('home'); await renderHome(); }
   if (!crossOriginIsolated && !params.has('nocoi')) toast('Not: çok çekirdekli mod için sayfa bir kez yenilenebilir (service worker).');
-  navigator.storage?.estimate?.().then((e) => { if (e?.quota) $('#dlText').textContent = `Tarayıcı depolama kotası: ≈${(e.quota / 1e9).toFixed(1)} GB`; });
+  const cap = capabilityNote();
+  if (cap.blocked) { $('#dlText').textContent = cap.text; $('#loadBtn').disabled = true; $('#loadBtn').title = 'Bu tarayıcıda WebAssembly kapalı'; }
+  else navigator.storage?.estimate?.().then((e) => { if (e?.quota) $('#dlText').textContent = [cap.text, `Tarayıcı depolama kotası: ≈${(e.quota / 1e9).toFixed(1)} GB`].filter(Boolean).join(' '); });
 })();
