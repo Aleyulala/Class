@@ -535,3 +535,47 @@ dialog.spot .fsBar{background:var(--bg)}
 .tcPop h4{grid-column:1/-1;margin:0;font-size:12.5px;font-weight:600;color:var(--mu)}
 .tcDot{width:34px;height:34px;border-radius:10px;border:2px solid transparent;cursor:pointer;padding:0;display:grid;place-items:center;color:#fff}
 .tcDot:hover,.tcDot:focus-visible{outline:2px solid var(--tx);outline-offset:2px}.tcDot.on{border-color:var(--tx)}.tcDot svg{width:16px;height:16px}
+
+/* ---- Sohbet: Blogger yorum görünümü (.cmBd/.cmAv/.cmCh): sol çizgi, avatar, ad + rozet, tarih, tepki satırı ---- */
+.chHead{flex:none;margin:0 0 10px}
+.chSearch{display:flex;align-items:center;gap:10px;height:46px;padding:0 16px;border-radius:var(--rp);background:var(--btn);color:var(--mu);border:1px solid transparent;transition:border-color .15s}
+.chSearch:focus-within{border-color:var(--ac)}.chSearch svg{flex:none;width:18px;height:18px}
+.chSearch input{flex:1;min-width:0;background:none;border:0;outline:0;color:var(--tx);font-size:15px;padding:0;-webkit-appearance:none;appearance:none}.chSearch input::-webkit-search-cancel-button{display:none}
+.chBody{flex:1;min-height:0;display:flex;gap:10px}
+.chRail{flex:none;width:44px;display:flex;flex-direction:column;align-items:center;gap:6px;padding-top:4px}
+.chRail button{position:relative;width:40px;height:40px;display:grid;place-items:center;border:0;border-radius:var(--rb);background:transparent;color:var(--mu);cursor:pointer;padding:0;transition:color .15s,background .15s}
+.chRail button:hover,.chRail button:focus-visible{color:var(--tx);background:var(--btn)}.chRail button.on{color:var(--ac);background:color-mix(in srgb,var(--ac) 14%,transparent)}
+.chRail svg{width:20px;height:20px}.chRail b{position:absolute;top:1px;right:0;min-width:16px;height:16px;padding:0 4px;border-radius:8px;background:var(--btnh);color:var(--tx);font-size:10px;font-weight:600;line-height:16px;text-align:center}
+.chBody .msgs{padding:0 2px 8px;gap:0}
+.msgs .msg.c{position:relative;max-width:100%;align-self:stretch;padding:2px 0 2px 14px;margin:0 0 22px;background:transparent!important;border:0!important;border-radius:0!important;border-inline-start:3px solid rgba(127,127,127,.28)!important;color:var(--tx)}
+.msgs .msg.c.me{border-inline-start-color:color-mix(in srgb,var(--ac) 70%,transparent)!important}
+.msgs .msg.c.err{border-inline-start-color:var(--er)!important}
+.msg.c[hidden]{display:none}
+.mHd{display:flex;align-items:center;gap:12px;margin-bottom:8px}
+.mAv{flex:none;width:40px;height:40px;border-radius:50%;display:grid;place-items:center;font-weight:800;font-size:16px;color:var(--acfg);background:linear-gradient(135deg,var(--ac),color-mix(in srgb,var(--ac) 55%,#000))}
+.mAv.u{background:linear-gradient(135deg,#4a4e55,#2d2d30);color:#fffdfc}
+.mWho{display:flex;flex-direction:column;align-items:center;gap:2px;min-width:0;flex:1}
+.mNm{display:flex;align-items:center;gap:10px;min-width:0}.mNm b{font-size:15px;font-weight:700;letter-spacing:.2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.mBadge{flex:none;padding:3px 10px;border-radius:8px;background:rgba(127,127,127,.2);color:var(--mu);font-size:12.5px;font-weight:500}
+.mTi{font-size:12.5px;color:var(--mu)}
+.mBd{font-size:15px;line-height:1.65;overflow-wrap:anywhere;word-break:break-word}.mBd>:first-child{margin-top:0}.mBd>:last-child{margin-bottom:0}.mBd .mTx{white-space:pre-wrap}
+.msgs .msg.c .acts{margin-top:10px;gap:8px;flex-wrap:nowrap;align-items:center}
+.msgs .msg.c .rxWrap{margin-inline-end:auto;gap:8px}
+.msgs .msg.c.me .acts{justify-content:flex-start}
+.msgs .rxBtn{width:38px;height:38px;border-radius:12px;background:transparent;border:1px solid rgba(127,127,127,.28);color:var(--tx)}
+.msgs .rxBtn.ghost{border-color:transparent;color:var(--mu);width:34px}.msgs .rxBtn.ghost:hover,.msgs .rxBtn.ghost:focus-visible{color:var(--ac);background:var(--btn);border-color:transparent}
+.msgs .rxBtn svg{width:18px;height:18px;stroke-width:1.5}
+.msgs .rxPill{height:38px;padding:0 12px;border-radius:12px;background:var(--btn);border:1px solid transparent;color:var(--tx)}
+.msgs .rxPill .rxCount{color:var(--ac)}
+.msgs .rxPop{left:0;bottom:calc(100% + 8px)}
+.msg.flash{border-radius:0!important}
+/* /komutlar satırı: kırpılmasın, sola dayalı kaysın */
+.cmdTrack{scroll-snap-type:none;scroll-padding-left:0;padding:2px 4px 2px 2px}
+.cmdBar{align-items:flex-start;gap:8px}
+.cmdToggle{height:34px;border-radius:12px;font-size:13px}
+.cmdOrb{border-radius:12px}
+@media (max-width:900px){body:has(#cols[data-tab=chat]:not([hidden])) .qeF{display:none}.chRail{width:40px}.chRail button{width:36px;height:36px}}
+/* yazma alanı: Blogger composer kartı */
+.composer{border-radius:var(--rp)!important;padding:8px 8px 8px 8px!important;gap:6px!important}
+.composer .sendBtn{width:44px;height:44px;border-radius:var(--rb)}
+.composer textarea::placeholder{color:var(--mu)}
