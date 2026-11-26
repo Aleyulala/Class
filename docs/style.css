@@ -660,3 +660,53 @@ dialog.ct .chSearch{flex-direction:row;align-items:center}
 .cmdTile:hover,.cmdTile:focus-visible{border-color:var(--ac);color:var(--ac);transform:none;box-shadow:none}.cmdTile:hover .cmdOrb{background:none;color:var(--ac)}
 .cmdLbl{font-size:14px;font-weight:600;opacity:1}
 .cmdTrack{gap:8px;align-items:center}
+
+/* ---- İletişim: ekran görüntüsüyle birebir (Blogger İletişim sohbeti) ---- */
+dialog.ct{--ctC:rgba(127,127,127,.28)}
+dialog.ct>.ctBody{max-width:520px;padding:52px 16px 24px;gap:0}
+dialog.ct .chSearch{height:38px;padding:0 14px;border-radius:12px;background:transparent;border:1px solid var(--line);margin-bottom:26px}
+dialog.ct .chSearch input{font-size:14.5px}
+.ctMsgs{display:block;padding:0;margin:0 0 30px}
+.ctM{display:flex;align-items:flex-start;gap:12px;margin:0 0 18px;padding:0 0 0 16px;border-inline-start:3px solid var(--ctC);position:relative}
+.ctM[hidden]{display:none}.ctM.me{border-inline-start-color:color-mix(in srgb,var(--ac) 70%,transparent)}
+.ctAv{flex:none;width:28px;height:28px;margin-top:1px;border-radius:50%;display:grid;place-items:center;font-size:11.5px;font-weight:600;color:#6ee7a3;background:rgba(74,222,128,.2)}
+.ctAv.u{color:var(--tx);background:rgba(127,127,127,.25)}
+.ctMc{flex:1;min-width:0}
+.ctNm{display:flex;align-items:center;flex-wrap:wrap;gap:6px 8px;font-size:14px;line-height:1.2}.ctNm b{font-weight:500;font-size:14.5px}
+.ctBadge{padding:2px 9px;border-radius:7px;border:1px solid var(--line);color:var(--mu);font-size:11.5px}
+.ctVer{display:inline-flex;color:var(--mu)}.ctVer svg{width:15px;height:15px}
+.ctWho{color:var(--mu);font-size:12.5px}
+.ctTx{margin-top:8px;font-size:14.5px;line-height:1.6;overflow-wrap:anywhere}
+.ctAct{display:flex;align-items:center;gap:4px;margin-top:8px}.ctSp{flex:1}
+.ctGh{width:32px;height:32px;display:grid;place-items:center;border:0;border-radius:10px;background:transparent;color:var(--mu);cursor:pointer;padding:0;font-size:16px}.ctGh:hover,.ctGh.on{color:var(--ac);background:var(--btn)}.ctGh svg{width:18px;height:18px}
+.ctForm{margin:0;padding:0 0 0 16px;border-inline-start:3px solid var(--ctC)!important;background:transparent!important;border-radius:0!important;max-width:none;display:block}
+.ctFh{display:flex;align-items:center;justify-content:space-between;gap:10px}.ctFh h3{margin:0;font-size:18px;font-weight:600}
+.ctFh .btn{min-height:30px!important;height:30px;padding:0 14px!important;font-size:12.5px!important;background:transparent!important;border:1px solid var(--line)!important;box-shadow:none}
+.ctForm .muted{margin:8px 0 12px;font-size:13px;color:var(--mu)}
+.ctProg{width:24px;height:4px;border-radius:4px;background:rgba(127,127,127,.5);margin-bottom:14px}.ctProg i{background:var(--tx);opacity:.85}
+.ctBox{border-radius:12px;background:rgba(0,0,0,.28);border:0;padding:4px 12px 12px}
+:root[data-theme="light"] .ctBox{background:rgba(0,0,0,.05)}
+.ctInRow{align-items:center;gap:12px;padding:10px 2px;border-bottom:1px solid var(--line)}
+.ctIc{width:34px;height:34px;border-radius:50%;border:1px solid var(--line);color:var(--tx)}.ctIc svg{width:18px;height:18px}
+.ctInRow input,.ctInRow textarea{font-size:14.5px;padding:6px 0}
+.ctSteps{gap:6px;padding-top:12px;flex-wrap:nowrap}
+:root dialog.ct .ctStep{min-height:28px;height:28px;padding:0 10px;font-size:12.5px;border:1px solid var(--line);background:transparent;color:var(--mu);border-radius:8px;box-shadow:none}
+:root dialog.ct .ctStep.on{color:var(--tx);border-color:var(--tx);background:transparent}
+:root dialog.ct .ctSend{min-height:30px;height:30px;padding:0 12px;font-size:13px;gap:8px;border:1px solid var(--line);background:rgba(0,0,0,.18);color:var(--tx);border-radius:8px;box-shadow:none;margin-inline-start:auto}
+:root dialog.ct .ctSend:hover{border-color:var(--ac);color:var(--ac);transform:none}
+:root dialog.ct .ctSend svg{width:16px;height:16px}
+dialog.ct .fsBar b{font-weight:800;font-size:17px}
+.ctChip{background:rgba(127,127,127,.2);font-size:13px;padding:4px 12px}
+/* sığdır: adım düğmeleri + Gönder tek satırda */
+:root dialog.ct .ctStep{padding:0 8px;font-size:12px}
+:root dialog.ct .ctSend{padding:0 10px;font-size:12.5px;gap:6px}
+.ctSteps{gap:5px}
+/* sohbet yazma alanı: İletişim kartıyla aynı ölçüler */
+#composer.composer{border-radius:12px!important;background:rgba(0,0,0,.28)!important;border:0;padding:4px 12px 12px!important}
+:root[data-theme="light"] #composer.composer{background:rgba(0,0,0,.05)!important}
+.cmpRow{gap:12px;padding:10px 2px}.cmpIc{width:34px;height:34px}.cmpIc svg{width:18px;height:18px}
+#composer textarea{font-size:14.5px;padding:6px 0}
+.cmpFoot{gap:6px;padding-top:12px;flex-wrap:nowrap}
+.cmpChip{min-height:28px;height:28px;padding:0 10px;font-size:12px;border-radius:8px;gap:6px}.cmpChip svg{width:16px;height:16px}
+:root #composer .sendBtn{height:30px;padding:0 10px;font-size:12.5px;gap:8px;border-radius:8px;background:rgba(0,0,0,.18)}
+:root #composer .sendBtn svg{width:16px;height:16px}
