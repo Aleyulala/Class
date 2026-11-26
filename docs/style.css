@@ -580,6 +580,53 @@ dialog.spot .fsBar{background:var(--bg)}
 .composer .sendBtn{width:44px;height:44px;border-radius:var(--rb)}
 .composer textarea::placeholder{color:var(--mu)}
 
+/* ---- Sohbet özellikleri: ⋯ menü, sabit yıldızı, sohbet içi slaytlar ---- */
+.mMore{flex:none;width:34px;height:34px;display:grid;place-items:center;border:0;border-radius:var(--rb);background:transparent;color:var(--mu);cursor:pointer;padding:0;margin-inline-start:auto;align-self:flex-start}
+.mMore:hover,.mMore:focus-visible{color:var(--ac);background:var(--btn)}.mMore svg{width:18px;height:18px}
+.mPin{display:inline-flex;color:var(--ac)}.mPin svg{width:15px;height:15px;fill:currentColor}
+.mHd{position:relative}.mHd .mWho{padding-inline-end:0}
+.sld{margin:2px 0 4px}.sldHd{display:flex;align-items:center;gap:10px;margin-bottom:10px;min-width:0}.sldHd b{font-size:14.5px;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.sldHd small{margin-inline-start:auto;color:var(--mu);font-size:12px;white-space:nowrap}
+.sldHd .tIc{font-size:20px}.sldGone{padding:12px;color:var(--mu);font-size:13px}
+.sldTrack{display:flex;gap:10px;overflow-x:auto;scroll-snap-type:x mandatory;scrollbar-width:none;padding:2px 0;overscroll-behavior-x:contain;outline:0}.sldTrack::-webkit-scrollbar{display:none}
+.sldCard{flex:0 0 88%;scroll-snap-align:start;min-height:170px;display:flex;flex-direction:column;gap:10px;padding:16px;border-radius:var(--rp);background:var(--btn);border:1px solid var(--line);border-inline-start:3px solid var(--ac);box-sizing:border-box}
+.sldK{font-size:12px;font-weight:700;color:var(--ac);letter-spacing:.06em;text-transform:uppercase}
+.sldT{font-size:16px;line-height:1.45;font-weight:600}.sldS{margin:0;font-size:14px;line-height:1.6;color:var(--mu)}
+.sldL{margin:0;padding-inline-start:18px;font-size:14px;line-height:1.7}
+.sldBtn{align-self:flex-start;margin-top:auto;padding:7px 14px;border:0;border-radius:var(--rb);background:var(--p3);color:var(--tx);font-weight:600;font-size:13px;cursor:pointer}.sldBtn:hover{color:var(--ac)}
+.sldO{display:flex;flex-direction:column;gap:8px;margin-top:auto}.sldO button{text-align:left;padding:9px 12px;border-radius:var(--rb);border:1px solid var(--line);background:var(--p);color:var(--tx);font:inherit;font-size:14px;cursor:pointer}
+.sldO button:hover:not(:disabled){border-color:var(--ac)}.sldO button.ok{border-color:var(--ok);background:color-mix(in srgb,var(--ok) 16%,transparent)}.sldO button.bad{border-color:var(--er);background:color-mix(in srgb,var(--er) 16%,transparent)}
+.sldDots{display:flex;gap:6px;justify-content:center;margin-top:10px;flex-wrap:wrap}.sldDots button{width:14px;height:6px;border:0;border-radius:6px;background:rgba(127,127,127,.4);padding:0;cursor:pointer;transition:width .2s,background .2s}.sldDots button.on{width:28px;background:var(--ac)}
+/* ---- Paneller: sohbet çerçevesi (sol çizgi) her listede ---- */
+.panel .list li{border-inline-start:3px solid color-mix(in srgb,var(--ac) 55%,transparent);border-radius:var(--rb)}
+.panel .list.outs li,.panel .list.notes li{background:var(--btn)}
+.ph{align-items:center}.ph h2{display:inline-flex;align-items:center;gap:8px;font-size:15px}.ph h2::before{content:"";width:3px;height:16px;border-radius:2px;background:var(--ac)}
+/* ---- Alt bilgi (Blogger footer) ---- */
+.ftr{margin:36px 0 12px;padding-top:22px;border-top:1px solid var(--line);display:flex;flex-direction:column;gap:22px}
+.ftrBrand{display:flex;align-items:center;gap:16px}.ftrAv{flex:none;width:76px;height:76px;border-radius:var(--rp);display:grid;place-items:center;font-size:34px;font-weight:800;color:var(--acfg);background:linear-gradient(135deg,var(--ac),color-mix(in srgb,var(--ac) 50%,#000))}
+.ftrBrand b{display:block;font-size:26px;line-height:1.2}.ftrBrand small{display:flex;align-items:center;gap:8px;margin-top:8px;color:var(--mu);font-size:14px;font-weight:600}.ftrBrand small svg{width:18px;height:18px}
+.ftrLinks{margin:0;color:var(--mu);font-size:16px}.ftrLinks a{color:var(--mu);text-decoration:none}.ftrLinks a:hover,.ftrSec a:hover,.ftrFeed:hover{color:var(--ac)}
+.ftrSec b{display:block;font-size:17px;margin-bottom:12px}.ftrSec ul{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:12px}
+.ftrSec li a{display:flex;align-items:center;gap:8px;color:var(--tx);text-decoration:none;font-size:16px}.ftrSec li a::before{content:"–";color:var(--mu)}
+.ftrFeed{display:inline-flex;align-items:center;gap:12px;color:var(--mu);text-decoration:none;font-size:16px}
+@media (min-width:901px){.ftr{display:grid;grid-template-columns:repeat(3,1fr);gap:22px 32px}.ftrBrand,.ftrLinks,.ftrFeed{grid-column:1/-1}}
+/* ---- İletişim sohbeti ---- */
+dialog.ct .ctBody{display:flex;flex-direction:column;gap:14px}
+.ctMsgs{flex:none;gap:0;overflow:visible;padding:4px 0}.ctMsgs .msg.c{margin-bottom:18px}
+.ctVer{display:inline-flex;color:var(--mu)}.ctVer svg{width:16px;height:16px}
+.ctForm{margin:6px 0 0;padding-bottom:6px}
+.ctFh{display:flex;align-items:center;justify-content:space-between;gap:10px}.ctFh h3{margin:0;font-size:20px}
+.ctForm .muted{margin:6px 0 10px;font-size:14px}
+.ctProg{width:42px;height:6px;border-radius:6px;background:rgba(127,127,127,.3);margin-bottom:14px;overflow:hidden}.ctProg i{display:block;height:100%;width:33%;border-radius:6px;background:var(--tx);opacity:.7;transition:width .25s}
+.ctBox{border-radius:var(--rp);background:color-mix(in srgb,var(--p) 80%,transparent);border:1px solid var(--line);padding:6px 12px 12px}
+.ctInRow{display:flex;align-items:flex-start;gap:14px;padding:14px 4px;border-bottom:1px solid var(--line)}
+.ctIc{flex:none;width:40px;height:40px;display:grid;place-items:center;border-radius:50%;border:1px solid var(--line);color:var(--tx)}.ctIc svg{width:20px;height:20px}
+.ctInRow input,.ctInRow textarea{flex:1;min-width:0;background:none;border:0;outline:0;color:var(--tx);font-size:16px;padding:8px 0;resize:none;font-family:inherit}
+.ctSteps{display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding-top:12px}
+.ctStep{padding:10px 14px;border-radius:var(--rb);border:1px solid var(--line);background:transparent;color:var(--mu);font:inherit;font-size:14px;cursor:pointer}.ctStep.on{color:var(--tx);border-color:var(--tx)}
+.ctSend{margin-inline-start:auto;display:inline-flex;align-items:center;gap:10px;padding:10px 18px;border-radius:var(--rb);border:1px solid var(--line);background:var(--p);color:var(--tx);font:inherit;font-size:15px;cursor:pointer}.ctSend:hover{border-color:var(--ac);color:var(--ac)}
+.ctChip{display:inline-flex;align-items:center;gap:8px;margin-inline-start:10px;padding:5px 12px;border-radius:10px;background:rgba(127,127,127,.18);font-size:14px;font-weight:500}.ctChip i{width:9px;height:9px;border-radius:50%;background:var(--ok)}
+dialog.fs .fsBar b{display:inline-flex;align-items:center}dialog.fs .fsBar b+.ctChip{margin-inline-end:auto}
+dialog.ct .chSearch{flex-direction:row;align-items:center}
 /* ---- Tek tip düğmeler: "Tümü" düğmesiyle aynı boy (42px), köşe (10px), yazı ve üzerine gelme ---- */
 :root{--ctlH:42px}
 :root .pillBtn,:root .newPill,:root .pillAct,:root .btn:not(.sm):not(.back),:root .cmdToggle,:root .ctSend,:root .ctStep{min-height:var(--ctlH);box-sizing:border-box;display:inline-flex;align-items:center;justify-content:center;gap:8px;padding:0 16px;border-radius:var(--rb);font-size:14px;font-weight:600;line-height:1;white-space:nowrap}
