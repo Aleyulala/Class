@@ -12,6 +12,7 @@ const params = new URLSearchParams(location.search);
 /* ---------------- Simgeler, açılır menü, tema ---------------- */
 const svg = (d, extra = '') => `<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" ${extra}>${d}</svg>`;
 const IC = {
+  speak: svg('<path d="M11 5 6 9H3v6h3l5 4z"/><path d="M15.5 8.5a5 5 0 0 1 0 7M18.5 6a9 9 0 0 1 0 12"/>'), refresh: svg('<path d="M20 11a8 8 0 0 0-14.9-3M4 5v4h4M4 13a8 8 0 0 0 14.9 3M20 19v-4h-4"/>'), star: svg('<path d="m12 3 2.7 5.6 6.1.9-4.4 4.3 1 6.1L12 17l-5.4 2.9 1-6.1L3.2 9.5l6.1-.9z"/>'), expand: svg('<path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7"/>'),
   menu: svg('<polyline points="2 17 7 12 2 7"/><path d="M8 5h14M12 12h10M8 19h14"/>'), install: svg('<path d="M12 3v12M7 10l5 5 5-5M5 19h14"/>'), win: svg('<rect x="3" y="4" width="18" height="16" rx="3"/><path d="M3 9h18"/>'), min: svg('<path d="M6 12h12"/>'), max: svg('<rect x="5" y="5" width="14" height="14" rx="2"/>'),
   back: svg('<path d="M19 12H5M12 19l-7-7 7-7"/>'), search: svg('<circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/>'), plus: svg('<path d="M12 5v14M5 12h14"/>'),
   share: svg('<path d="M12 16V4M7 9l5-5 5 5M5 14v5a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-5"/>'), more: svg('<circle cx="12" cy="5" r="1.4" fill="currentColor"/><circle cx="12" cy="12" r="1.4" fill="currentColor"/><circle cx="12" cy="19" r="1.4" fill="currentColor"/>'),
@@ -222,7 +223,7 @@ function renderChat() {
 /* Sohbet üst çubuğu: sol ray süzgeçleri (tümü / tepki / alıntı) + mesajlarda ara */
 const chatF = { f: 'all', q: '' };
 const nq = (s) => String(s || '').toLocaleLowerCase('tr').normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/ı/g, 'i');
-function chatVisible(m) { if (chatF.f === 'rx' && !m.rx) return false; if (chatF.f === 'rp' && !m.reply) return false; if (chatF.q && !nq(m.text).includes(nq(chatF.q))) return false; return true; }
+function chatVisible(m) { if (chatF.f === 'rx' && !m.rx && !m.pin) return false; if (chatF.f === 'rp' && !m.reply) return false; if (chatF.q && !nq(m.text).includes(nq(chatF.q))) return false; return true; }
 function updateChatRail() {
   document.querySelectorAll('#chRail button').forEach((b) => b.classList.toggle('on', b.dataset.f === chatF.f));
   const c = $('#chCount'); if (c) c.textContent = String(chat.length);
@@ -256,17 +257,65 @@ function flashMsg(id) {
 const LK = '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M13 10.9c2.3 2.3 2.3 5.9 0 8.1s-5.9 2.3-8.1 0c-2.2-2.2-2.2-5.8 0-8.1"/><path d="M10.6 13.4c-2.3-2.3-2.3-6.1 0-8.5s6.1-2.3 8.5 0c2.3 2.3 2.3 6.1 0 8.5"/></svg>';
 function msgWhen(t) { if (!t) return ''; const d = new Date(t); return `${d.toDateString() === new Date().toDateString() ? 'Bugün' : fmtDate(t)} • ${d.toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' })}`; }
 /* XML: .cmBd > .cmAv + .cmCh (.aNm + rozet + .cmTi) — avatar, ad, rozet, tarih */
-function msgHead(m, me) {
+function msgHead(m, me, i) {
+  const more = el('button', { type: 'button', className: 'mMore', title: 'Mesaj işlemleri', ariaLabel: 'Mesaj işlemleri', ariaHaspopup: 'menu', innerHTML: IC.more });
+  more.onclick = (e) => { e.stopPropagation(); msgMenu(more, m, i); };
   return el('div', { className: 'mHd' }, el('span', { className: 'mAv ' + (me ? 'u' : 'a'), textContent: me ? 'S' : 'C', 'aria-hidden': 'true' }),
-    el('div', { className: 'mWho' }, el('div', { className: 'mNm' }, el('b', { textContent: me ? 'Sen' : 'Class' }), el('span', { className: 'mBadge', textContent: me ? 'Soru' : 'Yanıt' })), el('time', { className: 'mTi', textContent: msgWhen(m.at) })));
+    el('div', { className: 'mWho' }, el('div', { className: 'mNm' }, el('b', { textContent: me ? 'Sen' : 'Class' }), el('span', { className: 'mBadge', textContent: m.kind === 'slides' ? 'Slayt' : me ? 'Soru' : 'Yanıt' }), m.pin ? el('span', { className: 'mPin', title: 'Sabitlendi', innerHTML: IC.star }) : ''), el('time', { className: 'mTi', textContent: msgWhen(m.at) })), more);
+}
+/* Mesaj işlemleri: sabitle, sesli oku, düzenle, yeniden üret, sil */
+let speakingId = null;
+function speak(m) {
+  if (!('speechSynthesis' in window)) { toast('Bu tarayıcı sesli okumayı desteklemiyor.'); return; }
+  if (speakingId === m.id) { speechSynthesis.cancel(); speakingId = null; return; }
+  speechSynthesis.cancel(); const u = new SpeechSynthesisUtterance(String(m.text).replace(/[*_`#>]/g, '')); u.lang = 'tr-TR'; u.onend = u.onerror = () => { if (speakingId === m.id) speakingId = null; };
+  speakingId = m.id; speechSynthesis.speak(u);
+}
+function msgMenu(anchor, m, i) {
+  const me = m.role === 'user', last = i === chat.length - 1 || (i === chat.length - 2 && chat[chat.length - 1].role !== 'user');
+  const items = [{ icon: 'star', label: m.pin ? 'Sabitlemeyi kaldır' : 'Sabitle', run: () => { m.pin = !m.pin; if (!m.pin) delete m.pin; renderChat(); persistChat(); } }];
+  if (m.text && !m.live) items.push({ icon: 'speak', label: speakingId === m.id ? 'Okumayı durdur' : 'Sesli oku', run: () => speak(m) });
+  if (me && m.text) items.push({ icon: 'edit', label: 'Düzenle', sub: 'Metni yazma alanına al', run: () => { $('#q').value = m.text; $('#q').dispatchEvent(new Event('input')); $('#q').focus(); setTab('chat'); } });
+  if (!me && !m.err && m.kind !== 'slides' && chat[i - 1]?.role === 'user' && !busy) items.push({ icon: 'refresh', label: 'Yeniden üret', run: () => { const q = chat[i - 1].text; chat.splice(i - 1, 2); renderChat(); ask(q); } });
+  if (m.kind === 'slides') items.push({ icon: 'expand', label: 'Tam ekranda aç', run: () => { const o = outputs.find((x) => x.id === m.outId); if (o) openOutput(o); else toast('Bu çıktı silinmiş.'); } });
+  items.push('-', { icon: 'trash', label: 'Mesajı sil', danger: true, run: () => { if (busy && m.live) return; chat.splice(i, 1); renderChat(); persistChat(); } });
+  showMenu(anchor, items);
+}
+/* ---- Sohbet içi slaytlar: Stüdyo çıktıları yatay kaydırılan kartlar olarak sohbette ---- */
+function slidesFor(o) {
+  const d = o.data;
+  if (o.type === 'cards') return d.cards.map((c, k) => ({ k: `Kart ${k + 1}/${d.cards.length}`, t: c.front, s: c.back, flip: true }));
+  if (o.type === 'quiz') return d.questions.map((q, k) => ({ k: `Soru ${k + 1}/${d.questions.length}`, t: q.q, opts: q.options, ans: q.answer, ex: q.explanation }));
+  if (o.type === 'infographic') return [...d.points.map((p) => ({ k: p.emoji, t: p.title, s: p.text })), ...(d.takeaway ? [{ k: '💡', t: 'Çıkarım', s: d.takeaway }] : [])];
+  if (o.type === 'podcast') return d.turns.map((t) => ({ k: t.speaker, t: t.text }));
+  return d.branches.map((b) => ({ k: 'Dal', t: b.title, list: b.children }));
+}
+function slidesNode(m) {
+  const o = outputs.find((x) => x.id === m.outId); const wrap = el('div', { className: 'sld' });
+  if (!o) { wrap.append(el('div', { className: 'sldGone', textContent: 'Bu çıktı silinmiş.' })); return wrap; }
+  const T = TYPES[o.type]; const sl = slidesFor(o);
+  wrap.append(el('div', { className: 'sldHd' }, el('span', { className: 'tIc', textContent: T.emoji }), el('b', { textContent: o.title }), el('small', { textContent: `${T.label} · ${sl.length} slayt` })));
+  const track = el('div', { className: 'sldTrack', tabIndex: 0, role: 'group', ariaLabel: 'Slaytlar: sağa sola kaydırın' });
+  sl.forEach((s) => {
+    const c = el('div', { className: 'sldCard' }, el('span', { className: 'sldK', textContent: s.k }), el('b', { className: 'sldT', textContent: s.t }));
+    if (s.flip) { const back = el('p', { className: 'sldS', textContent: s.s, hidden: true }); c.append(back, el('button', { type: 'button', className: 'sldBtn', textContent: 'Cevabı göster', onclick: (e) => { back.hidden = !back.hidden; e.currentTarget.textContent = back.hidden ? 'Cevabı göster' : 'Gizle'; } })); }
+    else if (s.s) c.append(el('p', { className: 'sldS', textContent: s.s }));
+    if (s.list) c.append(el('ul', { className: 'sldL' }, ...s.list.map((x) => el('li', { textContent: x }))));
+    if (s.opts) { const ex = el('p', { className: 'sldS', hidden: true, textContent: s.ex || '' }); c.append(el('div', { className: 'sldO' }, ...s.opts.map((t, j) => el('button', { type: 'button', textContent: t, onclick: (e) => { const row = e.currentTarget.parentElement; row.querySelectorAll('button').forEach((b, x) => { b.disabled = true; b.classList.toggle('ok', x === s.ans); }); if (j !== s.ans) e.currentTarget.classList.add('bad'); ex.hidden = !s.ex; } }))), ex); }
+    track.append(c);
+  });
+  const dots = el('div', { className: 'sldDots' }, ...sl.map((_, k) => el('button', { type: 'button', className: k ? '' : 'on', ariaLabel: `Slayt ${k + 1}`, onclick: () => track.children[k].scrollIntoView({ behavior: 'smooth', inline: 'start', block: 'nearest' }) })));
+  track.addEventListener('scroll', () => { const k = Math.round(track.scrollLeft / (track.children[0].offsetWidth + 10)); [...dots.children].forEach((d, x) => d.classList.toggle('on', x === k)); }, { passive: true });
+  wrap.append(track, dots); return wrap;
 }
 function msgNode(m, i) {
   if (!m.id) m.id = uid();
   const me = m.role === 'user';
   const d = el('div', { className: `msg c ${me ? 'me' : ''} ${m.err ? 'err' : ''}` }); d.dataset.mid = m.id;
-  d.append(msgHead(m, me));
+  d.append(msgHead(m, me, i));
   const bd = el('div', { className: 'mBd' }); d.append(bd);
-  if (me) { if (m.reply) bd.append(quoteRef(m.reply)); if (m.text) bd.append(el('span', { className: 'mTx', textContent: m.text })); if (m.atts?.length) bd.append(el('div', { className: 'atts' }, ...m.atts.map((a) => attCard(a)))); }
+  if (m.kind === 'slides') bd.append(slidesNode(m));
+  else if (me) { if (m.reply) bd.append(quoteRef(m.reply)); if (m.text) bd.append(el('span', { className: 'mTx', textContent: m.text })); if (m.atts?.length) bd.append(el('div', { className: 'atts' }, ...m.atts.map((a) => attCard(a)))); }
   else bd.innerHTML = md(m.text);
   if (m.live || m.err || !m.text && !m.atts?.length) return d;
   /* XML: .btt-cm-rx-wrap — seçili tepki rozeti + tepki ekle, sağda Yanıtla */
@@ -675,7 +724,7 @@ async function makeRich(type) {
       if (!data) throw last || new Error('Çıktı alınamadı');
     }
     const out = { id: uid(), nbId: nb.id, type, title: '', data: normalize(type, data), createdAt: Date.now() }; out.title = out.data.title;
-    outputs.push(out); await DB.put('outputs', out); touchNb(); renderOutputs(); openOutput(out); toast('');
+    outputs.push(out); await DB.put('outputs', out); touchNb(); renderOutputs(); chat.push({ id: uid(), role: 'assistant', kind: 'slides', outId: out.id, text: `${T.emoji} ${out.title} (${T.label})`, at: Date.now() }); renderChat(); persistChat(); setTab('chat'); toast('Slaytlar sohbette. Tam ekran için ⋯ menüsünü kullan.');
   } catch (e) { toast(abortCtl?.signal.aborted ? 'Üretim durduruldu.' : `${T.label} üretilemedi: ${e.message || e}. Tekrar dene ya da daha büyük bir model seç.`); }
   finally { busy = false; abortCtl = null; showGen(false); }
 }
