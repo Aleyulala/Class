@@ -18,7 +18,14 @@ Telefonda düzen NotebookLM'in mobil web arayüzü gibidir: üstte **Tümü** fi
 1. Sağ üstten **Model seç** → bir model seç → **Yükle**. İlk seferde Hugging Face'ten iner (birkaç yüz MB – birkaç GB), sonra tarayıcı depolamasında kalır ve bir daha indirilmez.
 2. Soldan **Dosya ekle** / **Metin yapıştır** ile kaynak ekle. Kutuyu işaretleyip kaldırarak hangi kaynakların kullanılacağını seç.
 3. Sohbete soru yaz. Cevaptaki `[1]`, `[2]` atıflarına basınca ilgili kaynak parçası açılır. Kaynak seçili değilse normal sohbet olur.
-4. Sağdaki **Stüdyo** düğmeleri seçili kaynaklardan özet, ana fikirler, SSS, çalışma rehberi, quiz ve zihin haritası üretir. **Nota kaydet** ile saklanır, `.md` olarak indirilir.
+4. Sağdaki **Stüdyo** seçili kaynaklardan çıktı üretir:
+   - **Sesli özet:** Ayşe ve Can'ın sohbet ettiği bir metin; cihazının konuşma sentezi iki farklı sesle okur (ses dosyası olarak indirilemez).
+   - **Zihin haritası:** renkli SVG harita, PNG indirilir.
+   - **Görsel özet:** başlık, emojili ana noktalar ve çıkarımdan oluşan bilgi grafiği, PNG indirilir.
+   - **Bilgi kartları:** çevirmeli kartlar, "Biliyorum" işaretleme.
+   - **Quiz:** çoktan seçmeli, anında doğru/yanlış, puan.
+   - **Özet, ana fikirler, SSS, çalışma rehberi:** sohbete metin olarak gelir, **Nota kaydet** ile saklanır.
+   Üretilen çıktılar not defterinde **Çıktılar** listesinde kalır. Model, çıktıyı JSON şemasına uyarak üretir; küçük modeller bazen başarısız olur, "tekrar dene" ya da daha büyük model.
 5. **Demo (model yok)** düğmesi modeli indirmeden arayüzü dener (cevap yerine eşleşen kaynak parçalarını gösterir). Adrese `?demo` eklersen doğrudan demo açılır.
 
 ## Model önerileri (8 GB ekran kartı için)
@@ -38,7 +45,7 @@ Listedeki dosya adları Hugging Face'teki depolara işaret eder; bir ad değişm
 - **WebGPU:** Chrome / Edge (yeni sürümler). Ekran kartı seçeneği kapatılırsa yalnızca işlemci kullanılır (yavaştır).
 - **Bağlam:** Varsayılan 4096 token. Kaynaklar uzunsa soruyla en alakalı parçalar (BM25 araması) modele verilir; Stüdyo düğmeleri her kaynağı baştan kısaltır.
 - **Kalite:** 3B–7B yerel modeller Gemini gibi büyük bulut modelleri kadar iyi değildir; atıfları kontrol et.
-- **Sesli özet (podcast), görsel/video üretimi bu uygulamada yok.** Onlar için ana stüdyo uygulamasını (`/app`) kullan.
+- **Yapay zekâ ile fotoğraf/video üretimi ve web'de araştırma bu uygulamada yok.** "Görsel özet" modelin yazdığı içeriği çizen bir bilgi grafiğidir, fotoğraf üretmez. Görsel/video üretimi için ana stüdyo uygulamasını (`/app`) kullan.
 - Tarayıcı verilerini temizlersen kaynaklar, notlar ve indirilen modeller silinir. Uygulama kalıcı depolama izni ister.
 
 ## Üçüncü taraf bileşenler

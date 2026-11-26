@@ -1,6 +1,9 @@
 // Defter — tarayıcıda çalışan, kaynaklarla sohbet eden yerel yapay zekâ arayüzü.
 // Model: wllama (llama.cpp'nin WASM/WebGPU sürümü). Hiçbir veri sunucuya gönderilmez.
 
+import { TYPES, parseJson, normalize, demo } from './rich.js';
+import { renderOutput } from './viewers.js';
+
 const $ = (s, r = document) => r.querySelector(s);
 const el = (t, props = {}, ...kids) => { const e = Object.assign(document.createElement(t), props); kids.flat().forEach((k) => e.append(k)); return e; };
 const uid = () => (crypto.randomUUID ? crypto.randomUUID() : String(Date.now()) + Math.random().toString(16).slice(2));
@@ -54,8 +57,8 @@ function showMenu(anchor, items, { align = 'right' } = {}) {
 const DB = (() => {
   let p;
   const open = () => (p ||= new Promise((res, rej) => {
-    const r = indexedDB.open('defter', 2);
-    r.onupgradeneeded = () => { const d = r.result; for (const n of ['sources', 'notes', 'notebooks']) if (!d.objectStoreNames.contains(n)) d.createObjectStore(n, { keyPath: 'id' }); if (!d.objectStoreNames.contains('kv')) d.createObjectStore('kv', { keyPath: 'key' }); };
+    const r = indexedDB.open('defter', 3);
+    r.onupgradeneeded = () => { const d = r.result; for (const n of ['sources', 'notes', 'notebooks', 'outputs']) if (!d.objectStoreNames.contains(n)) d.createObjectStore(n, { keyPath: 'id' }); if (!d.objectStoreNames.contains('kv')) d.createObjectStore('kv', { keyPath: 'key' }); };
     r.onsuccess = () => res(r.result); r.onerror = () => rej(r.error);
   }));
   const tx = async (s, mode, fn) => { const d = await open(); return new Promise((res, rej) => { const t = d.transaction(s, mode); const out = fn(t.objectStore(s)); t.oncomplete = () => res(out && 'result' in out ? out.result : undefined); t.onerror = () => rej(t.error); }); };
@@ -153,18 +156,18 @@ async function getWllama() {
   return engine.wllama;
 }
 
-async function chatStream(messages, { maxTokens = 700, temperature = 0.3, signal, onToken, demo }) {
+async function chatStream(messages, { maxTokens = 700, temperature = 0.3, signal, onToken, demo, responseFormat }) {
   if (engine.kind === 'demo') {
     const text = demo || 'Demo kipi: model yüklü değil.';
     for (let i = 0; i < text.length; i += 6) { if (signal?.aborted) break; onToken(text.slice(i, i + 6)); await new Promise((r) => setTimeout(r, 12)); }
     return;
   }
-  const stream = await engine.wllama.createChatCompletion({ messages, stream: true, max_tokens: maxTokens, temperature, abortSignal: signal });
+  const stream = await engine.wllama.createChatCompletion({ messages, stream: true, max_tokens: maxTokens, temperature, abortSignal: signal, ...(responseFormat ? { response_format: responseFormat } : {}) });
   for await (const chunk of stream) { const d = chunk?.choices?.[0]?.delta?.content; if (d) onToken(d); if (signal?.aborted) break; }
 }
 
 /* ---------------- Durum ---------------- */
-let notebooks = [], nb = null, sources = [], notes = [], chat = [], busy = false, abortCtl = null;
+let notebooks = [], nb = null, sources = [], notes = [], outputs = [], chat = [], busy = false, abortCtl = null;
 const enabledSources = () => sources.filter((s) => s.enabled !== false);
 const budgetChars = (reserve = 0) => Math.max(1500, Math.round((engine.nctx - 900) * 2.4) - reserve);
 
@@ -270,8 +273,6 @@ const STUDIO = [
   { id: 'fikir', label: 'Ana fikirler', sub: 'Madde madde', p: 'Kaynaklardaki ana fikirleri ve önemli bulguları numaralı bir liste olarak çıkar. Her madde tek cümle olsun.' },
   { id: 'sss', label: 'SSS', sub: 'Sık sorulan sorular', p: 'Bu kaynaklardan 6 adet sık sorulan soru ve kısa cevaplarını üret. Biçim: "S:" ve "C:".' },
   { id: 'rehber', label: 'Çalışma rehberi', sub: 'Kavramlar + sorular', p: 'Bir çalışma rehberi hazırla: (1) Anahtar kavramlar ve kısa tanımları, (2) Tekrar için 5 kısa cevaplı soru, (3) Düşündürücü 2 soru.' },
-  { id: 'quiz', label: 'Quiz', sub: 'Çoktan seçmeli', p: 'Kaynaklara dayanan 5 çoktan seçmeli soru hazırla. Her soruda A, B, C, D şıkları olsun; sorunun altında "Doğru cevap:" yaz.' },
-  { id: 'harita', label: 'Zihin haritası', sub: 'Ana hat', p: 'Kaynakların zihin haritasını iç içe madde işaretli bir ana hat olarak çıkar: ana konu, 4-6 dal, her dalda 2-4 alt madde.' },
 ];
 async function studio(t) {
   if (busy || needModel()) return;
@@ -350,7 +351,8 @@ $('#expChat').onclick = () => download('defter-sohbet.md', '# Defter sohbeti\n\n
 $('#expNotes').onclick = () => download('defter-notlar.md', '# Defter notları\n\n' + notes.slice().sort((a, b) => a.addedAt - b.addedAt).map((n) => `## ${n.title}\n\n${n.text}`).join('\n\n---\n\n') + '\n');
 function setTab(t) { $('#cols').dataset.tab = t; document.querySelectorAll('#tabs button').forEach((b) => b.classList.toggle('on', b.dataset.tab === t)); }
 document.querySelectorAll('#tabs button').forEach((b) => (b.onclick = () => setTab(b.dataset.tab)));
-STUDIO.forEach((t) => { const b = el('button', { className: 'btn' }, el('b', { textContent: t.label }), el('small', { textContent: t.sub })); b.onclick = () => studio(t); $('#studioBtns').append(b); });
+Object.entries(TYPES).forEach(([k, T]) => { const b = el('button', { className: 'btn tile' }, el('span', { className: 'tIc', textContent: T.emoji }), el('b', { textContent: T.label }), el('small', { textContent: T.sub })); b.onclick = () => makeRich(k); $('#studioBtns').append(b); });
+STUDIO.forEach((t) => { const b = el('button', { className: 'btn tile' }, el('span', { className: 'tIc', textContent: '📝' }), el('b', { textContent: t.label }), el('small', { textContent: t.sub })); b.onclick = () => studio(t); $('#studioBtns').append(b); });
 
 /* ---------------- Not defterleri (ana ekran) ---------------- */
 const ICONS = ['📘', '🔬', '📚', '🧪', '🌍', '💡', '📊', '🎓'];
@@ -403,6 +405,7 @@ async function deleteNb(n) {
   if (!confirm(`"${n.title}" not defteri, kaynakları ve notlarıyla birlikte silinsin mi?`)) return;
   for (const x of (await DB.all('sources')).filter((x) => x.nbId === n.id)) await DB.del('sources', x.id);
   for (const x of (await DB.all('notes')).filter((x) => x.nbId === n.id)) await DB.del('notes', x.id);
+  for (const x of (await DB.all('outputs')).filter((x) => x.nbId === n.id)) await DB.del('outputs', x.id);
   await DB.del('notebooks', n.id); await DB.set('chat:' + n.id, []); notebooks = notebooks.filter((x) => x.id !== n.id);
   if (nb && nb.id === n.id) { busy = false; goHome(); } else renderHome();
 }
@@ -415,13 +418,13 @@ function setView(v) {
 async function openNb(id) {
   const n = notebooks.find((x) => x.id === id); if (!n) return goHome();
   if (busy) return; nb = n; closeMenu();
-  [sources, notes, chat] = await Promise.all([DB.all('sources').then((a) => a.filter((x) => x.nbId === id).sort((a, b) => a.addedAt - b.addedAt)), DB.all('notes').then((a) => a.filter((x) => x.nbId === id)), DB.get('chat:' + id).then((c) => c || [])]);
+  [sources, notes, outputs, chat] = await Promise.all([DB.all('sources').then((a) => a.filter((x) => x.nbId === id).sort((a, b) => a.addedAt - b.addedAt)), DB.all('notes').then((a) => a.filter((x) => x.nbId === id)), DB.all('outputs').then((a) => a.filter((x) => x.nbId === id)), DB.get('chat:' + id).then((c) => c || [])]);
   setView('nb'); $('#nbTitle').value = n.title; document.title = `${n.title} — Defter`;
   if (location.hash !== '#nb-' + id) history.pushState(null, '', '#nb-' + id);
-  setTab('chat'); renderSources(); renderNotes(); renderChat();
+  setTab('chat'); renderSources(); renderNotes(); renderOutputs(); renderChat();
 }
 function goHome() {
-  if (busy) return; nb = null; sources = []; notes = []; chat = []; closeMenu();
+  if (busy) return; nb = null; sources = []; notes = []; outputs = []; chat = []; closeMenu();
   setView('home'); document.title = 'Defter — Tarayıcıda Yerel Yapay Zekâ';
   if (location.hash) history.pushState(null, '', location.pathname + location.search);
   renderHome();
@@ -468,6 +471,58 @@ drop.onkeydown = (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDef
 drop.addEventListener('drop', (e) => ingestFiles([...e.dataTransfer.files]));
 $('#dlgFile').onclick = () => $('#fileInput').click();
 $('#dlgText').onclick = () => { $('#srcDlg').close(); $('#addText').click(); };
+
+/* ---------------- Zengin Stüdyo çıktıları ---------------- */
+const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+function showGen(on, text = '') { $('#genBar').hidden = !on; $('#genText').textContent = text; }
+$('#genStop').onclick = () => abortCtl?.abort();
+
+async function makeRich(type) {
+  if (busy || needModel()) return;
+  const on = enabledSources(); const T = TYPES[type];
+  if (!on.length) { toast('Önce en az bir kaynak ekle ve seç.'); setTab('sources'); return; }
+  busy = true; abortCtl = new AbortController(); showGen(true, `${T.label} hazırlanıyor…`);
+  try {
+    let data;
+    if (engine.kind === 'demo') { await sleep(600); data = demo(type, on); }
+    else {
+      const cap = budgetChars(T.max * 2 + 600); const per = Math.floor(cap / on.length);
+      const body = on.map((s) => `### ${s.title}\n${s.text.slice(0, per)}`).join('\n\n');
+      const messages = [{ role: 'system', content: `Sen kullanıcının kaynaklarıyla çalışan bir araştırma yardımcısısın. Yalnızca verilen kaynaklara dayan, Türkçe yaz, uydurma. Yalnızca geçerli JSON döndür.\n\nKAYNAKLAR:\n${body}` }, { role: 'user', content: T.prompt }];
+      let last = null;
+      for (const rf of [{ type: 'json_schema', json_schema: { name: type, schema: T.schema, strict: true } }, { type: 'json_object' }, undefined]) {
+        let text = '';
+        try { await chatStream(messages, { maxTokens: T.max, temperature: 0.4, signal: abortCtl.signal, responseFormat: rf, onToken: (t) => { text += t; $('#genText').textContent = `${T.label} hazırlanıyor… ${text.length} karakter`; } }); data = parseJson(text); break; }
+        catch (e) { if (abortCtl.signal.aborted) throw e; last = e; data = null; }
+      }
+      if (!data) throw last || new Error('Çıktı alınamadı');
+    }
+    const out = { id: uid(), nbId: nb.id, type, title: '', data: normalize(type, data), createdAt: Date.now() }; out.title = out.data.title;
+    outputs.push(out); await DB.put('outputs', out); touchNb(); renderOutputs(); openOutput(out); toast('');
+  } catch (e) { toast(abortCtl?.signal.aborted ? 'Üretim durduruldu.' : `${T.label} üretilemedi: ${e.message || e}. Tekrar dene ya da daha büyük bir model seç.`); }
+  finally { busy = false; abortCtl = null; showGen(false); }
+}
+
+function renderOutputs() {
+  const ul = $('#outList'); ul.replaceChildren();
+  outputs.slice().sort((a, b) => b.createdAt - a.createdAt).forEach((o) => {
+    const T = TYPES[o.type]; const del = el('button', { className: 'x', title: 'Sil', ariaLabel: `${o.title} çıktısını sil`, innerHTML: IC.close.replace('width="22" height="22"', 'width="16" height="16"') });
+    del.onclick = async (e) => { e.stopPropagation(); await DB.del('outputs', o.id); outputs = outputs.filter((x) => x.id !== o.id); renderOutputs(); };
+    const li = el('li', { className: 'outItem', tabIndex: 0, role: 'button' }, el('span', { className: 'tIc', textContent: T.emoji }), el('div', { className: 't' }, el('b', { textContent: o.title, title: o.title }), el('small', { textContent: `${T.label} · ${fmtDate(o.createdAt)}` })), del);
+    li.onclick = () => openOutput(o); li.onkeydown = (e) => { if (e.target === li && (e.key === 'Enter' || e.key === ' ')) { e.preventDefault(); openOutput(o); } };
+    ul.append(li);
+  });
+  $('#outHint').hidden = outputs.length > 0;
+}
+
+let vwCleanup = null;
+function openOutput(o) {
+  const dlg = $('#vwDlg'); const actions = $('#vwActions'); actions.replaceChildren(); $('#vwBody').replaceChildren(); $('#vwTitle').textContent = `${TYPES[o.type].emoji} ${o.title}`;
+  vwCleanup?.(); const r = renderOutput(o, actions); $('#vwBody').append(r.node); vwCleanup = r.cleanup || null;
+  if (!dlg.open) dlg.showModal();
+}
+$('#vwClose').onclick = () => $('#vwDlg').close();
+$('#vwDlg').addEventListener('close', () => { vwCleanup?.(); vwCleanup = null; });
 
 /* ---------------- Başlangıç ---------------- */
 (async () => {

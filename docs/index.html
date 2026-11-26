@@ -80,7 +80,11 @@
   <!-- STÜDYO + NOTLAR -->
   <section class="panel" id="panelStudio" aria-label="Stüdyo">
     <div class="ph"><h2>Stüdyo</h2></div>
+    <div class="genBar" id="genBar" hidden><span class="spin" aria-hidden="true"></span><span id="genText" role="status"></span><button class="btn sm" id="genStop" type="button">Durdur</button></div>
     <div class="grid" id="studioBtns"></div>
+    <div class="ph mt"><h2>Çıktılar</h2></div>
+    <ul class="list outs" id="outList"></ul>
+    <p class="hint" id="outHint">Üretilen bilgi kartları, quiz, harita, görsel ve sesli özet burada saklanır.</p>
     <div class="ph mt"><h2>Notlar</h2><div class="row tight"><button class="btn sm" id="expNotes">.md indir</button></div></div>
     <ul class="list notes" id="noteList"></ul>
     <p class="hint" id="noteHint">Cevapları ve stüdyo çıktılarını kaydet ya da “Not oluştur” ile kendin yaz.</p>
@@ -134,6 +138,12 @@
     <label>Metin <textarea id="textBody" rows="10"></textarea></label>
     <div class="row end"><button class="btn" value="cancel">Vazgeç</button><button class="btn primary" type="button" id="textSave">Ekle</button></div>
   </form>
+</dialog>
+
+<!-- Stüdyo çıktısı görüntüleyici -->
+<dialog id="vwDlg" class="vw">
+  <div class="vwHead"><h3 id="vwTitle"></h3><div class="row tight" id="vwActions"></div><button class="ib" id="vwClose" type="button" aria-label="Kapat" data-ic="close"></button></div>
+  <div class="vwBody" id="vwBody"></div>
 </dialog>
 
 <!-- Atıf penceresi -->
