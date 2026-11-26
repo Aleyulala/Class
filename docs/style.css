@@ -1,4 +1,4 @@
-:root{--bg:#f1f2f5;--p:#ffffff;--p2:#eef0f3;--p3:#e3e6ea;--line:rgba(0,0,0,.09);--tx:#1b1f26;--mu:#5f6368;--ac:#1a73e8;--acfg:#fff;--ac2:#1a73e8;--ok:#188a57;--er:#d93025;--ca:#dbe7fb;--cb:#c7d6f2;--sh:0 10px 30px rgba(0,0,0,.08)}
+:root{--linkC:var(--ac);--bg:#f1f2f5;--p:#ffffff;--p2:#eef0f3;--p3:#e3e6ea;--line:rgba(0,0,0,.09);--tx:#1b1f26;--mu:#5f6368;--ac:#1a73e8;--acfg:#fff;--ac2:#1a73e8;--ok:#188a57;--er:#d93025;--ca:#dbe7fb;--cb:#c7d6f2;--sh:0 10px 30px rgba(0,0,0,.08)}
 @media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#1e1e1e;--p:#252526;--p2:#2d2d2f;--p3:#363639;--line:rgba(255,255,255,.08);--tx:#fffdfc;--mu:#989b9f;--ac:#60cdff;--acfg:#0d1b24;--ac2:#60cdff;--ok:#4ade80;--er:#f87171;--ca:#22345a;--cb:#141824;--sh:0 14px 36px rgba(0,0,0,.45);color-scheme:dark}}
 :root[data-theme="dark"]{--bg:#1e1e1e;--p:#252526;--p2:#2d2d2f;--p3:#363639;--line:rgba(255,255,255,.08);--tx:#fffdfc;--mu:#989b9f;--ac:#60cdff;--acfg:#0d1b24;--ac2:#60cdff;--ok:#4ade80;--er:#f87171;--ca:#22345a;--cb:#141824;--sh:0 14px 36px rgba(0,0,0,.45);color-scheme:dark}
 *{box-sizing:border-box}html,body{height:100%}
@@ -303,9 +303,9 @@ dialog.fs::backdrop{background:var(--bg)}
 .wm{font:400 16px/1 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;color:#fffdfc;white-space:nowrap}
 .wmI{display:inline-flex;align-items:center;justify-content:center;margin-inline-start:10px;color:#fffdfc;flex-shrink:0;line-height:1;transition:all .25s cubic-bezier(.16,1,.3,1)}
 .wmI svg{width:14px;height:14px;stroke:currentColor;fill:none;stroke-width:2.2;display:block;opacity:.8}
-.logoLink:hover .wmI{transform:scale(1.08);color:var(--linkC,#60cdff)}
+.logoLink:hover .wmI{transform:scale(1.08);color:var(--ac)}
 .drHead .wm{flex:1;color:var(--tx)}
-.top .ib{background:transparent!important;color:#fffdfc}.top .ib:hover,.top .ib:focus-visible{background:rgba(255,255,255,.08)!important;color:var(--linkC,#60cdff)}
+.top .ib{background:transparent!important;color:#fffdfc}.top .ib:hover,.top .ib:focus-visible{background:rgba(255,255,255,.08)!important;color:var(--ac)}
 .top .ib svg{opacity:.8}
 .top .pillBtn{background:#282828;color:#fffdfc;border-color:transparent}.top .pillBtn:hover{background:#333}
 .top .nbTitle{color:#fffdfc}.top .nbTitle:hover,.top .nbTitle:focus{background:#282828;border-color:rgba(255,255,255,.08)}
@@ -347,14 +347,14 @@ dialog.fs::backdrop{background:var(--bg)}
  .mobB{display:inline-flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;min-width:44px;height:44px;padding:0 6px;border:0;border-radius:12px;background:transparent;color:inherit;cursor:pointer;font:inherit;font-size:11px;opacity:.8;transition:color .15s,opacity .15s,background .15s;position:relative}
  .mobB svg{width:20px;height:20px;display:block}.mobB span{opacity:.85;white-space:nowrap;max-width:68px;overflow:hidden;text-overflow:ellipsis}
  .mobB:hover,.mobB:focus-visible{background:rgba(255,255,255,.08);opacity:1}.mobB:focus-visible{outline:2px solid var(--ac);outline-offset:-2px}
- .mobB.on{color:var(--linkC,#60cdff);opacity:1}.mobB.on::after{content:"";position:absolute;bottom:-2px;width:4px;height:4px;border-radius:50%;background:var(--linkC,#60cdff)}
+ .mobB.on{color:var(--ac);opacity:1}.mobB.on::after{content:"";position:absolute;bottom:-2px;width:4px;height:4px;border-radius:50%;background:var(--ac)}
  #tabs:not([hidden]){display:none!important}
  .panel{padding-bottom:6px}
 }
 
 /* ---- Sohbet: XML'deki yorum sistemi (tepki, Yanıtla, alıntı, ekler, /komutlar) ---- */
 .msg{transition:background .3s}
-.msg.flash{background:rgba(96,205,255,.12)!important;box-shadow:0 0 0 1px var(--ac);border-radius:var(--rt)}
+.msg.flash{background:color-mix(in srgb,var(--ac) 12%,transparent)!important;box-shadow:0 0 0 1px var(--ac);border-radius:var(--rt)}
 .msg .acts{display:flex;align-items:center;gap:6px;margin-top:8px;flex-wrap:wrap}
 .msg.me .acts{justify-content:flex-end}
 .rxWrap{position:relative;display:inline-flex;align-items:center;gap:6px;margin-inline-end:auto}
@@ -362,15 +362,15 @@ dialog.fs::backdrop{background:var(--bg)}
 .rxBtn{width:34px;height:34px;flex:none;padding:0;border-radius:10px;border:1px solid var(--line);background:var(--btn);color:var(--tx);display:inline-flex;align-items:center;justify-content:center;cursor:pointer;transition:background .15s,border-color .15s,transform .15s}
 .rxBtn svg{width:16px;height:16px;stroke-width:1.9;opacity:.85}
 .rxBtn:hover,.rxBtn:focus-visible{background:var(--btnh);border-color:var(--ac);color:var(--ac);transform:translateY(-2px)}
-.rxPill{height:34px;padding:0 10px;border-radius:10px;background:rgba(96,205,255,.12);border:1px solid var(--ac);color:var(--tx);display:inline-flex;align-items:center;gap:6px;font:600 13px/1 inherit;cursor:pointer}
-.rxPill:hover{background:rgba(96,205,255,.22)}.rxEmo{font-size:15px;line-height:1}.rxCount{font-size:12px;font-weight:700;color:var(--ac)}
+.rxPill{height:34px;padding:0 10px;border-radius:10px;background:color-mix(in srgb,var(--ac) 12%,transparent);border:1px solid var(--ac);color:var(--tx);display:inline-flex;align-items:center;gap:6px;font:600 13px/1 inherit;cursor:pointer}
+.rxPill:hover{background:color-mix(in srgb,var(--ac) 22%,transparent)}.rxEmo{font-size:15px;line-height:1}.rxCount{font-size:12px;font-weight:700;color:var(--ac)}
 .rxPop{position:absolute;bottom:calc(100% + 6px);left:0;z-index:60;display:none;align-items:center;gap:2px;padding:4px 6px;border-radius:10px;background:var(--p);border:1px solid var(--line);box-shadow:0 8px 24px rgba(0,0,0,.45)}
 .msg.me .rxPop{left:auto;right:0}
 .rxPop.open{display:inline-flex}
 .rxOpt{width:32px;height:32px;border:0;border-radius:8px;background:transparent;font-size:17px;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;transition:transform .14s,background .14s}
 .rxOpt:hover,.rxOpt:focus-visible,.rxOpt.on{transform:scale(1.15);background:rgba(127,127,127,.18)}
 .rqRef{display:flex;align-items:center;justify-content:space-between;gap:8px;width:100%;margin:0 0 8px;padding:7px 11px;border-radius:10px;border:1px solid var(--line);border-left:3px solid var(--ac);background:rgba(127,127,127,.08);color:var(--tx);font:12.5px/1.4 inherit;text-align:left;cursor:pointer;transition:border-color .16s,background .16s}
-.rqRef:hover{background:rgba(127,127,127,.14);border-color:rgba(96,205,255,.4);border-left-color:var(--ac)}
+.rqRef:hover{background:rgba(127,127,127,.14);border-color:color-mix(in srgb,var(--ac) 40%,transparent);border-left-color:var(--ac)}
 .rqTx{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--mu)}.rqTx b{color:var(--ac);font-weight:600}
 .rqJump{flex:none;color:var(--mu);display:inline-flex}.rqRef:hover .rqJump{color:var(--ac)}
 .replyBar,.attList{display:flex;align-items:center;gap:8px;margin-top:10px}
@@ -522,3 +522,16 @@ dialog.spot .fsBar{background:var(--bg)}
 #filterBtn.inRow{margin-inline-start:auto}
 .hRow{gap:10px}
 .dwItem{text-decoration:none}
+
+/* ---- Simge tarzı (Blogger XML: svg.line, ince çizgi; üst çubuk 20px, menü 18px, küçük 16px) ---- */
+:where(svg[fill="none"]),svg.line{stroke-width:1.5;stroke-linecap:round;stroke-linejoin:round}
+.top .ib svg,.top .ib .ibi{width:20px;height:20px}
+.mobB svg{width:20px;height:20px}
+.dwItem .mi svg,.qeF svg,.spIco svg,.spGo svg,.spClr svg,.spItIco svg,.ntfX svg,.plIc svg,.fsBar svg,.menu .mi svg,.chipsRow svg{width:18px;height:18px}
+.wmB svg,.plNext svg,.mc svg{width:16px;height:16px}
+.mobB svg,.qeF svg,.dwItem svg{opacity:.85}
+#themeBtn svg{width:20px;height:20px}
+.tcPop{position:fixed;z-index:70;padding:12px;border-radius:var(--rp);background:var(--p);border:1px solid var(--line);box-shadow:0 14px 40px rgba(0,0,0,.45);display:grid;grid-template-columns:repeat(5,34px);gap:10px;animation:menuIn .2s cubic-bezier(.16,1,.3,1) both}
+.tcPop h4{grid-column:1/-1;margin:0;font-size:12.5px;font-weight:600;color:var(--mu)}
+.tcDot{width:34px;height:34px;border-radius:10px;border:2px solid transparent;cursor:pointer;padding:0;display:grid;place-items:center;color:#fff}
+.tcDot:hover,.tcDot:focus-visible{outline:2px solid var(--tx);outline-offset:2px}.tcDot.on{border-color:var(--tx)}.tcDot svg{width:16px;height:16px}

@@ -238,9 +238,9 @@ function buildMobileMenu() {
   const defs = () => view() === 'nb'
     ? [{ k: 'back', i: 'back', t: 'Defterler', run: () => A().goHome() },
        { k: 'sources', i: 'src', t: 'Kaynaklar', on: tab() === 'sources', run: () => press('sources') },
-       { k: 'chat', i: 'chat', t: 'Sohbet', on: tab() === 'chat', run: () => press('chat') },
+       { k: 'menu', i: 'menu', t: 'Menü', run: openDrawer },
        { k: 'studio', i: 'studio', t: 'Stüdyo', on: tab() === 'studio', run: () => press('studio') },
-       { k: 'menu', i: 'menu', t: 'Menü', run: openDrawer }]
+       { k: 'chat', i: 'chat', t: 'Sohbet', on: tab() === 'chat', run: () => press('chat') }]
     : [{ k: 'home', i: 'home', t: 'Ana sayfa', on: true, run: () => scrollTo({ top: 0 }) || $('#home').scrollTo?.({ top: 0, behavior: 'smooth' }) },
        { k: 'search', i: 'search', t: 'Ara', run: () => $('#searchBtn').click() },
        { k: 'menu', i: 'menu', t: 'Menü', run: openDrawer },

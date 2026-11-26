@@ -31,6 +31,7 @@ function commands() {
     { t: 'Tüm not defterleri', s: 'Ana ekrana dön', run: () => a.goHome() },
     { t: 'Model seç', s: 'Yerel yapay zekâ modeli', run: () => a.openModel() },
     { t: dark ? 'Açık moda geç' : 'Koyu moda geç', s: 'Görünüm', run: () => a.setTheme(dark ? 'light' : 'dark') },
+    { t: 'Tema rengi', s: 'Vurgu rengini seç', run: () => window.defterTheme?.open(document.querySelector('.qeT')) },
     { t: 'Klavye ve oyun kolu', s: 'Kısayollar', run: () => window.defterHelp?.() },
     { t: 'Çerez politikası', s: 'Gizlilik', run: () => document.getElementById('cookieDlg')?.showModal() },
   ].map((c) => ({ ...c, k: 'cmd', ico: I.cmd }));

@@ -1,3 +1,4 @@
+const ACC = () => (getComputedStyle(document.documentElement).getPropertyValue('--ac') || '#60cdff').trim();
 // Stüdyo çıktılarının görüntüleyicileri: bilgi kartları, quiz, zihin haritası, görsel özet, sesli özet.
 const el = (t, props = {}, ...kids) => { const e = Object.assign(document.createElement(t), props); kids.flat().forEach((k) => e.append(k)); return e; };
 const NS = 'http://www.w3.org/2000/svg';
@@ -51,7 +52,7 @@ const tw = (s, size) => Math.min(240, Math.max(60, Math.round(s.length * size * 
 const clip = (s, n) => (s.length > n ? s.slice(0, n - 1) + '…' : s);
 export function mapSvg(d) {
   const H = 38, GAP = 12, BG = 26, X1 = 40, rw = tw(clip(d.title, 28), 17);
-  const colors = ['#60cdff', '#a78bfa', '#34d399', '#fbbf24', '#f87171', '#f472b6', '#38bdf8'];
+  const colors = [ACC(), '#a78bfa', '#34d399', '#fbbf24', '#f87171', '#f472b6', '#38bdf8'];
   const blocks = d.branches.map((b) => ({ b, h: Math.max(H, b.children.length * (H + GAP) - GAP), w: tw(clip(b.title, 28), 15), cw: Math.max(0, ...b.children.map((c) => tw(clip(c, 34), 13))) }));
   const total = blocks.reduce((n, x) => n + x.h, 0) + BG * (blocks.length - 1);
   const bx = 20 + rw + 70; const maxBw = Math.max(...blocks.map((x) => x.w)); const cx = bx + maxBw + 56; const maxCw = Math.max(...blocks.map((x) => x.cw));
@@ -67,7 +68,7 @@ export function mapSvg(d) {
     blk.b.children.forEach((c, j) => { const ccy = y + j * (H + GAP) + H / 2; add('path', { d: `M${bx + blk.w} ${cy} C ${bx + blk.w + 28} ${cy}, ${cx - 28} ${ccy}, ${cx} ${ccy}`, fill: 'none', stroke: col, 'stroke-width': 1.6, opacity: 0.6 }); node(cx, ccy, tw(clip(c, 34), 13), H - 4, c, '#1f2330', col, '#e8eaed', 13, 400); });
     node(bx, cy, blk.w, H, blk.b.title, '#232838', col, '#ffffff', 15, 600); y += blk.h + BG;
   });
-  node(20, ry, rw, 46, d.title, '#22345a', '#60cdff', '#ffffff', 17, 700);
+  node(20, ry, rw, 46, d.title, '#22345a', ACC(), '#ffffff', 17, 700);
   return svg;
 }
 export function svgToPng(svg, scale = 2) {
@@ -104,10 +105,10 @@ export function drawInfographic(d) {
     g.font = `400 28px ${font}`; const tl = wrap(g, p.text, W - 2 * P - 150); const h = Math.max(110, 24 + 40 + tl.length * 38 + 22);
     g.fillStyle = 'rgba(255,255,255,.08)'; rr(g, P, y, W - 2 * P, h, 22); g.fill(); g.strokeStyle = 'rgba(255,255,255,.14)'; g.lineWidth = 2; g.stroke();
     g.fillStyle = 'rgba(255,255,255,.12)'; rr(g, P + 22, y + 22, 76, 76, 20); g.fill(); g.font = `44px ${font}`; g.textAlign = 'center'; g.fillStyle = '#fff'; g.fillText(p.emoji, P + 60, y + 76); g.textAlign = 'left';
-    g.fillStyle = '#60cdff'; g.font = `700 32px ${font}`; g.fillText(p.title, P + 122, y + 52); g.fillStyle = '#e8eaed'; g.font = `400 28px ${font}`; tl.forEach((l, k) => g.fillText(l, P + 122, y + 52 + 38 * (k + 1)));
+    g.fillStyle = ACC(); g.font = `700 32px ${font}`; g.fillText(p.title, P + 122, y + 52); g.fillStyle = '#e8eaed'; g.font = `400 28px ${font}`; tl.forEach((l, k) => g.fillText(l, P + 122, y + 52 + 38 * (k + 1)));
     y += h + 20;
   });
-  if (d.takeaway) { g.font = `600 30px ${font}`; const tl = wrap(g, d.takeaway, W - 2 * P - 60); const h = tl.length * 42 + 40; g.fillStyle = '#60cdff'; rr(g, P, y, W - 2 * P, h, 22); g.fill(); g.fillStyle = '#0d1b24'; tl.forEach((l, k) => g.fillText(l, P + 30, y + 52 + 42 * k)); }
+  if (d.takeaway) { g.font = `600 30px ${font}`; const tl = wrap(g, d.takeaway, W - 2 * P - 60); const h = tl.length * 42 + 40; g.fillStyle = ACC(); rr(g, P, y, W - 2 * P, h, 22); g.fill(); g.fillStyle = '#0d1b24'; tl.forEach((l, k) => g.fillText(l, P + 30, y + 52 + 42 * k)); }
   return c;
 }
 function viewInfographic(d, out, actions) {

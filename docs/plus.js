@@ -22,8 +22,40 @@ const P = {
   install: '<path d="M12 3v12M7 10l5 5 5-5M5 19h14"/>',
   verify: '<path d="M12 3 4 6v6c0 4.5 3.2 7.8 8 9 4.8-1.2 8-4.5 8-9V6z"/><path d="m9 12 2 2 4-4"/>',
   eye: '<path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/>',
+  check: '<path d="M5 12l5 5 9-10"/>',
+  palette: '<path d="M12 3a9 9 0 1 0 0 18c1.1 0 1.8-.9 1.6-1.9-.2-1 .5-2.1 1.6-2.1H17a4 4 0 0 0 4-4c0-5-4-10-9-10z"/><path d="M7.5 11h.01M10 7.5h.01M14.5 7.5h.01M17 11h.01"/>',
   smile: '<rect x="3" y="3" width="18" height="18" rx="5"/><path d="M8.5 14.5c1 1.2 2.1 1.8 3.5 1.8s2.5-.6 3.5-1.8M9 9.5h.01M15 9.5h.01"/>',
 };
+/* ---------- Tema rengi (Saved'deki THEME_COLORS ile aynı renk adları) ---------- */
+const COLORS = [['', 'Varsayılan'], ['#ea4335', 'Kırmızı'], ['#1e8e3e', 'Yeşil'], ['#4285f4', 'Mavi'], ['#f9ab00', 'Sarı'], ['#9334e6', 'Mor'], ['#e52592', 'Pembe'], ['#12b5cb', 'Camgöbeği'], ['#fa7b17', 'Turuncu'], ['#00897b', 'Teal'], ['#3949ab', 'İndigo'], ['#1a73e8', 'Google mavi'], ['#188038', 'Koyu yeşil'], ['#1967d2', 'Derin mavi'], ['#8ab4f8', 'Açık mavi']];
+const lum = (h) => { const n = parseInt(h.slice(1), 16); const f = (v) => { v /= 255; return v <= .03928 ? v / 12.92 : ((v + .055) / 1.055) ** 2.4; }; return .2126 * f(n >> 16) + .7152 * f((n >> 8) & 255) + .0722 * f(n & 255); };
+function applyAccent() {
+  const r = document.documentElement.style, c = lsGet('class-theme-color', '');
+  ['--ac', '--ac2', '--acfg', '--ca', '--cb'].forEach((k) => r.removeProperty(k));
+  if (!c) return;
+  r.setProperty('--ac', c); r.setProperty('--ac2', c); r.setProperty('--acfg', lum(c) > .42 ? '#10131a' : '#ffffff');
+  r.setProperty('--ca', `color-mix(in srgb, ${c} 28%, var(--bg))`); r.setProperty('--cb', `color-mix(in srgb, ${c} 14%, var(--bg))`);
+}
+let pop = null;
+function closePop() { if (!pop) return; pop.remove(); pop = null; document.removeEventListener('pointerdown', outPop, true); document.removeEventListener('keydown', keyPop, true); }
+const outPop = (e) => { if (pop && !pop.contains(e.target)) closePop(); };
+const keyPop = (e) => { if (e.key === 'Escape') { e.stopPropagation(); closePop(); } };
+function openThemeColors(anchor) {
+  if (pop) { closePop(); return; }
+  const cur = lsGet('class-theme-color', '');
+  pop = el('div', { className: 'tcPop', role: 'dialog', 'aria-label': 'Tema rengi' }, el('h4', { textContent: 'Tema rengi' }),
+    ...COLORS.map(([hex, name]) => {
+      const b = el('button', { type: 'button', className: 'tcDot' + (hex === cur ? ' on' : ''), title: name, 'aria-label': name, style: `background:${hex || 'var(--ac)'}` });
+      if (!hex) b.style.background = isDark() ? '#60cdff' : '#1a73e8';
+      if (hex === cur) b.innerHTML = svg(P.check);
+      b.onclick = () => { lsSet('class-theme-color', hex); applyAccent(); closePop(); }; return b;
+    }));
+  document.body.append(pop);
+  const r = (anchor || document.body).getBoundingClientRect(), w = pop.offsetWidth, h = pop.offsetHeight;
+  pop.style.left = Math.max(8, Math.min(innerWidth - w - 8, r.right - w)) + 'px'; pop.style.top = Math.max(8, Math.min(innerHeight - h - 8, r.top - h - 8)) + 'px';
+  document.addEventListener('pointerdown', outPop, true); document.addEventListener('keydown', keyPop, true); pop.querySelector('button')?.focus();
+}
+window.defterTheme = { open: openThemeColors, apply: applyAccent };
 const isDark = () => { const t = A().getTheme(); return t === 'dark' || (t === 'system' && matchMedia('(prefers-color-scheme:dark)').matches); };
 const nbView = () => $('#cols') && !$('#cols').hidden;
 
@@ -41,6 +73,7 @@ function items() {
   L.push({ t: 'Model seç', i: 'cpu', run: () => a.openModel() });
   L.push({ t: isDark() ? 'Açık mod' : 'Koyu mod', i: isDark() ? 'sun' : 'moon', run: () => a.setTheme(isDark() ? 'light' : 'dark') });
   if (s.wide?.()) L.push({ t: 'Pencere düzeni', i: 'layout', run: () => s.toggleWm?.() });
+  L.push({ t: 'Tema rengi', i: 'palette', run: () => openThemeColors($('.qeT')) });
   L.push({ t: 'Klavye ve oyun kolu', i: 'pad', run: () => window.defterHelp?.() });
   if (!s.standalone?.()) L.push({ t: 'Uygulama olarak kur', i: 'install', run: () => s.install?.() });
   L.push({ t: 'Çerez politikası', i: 'verify', run: () => document.getElementById('cookieDlg')?.showModal() });
@@ -105,5 +138,5 @@ function moveFilter() {
   const f = $('#filterBtn'), r = $('.hRow'), srt = $('#sortBtn'); if (!f || !r || !srt || f.parentElement === r) return;
   f.classList.add('inRow'); r.insertBefore(f, srt);
 }
-function boot() { buildThemeBtn(); buildChips(); moveFilter(); buildNtf(); buildFab(); }
+function boot() { applyAccent(); buildThemeBtn(); buildChips(); moveFilter(); buildNtf(); buildFab(); }
 if (window.defterApp) boot(); else document.addEventListener('defter-ready', boot, { once: true });
