@@ -114,6 +114,17 @@
   </div>
 </dialog>
 
+<!-- Arama paneli (Blogger'daki Ctrl+K paneli gibi) -->
+<dialog id="srchDlg" class="spot" aria-label="Ara">
+  <div class="spCard">
+    <div class="spBar"><span class="spIco" id="spIco"></span><input id="spInput" type="search" autocomplete="off" spellcheck="false" placeholder="Ara: defter, kaynak, not veya komut…" aria-label="Ara"><button type="button" class="spClr" id="spClr" aria-label="Temizle" hidden></button><button type="button" class="spGo" id="spGo" aria-label="Ara" title="Ara"></button></div>
+    <div class="spPills" id="spPills" role="tablist"></div>
+    <div class="spBanner"><div class="spChips" id="spChips"></div><kbd id="spKbd">Enter ↵</kbd></div>
+    <div class="spRes" id="spRes" role="listbox"><div class="spHead"><span id="spCount"></span><span class="spHint">Gezinmek için ↑ ↓</span></div><div id="spItems"></div></div>
+  </div>
+  <div class="fsBar"><b>#Arama</b><button type="button" id="spClose" title="Kapat (Esc)" aria-label="Kapat (Esc)"><svg viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg></button></div>
+</dialog>
+
 <!-- Kaynak ekle (yeni not defterinde açılır) -->
 <dialog id="srcDlg">
   <form method="dialog" class="dlg">
@@ -185,5 +196,6 @@
 <script type="module" src="app.js"></script>
 <script type="module" src="nav.js"></script>
 <script type="module" src="shell.js"></script>
+<script type="module" src="search.js"></script>
 </body>
 </html>

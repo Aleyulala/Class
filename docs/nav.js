@@ -97,7 +97,7 @@ document.addEventListener('keydown', (ev) => {
   S.pointer = false; const a = document.activeElement; const k = ev.key;
   if (k === 'Tab') { setTimeout(() => { const n = document.activeElement; if (n && n !== document.body) { S.cur = n; updateDot(n); } }, 0); return; }
   if (editable(a)) {
-    if (k === 'Escape') { ev.preventDefault(); a.blur(); return; }
+    if (k === 'Escape') { if (a.closest && a.closest('dialog')) return; ev.preventDefault(); a.blur(); return; }
     if (a.tagName === 'SELECT') return;
     const d = DIRS[k]; if (d && (a.tagName === 'INPUT' || !a.value)) { ev.preventDefault(); S.cur = a; a.blur(); move(d); }
     return;

@@ -178,6 +178,8 @@ function openDrawer() {
       el('div', { className: 'drHead' }, el('span', { className: 'wm', textContent: 'Class' }), el('button', { className: 'ib', type: 'button', 'aria-label': 'Kapat', innerHTML: ic('close'), onclick: closeDrawer })),
       el('div', { className: 'drBody' },
         el('ul', { className: 'dwList' },
+          item('search', 'Ara  (Ctrl+K)', () => window.defterSearch?.open()),
+          el('div', { className: 'dwBr' }),
           folder('nb', 'tree', 'Not defterleri', 'Yeni!', [
             item('plus', 'Yeni not defteri', () => app.createNb()),
             item('back', 'Tüm not defterleri', () => app.goHome()),
