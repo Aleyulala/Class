@@ -627,3 +627,24 @@ dialog.ct .ctBody{display:flex;flex-direction:column;gap:14px}
 .ctChip{display:inline-flex;align-items:center;gap:8px;margin-inline-start:10px;padding:5px 12px;border-radius:10px;background:rgba(127,127,127,.18);font-size:14px;font-weight:500}.ctChip i{width:9px;height:9px;border-radius:50%;background:var(--ok)}
 dialog.fs .fsBar b{display:inline-flex;align-items:center}dialog.fs .fsBar b+.ctChip{margin-inline-end:auto}
 dialog.ct .chSearch{flex-direction:row;align-items:center}
+
+/* ---- Yazma alanı: İletişim "Mesaj Yaz" kartı gibi (üstte giriş satırı, altta düğme satırı), komutlar kartın altında ---- */
+#composer.composer{display:flex;flex-direction:column;align-items:stretch;gap:0;padding:6px 12px 12px!important;border-radius:var(--rp)!important;background:color-mix(in srgb,var(--p) 80%,transparent)!important;border:1px solid var(--line);margin-top:10px}
+.cmpRow{display:flex;align-items:center;gap:14px;padding:10px 4px;border-bottom:1px solid var(--line);min-width:0}
+.cmpIc{flex:none;width:40px;height:40px;display:grid;place-items:center;border-radius:50%;border:1px solid var(--line);color:var(--tx)}
+#composer textarea{flex:1;min-width:0;width:auto;background:none;border:0;outline:0;color:var(--tx);font-size:16px;padding:8px 0;resize:none}
+.cmpFoot{display:flex;align-items:center;gap:8px;padding-top:12px;flex-wrap:wrap}
+.cmpChip{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:var(--ctlH,42px);padding:0 14px;border-radius:var(--rb);border:1px solid var(--line);background:transparent;color:var(--mu);font:inherit;font-size:14px;cursor:pointer;transition:color .15s,border-color .15s}
+.cmpChip:hover,.cmpChip:focus-visible{color:var(--ac);border-color:var(--ac)}.cmpChip svg{width:18px;height:18px}
+:root #composer .sendBtn{margin-inline-start:auto;width:auto;min-width:0;height:var(--ctlH,42px);padding:0 18px;display:inline-flex;align-items:center;gap:10px;border-radius:var(--rb);border:1px solid var(--line);background:var(--p);color:var(--tx);font-size:15px;font-weight:500}
+:root #composer .sendBtn:hover{border-color:var(--ac);color:var(--ac);background:var(--p);filter:none}
+:root #composer .sendBtn svg{width:18px;height:18px}
+/* komutlar: kartın altında, kenarlıklı hap düğmeler (Blogger sohbeti gibi) */
+.cmdBar{margin-top:12px;align-items:center;-webkit-mask-image:linear-gradient(90deg,#000 calc(100% - 28px),transparent);mask-image:linear-gradient(90deg,#000 calc(100% - 28px),transparent)}
+.cmdToggle,.cmdTile{height:var(--ctlH,42px);border:1px solid var(--line);border-radius:var(--rb);background:transparent;color:var(--tx);padding:0 14px 0 12px}
+.cmdToggle{font-size:14px;font-weight:700}.cmdToggle:hover{background:var(--btn)}
+.cmdTile{flex-direction:row;min-width:0;max-width:none;gap:8px;font-size:14px;font-weight:600}
+.cmdOrb{width:auto;height:auto;border-radius:0;background:none;color:var(--tx)}.cmdOrb svg{width:18px;height:18px}
+.cmdTile:hover,.cmdTile:focus-visible{border-color:var(--ac);color:var(--ac);transform:none;box-shadow:none}.cmdTile:hover .cmdOrb{background:none;color:var(--ac)}
+.cmdLbl{font-size:14px;font-weight:600;opacity:1}
+.cmdTrack{gap:8px;align-items:center}
