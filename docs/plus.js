@@ -99,6 +99,17 @@ function buildFab() {
   input.addEventListener('change', () => { if (input.checked) fill(); });
   document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && input.checked) { input.checked = false; e.stopPropagation(); toggle.focus(); } }, true);
   fill(); document.body.append(fab);
+  /* dişli yalnızca kaydırılan alanın en üstünde ve en altında görünür, arada kayarak gizlenir */
+  const show = (on) => fab.classList.toggle('qeHide', !on && !input.checked);
+  document.addEventListener('scroll', (e) => {
+    const t = e.target === document ? document.scrollingElement : e.target;
+    if (!(t instanceof Element) || t.closest('dialog,.drawer,.sldTrack,.cmdTrack,.spPills,.hsTabs,.qeF')) return;
+    const max = t.scrollHeight - t.clientHeight; if (max < 40) return;
+    show(t.scrollTop <= 20 || t.scrollTop >= max - 24);
+  }, { capture: true, passive: true });
+  input.addEventListener('change', () => show(true));
+  addEventListener('resize', () => show(true));
+  for (const v of [$('#cols'), $('#home')]) if (v) new MutationObserver(() => show(true)).observe(v, { attributes: true, attributeFilter: ['hidden'] });
 }
 
 /* ---------- Bildirim şeridi (Blogger .ntf: ALİ & NSONE + kapat + çizgi göstergeleri) ---------- */
