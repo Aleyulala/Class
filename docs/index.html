@@ -71,9 +71,18 @@
       <div class="row tight"><button class="btn sm" id="expChat">.md indir</button><button class="btn sm" id="clearChat">Temizle</button></div>
     </div>
     <div class="msgs" id="msgs" aria-live="polite"></div>
+    <div class="cmdBar" id="cmdBar">
+      <button type="button" class="cmdToggle" id="cmdToggle" aria-expanded="true" aria-controls="cmdTrack" title="Komutları göster / gizle"><span class="cmdS">/</span><span>Komutlar</span></button>
+      <div class="cmdTrack" id="cmdTrack" role="group" aria-label="Komutlar"></div>
+    </div>
+    <div class="replyBar" id="replyBar" hidden></div>
+    <div class="attList" id="attList" hidden></div>
     <form class="composer" id="composer">
+      <div class="cmdPop" id="cmdPop" role="listbox" aria-label="Komut önerileri" hidden></div>
       <button class="ib" id="tuneBtn" type="button" aria-label="Model ve ayarlar" title="Model ve ayarlar" data-ic="tune"></button>
-      <textarea id="q" rows="1" placeholder="Soru sorun veya içerik oluşturun" autocomplete="off"></textarea>
+      <button class="ib" id="attBtn" type="button" aria-label="Dosya ekle" title="Dosya ekle (sürükle bırak da olur)" data-ic="clip"></button>
+      <input type="file" id="chatFile" multiple hidden>
+      <textarea id="q" rows="1" placeholder="Soru sorun ya da / ile komut" autocomplete="off" role="combobox" aria-autocomplete="list" aria-controls="cmdPop" aria-expanded="false"></textarea>
       <span class="srcBadge" id="srcBadge" title="Kullanılan kaynak sayısı"><i data-ic="doc"></i><b id="srcBadgeN">0</b></span>
       <button class="sendBtn" id="send" type="submit" aria-label="Gönder" data-ic="up"></button>
       <button class="sendBtn stop" id="stop" type="button" aria-label="Durdur" hidden data-ic="stop"></button>
