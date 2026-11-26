@@ -1009,3 +1009,19 @@ dialog.hub>.hbWrap{max-width:860px;padding:14px 14px 28px;gap:12px}
 .cvMetaF dl{display:grid;grid-template-columns:auto 1fr;gap:4px 12px;margin:0;font-size:13px}.cvMetaF dt{color:var(--mu)}.cvMetaF dt.risk{color:var(--er);font-weight:600}.cvMetaF dd{margin:0;overflow-wrap:anywhere}
 .cvClr{align-self:flex-end;font-size:12.5px}
 .cvRow2{align-items:end}.cvRow2 .hbF>span{flex-wrap:wrap;row-gap:0}
+/* v27: NotebookLM tarzı Stüdyo — tek liste, sade kutucuklar */
+#studioBtns .btn.tile{min-height:0;flex-direction:row;align-items:center;gap:8px;padding:10px 12px}
+#studioBtns .btn.tile b{font-size:13px;font-weight:600;line-height:1.35;padding-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#studioBtns .btn.tile .tIc{font-size:16px;margin:0}
+.stDiv{height:1px;background:var(--line);margin:14px 2px 8px}
+#panelStudio .list.outs li{background:transparent;border:0;padding:8px 6px;gap:10px}
+#panelStudio .list.outs li:hover,#panelStudio .list.outs li:focus-visible{background:var(--btn)}
+#panelStudio .outItem .t{min-width:0;flex:1}
+#panelStudio .outItem .t b{display:block;font-size:13px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#panelStudio .outItem .t small{color:var(--mu);font-size:11px}
+#panelStudio .outItem .x{opacity:.6}#panelStudio .outItem:hover .x,#panelStudio .outItem .x:focus-visible{opacity:1}
+.stEmpty{display:flex;flex-direction:column;align-items:center;gap:6px;padding:22px 8px;color:var(--mu);font-size:13px;text-align:center}.stEmpty span{font-size:22px;opacity:.7}
+.stEmpty[hidden]{display:none}
+.btn.stAdd{display:flex;align-items:center;justify-content:center;gap:6px;width:100%;margin-top:10px;border-radius:999px;padding:10px 14px}
+.vwNote{padding:4px 2px;line-height:1.6;max-width:760px;margin:0 auto}
+#panelSources .row.two:has(#addNote[hidden]){display:flex}#panelSources .row.two:has(#addNote[hidden]) #addFile{flex:1;justify-content:center}
