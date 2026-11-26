@@ -260,20 +260,70 @@ a:focus-visible,button:focus-visible,input:focus-visible,select:focus-visible,te
 @keyframes sheetIn{from{transform:translateY(24px);opacity:0}to{transform:none;opacity:1}}
 .btn.primary{background:var(--ac);color:var(--acfg)}
 
-/* ---- Pencere düzeni (geniş ekranlarda): sürüklenebilir, boyutlandırılabilir paneller ---- */
-.wmBtns,.wmR{display:none}
-@media (min-width:901px){
- .cols[data-wm=on]{display:block;position:relative;overflow:hidden;padding:0}
- .cols[data-wm=on]>.panel{position:absolute;left:var(--x,12px);top:var(--y,12px);width:var(--w,320px);height:var(--h,400px);z-index:var(--z,1);box-shadow:0 10px 32px rgba(0,0,0,.35);background:var(--p);border:1px solid var(--line)}
- .cols[data-wm=on]>.panel>.ph:first-child{cursor:grab;touch-action:none;user-select:none;margin:-14px -14px 8px;padding:10px 12px 10px 14px;background:var(--p2);border-bottom:1px solid var(--line);border-radius:var(--rp) var(--rp) 0 0}
- .cols[data-wm=on]>.panel>.ph:first-child:active{cursor:grabbing}
- .cols[data-wm=on] .wmBtns{display:inline-flex;gap:4px;margin-left:8px}
- .wmB{width:26px;height:26px;display:inline-grid;place-items:center;border:0;border-radius:8px;background:var(--btn);color:var(--mu);cursor:pointer;padding:0}.wmB:hover{background:var(--btnh);color:var(--tx)}.wmB svg{width:14px;height:14px}
- .cols[data-wm=on] .wmR{display:block;position:absolute;z-index:2;touch-action:none}
- .wmRe{right:-4px;top:16px;bottom:16px;width:10px;cursor:ew-resize}.wmRs{left:16px;right:16px;bottom:-4px;height:10px;cursor:ns-resize}.wmRse{right:-4px;bottom:-4px;width:18px;height:18px;cursor:nwse-resize}
- .cols[data-wm=on]>.panel.wmMin{overflow:hidden}.cols[data-wm=on]>.panel.wmMin>*:not(.ph:first-child):not(.wmR){display:none}
- .cols[data-wm=on]>.panel.wmMax{border-radius:0;box-shadow:none}
+/* ---- Pencere düzeni (dock.js · Dockview): Krita gibi sekmeli, bölünebilir, yüzen pencereler; Plus UI renkleri ---- */
+.cols[data-wm=on]{display:flex!important;flex-direction:column;overflow:hidden!important;padding:6px 10px 10px;gap:0}
+.dkWrap{flex:1;min-height:0;display:flex;flex-direction:column;gap:8px}
+.dkHost{flex:1;min-height:0;position:relative;border-radius:var(--rp);overflow:hidden}
+.dkBar{display:flex;align-items:center;gap:6px;min-height:40px;flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none}.dkBar::-webkit-scrollbar{display:none}
+.dkWsL{display:flex;gap:6px}
+.dkWs{display:inline-flex;align-items:center;gap:7px;height:34px;padding:0 12px;border:0;border-radius:var(--rb);background:var(--btn);color:var(--tx);font:inherit;font-size:13px;font-weight:600;cursor:pointer;white-space:nowrap}
+.dkWs:hover{background:var(--btnh)}.dkWs.on{background:color-mix(in srgb,var(--ac) 18%,var(--btn));color:var(--ac)}
+.dkWs svg,.dkI svg,.dkB svg{flex:none}
+.dkI{width:34px;height:34px;display:inline-grid;place-items:center;border:0;border-radius:var(--rb);background:var(--btn);color:var(--mu);cursor:pointer;padding:0;flex:none}.dkI:hover:not(:disabled){background:var(--btnh);color:var(--tx)}.dkI:disabled{opacity:.4;cursor:default}
+.dkAct{display:flex;align-items:center;gap:2px;height:100%;padding-inline:4px}
+.dkB{width:28px;height:28px;display:inline-grid;place-items:center;border:0;border-radius:8px;background:transparent;color:var(--mu);cursor:pointer;padding:0}.dkB:hover{background:var(--btn);color:var(--tx)}.dkB[hidden]{display:none}
+.dkPane{height:100%;overflow:hidden;display:flex;flex-direction:column;background:var(--p)}
+.dkPane>.panel{flex:1;min-height:0;height:100%;display:flex!important;border:0!important;border-radius:0!important;box-shadow:none!important;background:var(--p)!important;padding:12px 14px}
+.dkPane>.panel>.ph:first-child{display:none}
+.dkPane>#panelChat{padding-top:10px}
+.dkPane>#panelStudio,.dkPane>#panelSources{overflow-y:auto}.dkPane>#panelStudio>*,.dkPane>#panelSources>*{flex-shrink:0}
+.dkHub{flex:1;min-height:0;overflow-y:auto;padding:14px 16px 24px;gap:12px}
+.dkHub>.hbPanel{max-width:880px;width:100%;margin-inline:auto}
+.dkPark{display:none!important}
+body.docked .qeF,body.docked .tTb{display:none}
+/* Dockview teması → Class / Plus UI değişkenleri */
+.dkHost .dockview-theme-abyss-spaced{
+ color-scheme:inherit;
+ --dv-group-view-background-color:var(--bg);
+ --dv-tabs-and-actions-container-background-color:var(--p);
+ --dv-activegroup-visiblepanel-tab-background-color:var(--btn);
+ --dv-activegroup-hiddenpanel-tab-background-color:transparent;
+ --dv-inactivegroup-visiblepanel-tab-background-color:var(--p2);
+ --dv-inactivegroup-hiddenpanel-tab-background-color:transparent;
+ --dv-tab-divider-color:transparent;
+ --dv-activegroup-visiblepanel-tab-color:var(--tx);
+ --dv-activegroup-hiddenpanel-tab-color:var(--mu);
+ --dv-inactivegroup-visiblepanel-tab-color:var(--tx);
+ --dv-inactivegroup-hiddenpanel-tab-color:var(--mu);
+ --dv-separator-border:var(--line);
+ --dv-paneview-header-border-color:var(--line);
+ --dv-paneview-active-outline-color:var(--ac);
+ --dv-active-sash-color:var(--ac);
+ --dv-drag-over-background-color:color-mix(in srgb,var(--ac) 18%,transparent);
+ --dv-drag-over-border-color:var(--ac);
+ --dv-edge-dock-indicator-color:var(--ac);
+ --dv-icon-hover-background-color:var(--btnh);
+ --dv-floating-box-shadow:var(--sh);
+ --dv-floating-group-border:1px solid var(--line);
+ --dv-floating-titlebar-background-color:var(--p2);
+ --dv-context-menu-background-color:var(--p);
+ --dv-context-menu-color:var(--tx);
+ --dv-border-radius:var(--rp);
+ --dv-tab-border-radius:10px;
+ --dv-tab-font-size:13px;
+ --dv-tabs-and-actions-container-height:44px;
+ --dv-spacing-padding:0px;
+ font-family:inherit;padding:0;background:transparent
 }
+.dkHost .dv-tab{font-weight:600}
+.dkHost .dv-tab:focus-visible{outline:2px solid var(--ac);outline-offset:-2px}
+.dkHost .dv-groupview .dv-content-container{background:var(--p)}
+.dkHost .dv-groupview.dv-active-group>.dv-tabs-and-actions-container .dv-tab.dv-active-tab{background:color-mix(in srgb,var(--ac) 18%,var(--btn));color:var(--ac)}
+.dkPane #studioBtns{grid-template-columns:repeat(auto-fill,minmax(132px,1fr))}
+.dkPane .hbStrip{flex-wrap:wrap}
+.dkHost .dv-resize-container{box-shadow:var(--sh)}
+.dkHost .dv-default-tab-action{border-radius:6px}
+@media (pointer:coarse){.dkHost .dockview-theme-abyss-spaced{--dv-tabs-and-actions-container-height:48px}.dkB{width:34px;height:34px}}
 @media (prefers-reduced-motion:reduce){.drawer,.sheet,.menu,.menuScrim,.sheetScrim,.drScrim{animation:none;transition:none}}
 body.wmDrag,body.wmDrag *{user-select:none!important;-webkit-user-select:none!important}
 
@@ -863,3 +913,42 @@ dialog.set>.stBody>*,.suBox>*,.stCard>*,.stOpt>*{flex-shrink:0}
 .stRow.stCol .stL{flex:none}
 .suNav{position:sticky;bottom:-28px;z-index:2;background:var(--bg);padding:12px 0 6px;margin-top:4px}
 .dlg label.stRow{flex-direction:row;align-items:center;gap:12px;font-size:inherit;color:inherit}
+
+/* ---- Stüdyolar (görsel, ses, yazıya dök, müzik, video, web, modeller, sistem) ---- */
+.pi .c{stroke:var(--ac)}
+dialog.hub>.hbWrap{max-width:860px;padding:14px 14px 28px;gap:12px}
+.hbTabs{display:flex;gap:6px;overflow-x:auto;scrollbar-width:none;position:sticky;top:-14px;z-index:2;background:var(--bg);padding:6px 0}.hbTabs::-webkit-scrollbar{display:none}
+.hbTab{flex:none;display:inline-flex;align-items:center;gap:8px;min-height:40px;padding:0 14px;border-radius:12px;border:1px solid var(--line);background:transparent;color:var(--mu);font:inherit;font-size:13.5px;font-weight:600;cursor:pointer}
+.hbTab svg{width:18px;height:18px}.hbTab:hover{color:var(--tx)}.hbTab.on{color:var(--ac);border-color:color-mix(in srgb,var(--ac) 60%,transparent);background:color-mix(in srgb,var(--ac) 12%,transparent)}
+.hbBody{min-height:300px}.hbPanel{display:flex;flex-direction:column;gap:14px}
+.hbP>div{display:flex;flex-direction:column;gap:14px}
+.hbSec{display:flex;flex-direction:column;gap:10px;padding:12px 12px 14px 14px;border-inline-start:3px solid color-mix(in srgb,var(--ac) 55%,transparent);background:var(--btn);border-radius:0 12px 12px 0}
+.hbSec h4{margin:0;font-size:14.5px}.hbSec h5{margin:6px 0 0;font-size:13px;color:var(--mu)}
+.hbF{display:flex;flex-direction:column;gap:6px;font-size:13px}.hbF>span{display:flex;align-items:baseline;gap:8px;font-weight:600}.hbF small{font-weight:400;color:var(--mu)}
+.hbRow{display:flex;gap:8px}.hbRow .stIn{flex:1;min-width:0}
+.hbStat{font-size:13px;color:var(--mu);min-height:18px}.hbStat[data-k=ok]{color:var(--ok)}.hbStat[data-k=err]{color:var(--er)}
+.hbBar{height:6px;border-radius:6px;background:rgba(127,127,127,.25);overflow:hidden}.hbBar i{display:block;height:100%;width:0;background:var(--ac);transition:width .3s}
+.hbGrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:12px}
+.hbImg{margin:0;display:flex;flex-direction:column;gap:8px;padding:8px;border-radius:12px;background:var(--btn)}.hbImg img{width:100%;border-radius:8px;display:block}
+.hbImg figcaption{display:flex;flex-direction:column;gap:6px}.hbImg small{color:var(--mu)}
+.hbOut audio,.hbOut video{width:100%;border-radius:10px;margin-bottom:8px}
+.hbList{display:flex;flex-direction:column;gap:8px}
+.hbItem{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:10px 12px;border-radius:10px;background:var(--p);flex-wrap:wrap}.hbItem>span:first-child{display:flex;flex-direction:column;min-width:0;flex:1 1 200px}.hbItem b{font-size:13.5px;overflow-wrap:anywhere}.hbItem small{color:var(--mu);font-size:12px}.hbItem em{color:var(--ok);font-size:12px;font-style:normal}
+.hbRes{display:flex;gap:10px;align-items:flex-start;padding:10px 12px;border-radius:10px;background:var(--btn);cursor:pointer}.hbRes input{margin-top:4px;accent-color:var(--ac)}
+.hbRes>span{display:flex;flex-direction:column;gap:3px;min-width:0}.hbRes b{font-size:14px}.hbRes small{color:var(--ac);font-size:12px;overflow-wrap:anywhere}.hbRes span span{font-size:13px;color:var(--mu)}.hbRes em{font-size:11.5px;color:var(--mu);font-style:normal}
+.hbKV{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:8px}.hbKV>div{display:flex;flex-direction:column;padding:8px 10px;border-radius:10px;background:var(--p)}.hbKV small{color:var(--mu);font-size:11.5px}.hbKV b{font-size:13px;overflow-wrap:anywhere}
+.hbDl{display:flex;align-items:center;justify-content:space-between;gap:10px;font-size:13px}
+.hbNeed{display:flex;flex-direction:column;gap:10px;padding:16px;border-radius:12px;background:var(--btn);border:1px dashed color-mix(in srgb,var(--ac) 45%,transparent)}.hbNeed b{font-size:15px}.hbNeed p{margin:0;color:var(--mu);font-size:13.5px;line-height:1.6}.hbNeed .btn{align-self:flex-start}
+.hbTip{margin:0;font-size:12.5px;color:var(--mu)}
+.ctChip.off i{background:var(--er)}
+.hbStrip{display:flex;gap:6px;overflow-x:auto;scrollbar-width:none;padding:2px 0 10px}.hbStrip::-webkit-scrollbar{display:none}
+.hbChip{flex:none;display:inline-flex;align-items:center;gap:6px;min-height:34px;padding:0 11px;border-radius:10px;border:1px solid var(--line);background:transparent;color:var(--tx);font:inherit;font-size:12.5px;font-weight:600;cursor:pointer}.hbChip svg{width:16px;height:16px;color:var(--ac)}.hbChip:hover{border-color:var(--ac)}
+/* sohbette görsel / ses / video */
+.mImg{margin:4px 0 0;display:flex;flex-direction:column;gap:6px}.mImg img,.mImg video{max-width:100%;border-radius:12px;display:block}.mImg audio{width:100%}.mImg figcaption{font-size:12.5px;color:var(--mu)}
+/* gerçek sesli özet */
+.pcReal{display:flex;flex-direction:column;gap:8px;padding:12px;border-radius:12px;background:var(--btn);margin-bottom:12px}
+.pcVoices{flex-wrap:wrap;gap:8px;align-items:center}.pcVoices label{display:inline-flex;align-items:center;gap:6px;font-size:13px}.pcVoices select{max-width:180px}
+.pcPlay audio{width:100%}
+.dlg label.hbRes{flex-direction:row;color:var(--tx);font-size:inherit}
+.dlg label.hbF{color:var(--tx)}
+@media (min-width:901px){.hbStrip{flex-wrap:wrap;overflow:visible}}

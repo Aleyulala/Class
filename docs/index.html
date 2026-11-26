@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Class</title>
 <meta name="description" content="Kaynaklarını yükle, onlarla sohbet et, özet ve çalışma rehberi çıkar. Her şey tarayıcında çalışır, hiçbir veri dışarı gitmez.">
-<link rel="stylesheet" href="style.css?v=24">
+<link rel="stylesheet" href="style.css?v=26">
 <link rel="manifest" href="manifest.webmanifest">
 <meta name="theme-color" content="#1e1e1e">
 <link rel="icon" href="icon.svg" type="image/svg+xml">
@@ -57,12 +57,13 @@
     <div class="row two">
       <button class="pillAct" id="addFile"><i data-ic="plus"></i><span>Kaynak ekle</span></button>
       <button class="pillAct" id="addNote"><i data-ic="plus"></i><span>Not oluştur</span></button>
-      <input type="file" id="fileInput" accept=".pdf,.txt,.md,.markdown,.csv,.html,.htm,.json,text/*" multiple hidden>
+      <input type="file" id="fileInput" accept=".pdf,.txt,.md,.markdown,.csv,.html,.htm,.json,.docx,.pptx,.xlsx,.odt,.odp,.ods,.epub,text/*,audio/*,video/*" multiple hidden>
     </div>
     <button class="linkBtn" id="addText"><i data-ic="plus"></i><span>Metin yapıştır</span></button>
+    <button class="linkBtn" id="addWeb" type="button"><i data-ic="plus"></i><span>Web’den ya da adresten ekle</span></button>
     <div class="selall"><i data-ic="layers"></i><span class="grow"></span><label for="selAll">Tümünü seç</label><input type="checkbox" id="selAll" class="chk" checked></div>
     <ul class="list" id="srcList"></ul>
-    <p class="hint" id="srcHint">PDF, TXT, MD ya da yapıştırdığın metin. Dosyalar yalnızca bu tarayıcıda saklanır.</p>
+    <p class="hint" id="srcHint">PDF, Word, PowerPoint, Excel, EPUB, metin; yerel sunucuyla ses ve video da. Dosyalar yalnızca bu cihazda saklanır.</p>
   </section>
 
   <!-- SOHBET -->
@@ -109,6 +110,7 @@
   <!-- STÜDYO + NOTLAR -->
   <section class="panel" id="panelStudio" aria-label="Stüdyo">
     <div class="ph"><h2>Stüdyo</h2></div>
+    <div class="hbStrip" id="hbStrip" aria-label="Stüdyolar"></div>
     <div class="genBar" id="genBar" hidden><span class="spin" aria-hidden="true"></span><span id="genText" role="status"></span><button class="btn sm" id="genStop" type="button">Durdur</button></div>
     <div class="grid" id="studioBtns"></div>
     <div class="ph mt"><h2>Çıktılar</h2></div>
@@ -161,11 +163,11 @@
 <dialog id="srcDlg">
   <form method="dialog" class="dlg">
     <h3>Kaynak ekle</h3>
-    <p class="muted">Not defterin bu kaynaklara dayanarak cevap verir. PDF, TXT, MD, HTML ya da düz metin.</p>
+    <p class="muted">Not defterin bu kaynaklara dayanarak cevap verir. PDF, Word (DOCX), PowerPoint (PPTX), Excel (XLSX), OpenDocument, EPUB, TXT, MD, HTML; yerel sunucuyla ses ve video (yazıya dökülür). Web adresi ve web araması için Stüdyolar > Web.</p>
     <div class="drop" id="drop" tabindex="0" role="button" aria-label="Dosyaları bırak ya da seç">
       <div class="dropIco" data-ic="up"></div><b>Dosyaları buraya bırak</b><span class="muted">ya da seçmek için dokun</span>
     </div>
-    <div class="row"><button class="btn" type="button" id="dlgFile">Dosya yükle</button><button class="btn" type="button" id="dlgText">Metin yapıştır</button></div>
+    <div class="row"><button class="btn" type="button" id="dlgFile">Dosya yükle</button><button class="btn" type="button" id="dlgText">Metin yapıştır</button><button class="btn" type="button" id="dlgWeb">Web / adres</button></div>
     <div class="row end"><button class="btn primary" value="close">Tamam</button></div>
   </form>
 </dialog>
@@ -225,13 +227,15 @@
   </form>
 </dialog>
 
-<script type="module" src="app.js?v=24"></script>
-<script type="module" src="nav.js?v=24"></script>
-<script type="module" src="shell.js?v=24"></script>
-<script type="module" src="search.js?v=24"></script>
-<script type="module" src="plus.js?v=24"></script>
-<script type="module" src="contact.js?v=24"></script>
-<script type="module" src="settings.js?v=24"></script>
-<script type="module" src="reveal.js?v=24"></script>
+<script type="module" src="app.js?v=26"></script>
+<script type="module" src="nav.js?v=26"></script>
+<script type="module" src="shell.js?v=26"></script>
+<script type="module" src="search.js?v=26"></script>
+<script type="module" src="plus.js?v=26"></script>
+<script type="module" src="contact.js?v=26"></script>
+<script type="module" src="hub.js?v=26"></script>
+<script type="module" src="dock.js?v=26"></script>
+<script type="module" src="settings.js?v=26"></script>
+<script type="module" src="reveal.js?v=26"></script>
 </body>
 </html>

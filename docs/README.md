@@ -1,6 +1,6 @@
 # Class — tarayıcıda çalışan yerel yapay zekâ (NotebookLM benzeri)
 
-Kaynaklarını (PDF, TXT, MD, yapıştırılmış metin) yükle, onlarla sohbet et, özet / SSS / çalışma rehberi / quiz / zihin haritası çıkar, cevapları nota kaydet.
+Kaynaklarını (PDF, Word, PowerPoint, Excel, ODT/ODP/ODS, EPUB, TXT, MD, web sayfası, yerel sunucuyla ses ve video) yükle, onlarla sohbet et, özet / SSS / çalışma rehberi / quiz / zihin haritası çıkar, cevapları nota kaydet.
 Hepsi **tarayıcında** çalışır: model [wllama](https://github.com/ngxson/wllama) (llama.cpp'nin WASM + WebGPU sürümü) ile ekran kartında/işlemcide çalışır, dosyalar yalnızca bu tarayıcının depolamasında (IndexedDB) kalır. Sunucuya hiçbir şey gönderilmez.
 
 ## GitHub Pages'ta yayınlama
@@ -19,7 +19,7 @@ Telefonda düzen NotebookLM'in mobil web arayüzü gibidir: üstte **Tümü** fi
 2. Soldan **Dosya ekle** / **Metin yapıştır** ile kaynak ekle. Kutuyu işaretleyip kaldırarak hangi kaynakların kullanılacağını seç.
 3. Sohbete soru yaz. Cevaptaki `[1]`, `[2]` atıflarına basınca ilgili kaynak parçası açılır. Kaynak seçili değilse normal sohbet olur.
 4. Sağdaki **Stüdyo** seçili kaynaklardan çıktı üretir:
-   - **Sesli özet:** Ayşe ve Can'ın sohbet ettiği bir metin; cihazının konuşma sentezi iki farklı sesle okur (ses dosyası olarak indirilemez).
+   - **Sesli özet:** Ayşe ve Can'ın sohbet ettiği bir metin; cihazının konuşma sentezi iki farklı sesle okur. Yerel sunucu açıksa **🎙 Gerçek sesle oluştur** her satırı sunucunun TTS motoruyla iki ayrı sesle seslendirir, tek bir `.wav` dosyasında birleştirir; dosya çıktıyla birlikte saklanır ve indirilebilir.
    - **Zihin haritası:** renkli SVG harita, PNG indirilir.
    - **Görsel özet:** başlık, emojili ana noktalar ve çıkarımdan oluşan bilgi grafiği, PNG indirilir.
    - **Bilgi kartları:** çevirmeli kartlar, "Biliyorum" işaretleme.
@@ -77,12 +77,12 @@ Listedeki dosya adları Hugging Face'teki depolara işaret eder; bir ad değişm
 - **WebGPU:** Chrome / Edge (yeni sürümler). Ekran kartı seçeneği kapatılırsa yalnızca işlemci kullanılır (yavaştır).
 - **Bağlam:** Varsayılan 4096 token. Kaynaklar uzunsa soruyla en alakalı parçalar (BM25 araması) modele verilir; Stüdyo düğmeleri her kaynağı baştan kısaltır.
 - **Kalite:** 3B–7B yerel modeller Gemini gibi büyük bulut modelleri kadar iyi değildir; atıfları kontrol et.
-- **Yapay zekâ ile fotoğraf/video üretimi ve web'de araştırma bu uygulamada yok.** "Görsel özet" modelin yazdığı içeriği çizen bir bilgi grafiğidir, fotoğraf üretmez. Görsel/video üretimi için ana stüdyo uygulamasını (`/app`) kullan.
+- **Görsel, ses, müzik, video üretimi, yazıya dökme ve web araştırması** yerel sunucu gerektirir (aşağıda *Stüdyolar*). GitHub Pages sürümünde bu paneller “yerel sunucuyla açın” bilgisini gösterir; sohbet, kaynaklar ve Stüdyo çıktıları sunucusuz çalışır.
 - Tarayıcı verilerini temizlersen kaynaklar, notlar ve indirilen modeller silinir. Uygulama kalıcı depolama izni ister.
 
 ## Üçüncü taraf bileşenler
 
-`docs/vendor/wllama` (MIT) ve `docs/vendor/pdfjs` (Apache-2.0) — lisans dosyaları kendi klasörlerindedir.
+`docs/vendor/wllama` (MIT), `docs/vendor/pdfjs` (Apache-2.0) ve `docs/vendor/dockview` (Dockview 8.8.3, MIT) — lisans dosyaları kendi klasörlerindedir. Simgeler Plus UI Blogger temasının simge setinden (`docs/icons.js`).
 
 ## Ayarlar ve yapay zekâ motorları (v24)
 
@@ -95,3 +95,22 @@ Sağ üstteki dişli **Ayarlar** panelini açar. İlk açılışta kısa bir **K
 | OpenAI uyumlu API | Adres + (isteğe bağlı) anahtar + model | LM Studio `http://localhost:1234/v1`, Ollama `http://localhost:11434/v1` (`OLLAMA_ORIGINS` ile), OpenRouter vb. Anahtar yalnızca bu tarayıcıda saklanır. |
 
 Diğer ayarlar: tema ve tema rengi, yazı/arayüz boyutu, animasyonlar, ayna (RTL), sıcaklık, en uzun cevap, bağlam, ek sistem talimatı, Enter ile gönder, depolama kullanımı, kalıcı depolama, **yedeği indir / yükle (.json)**, tüm verileri sil, cihaz tanılama.
+
+## Stüdyolar, kaynak türleri ve pencere düzeni (v25)
+
+**Stüdyolar** (Stüdyo panelinin üstündeki şerit, hızlı menü, kenar menüsü ya da `/` aramasında “stüdyo”): yerel sunucuyla (`windows.bat` / `linux.sh` / `mac.sh`) çalışır.
+
+| Panel | Ne yapar | Sunucu uç noktası |
+|---|---|---|
+| Görsel | Stable Diffusion; oran, çözünürlük, adım, CFG, tohum, “kaynaklardan istem öner”; indir ya da sohbete ekle | `/api/models`, `/sdapi/v1/txt2img` |
+| Ses | Metni seslendir (ses, hız seçimi) | `/api/tts/*` |
+| Yazıya dök | Ses/video dosyası ya da mikrofon → metin (Whisper); kaynak olarak ekle | `/api/speech/*` |
+| Müzik | Müzik ve ses efekti üretimi | `/api/audio/music` |
+| Video | Metinden video (ilerleme takibi) | `/api/video/*` |
+| Web | Web araması → seçilen sonuçları kaynak yap; adresten sayfa ekle | `/api/web-search`, `/api/fetch-url` |
+| Modeller | Donanım, yüklü modeller (kullan/sil), öneriler, Hugging Face araması ve indirme (ilerleme, iptal), ses modelleri | `/api/llm/*`, `/api/huggingface/models`, `/api/download-progress` |
+| Sistem | Güncelleme, Hugging Face anahtarı, disk temizliği, tanılama | `/api/updater/*`, `/api/hf-token`, `/api/cleanup*`, `/api/diagnostics` |
+
+**Kaynak türleri:** `.docx .pptx .xlsx .odt .odp .ods .epub` tarayıcıda, kütüphanesiz okunur (`docs/extract.js`). Ses ve video dosyaları 16 kHz WAV'a çevrilip yerel sunucunun Whisper motoruyla yazıya dökülür. Web sayfaları adresle eklenir.
+
+**Pencere düzeni** (geniş ekran: masaüstü, el konsolu, yatay/dikey tablet; ≥ 901 × 520 px): Kaynaklar, Sohbet, Stüdyo ve tüm stüdyo panelleri Krita'daki gibi sekmeli bölmelere dönüşür. Sekmeyi sürükleyip başka bölmeye bırak, kenara bırakarak böl, başlıktaki düğmeyle **yüzen pencere** yap ya da **büyüt**; sağ tıkla menü. Hazır **çalışma alanları**: Araştırma, Odak, Medya, Laboratuvar. Düzen yatay ve dikey yön için ayrı saklanır. Aç/kapat: Ayarlar > Görünüm, kenar menüsü > Araçlar, ⋮ menüsü ya da arama. Telefonda klasik sekmeler kalır.

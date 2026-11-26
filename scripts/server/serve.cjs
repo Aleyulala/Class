@@ -18,6 +18,7 @@ const path     = require("path");
 const { spawn, spawnSync, execSync, execFileSync, exec, execFile } = require("child_process");
 const { createHash } = require("crypto");
 const { comprehensiveWebSearch } = require("../search/core");
+const { fetchPageContent } = require("../search/content");
 
 // HTTP keep-alive agent for llama-server (eliminates TCP handshake per request)
 const llmHttpAgent = new http.Agent({
@@ -11324,6 +11325,20 @@ async function getLlmfitRecommendations(useCase = "chat", limit = 10) {
     if (!llmReady) return json(res, 409, { ok: false, error: "Load a text model before sending a message." });
     await doLlmChat(req, res, body);
     return;
+  }
+
+  // POST /api/fetch-url — Class: bir web sayfasını kaynak olarak ekler. Yerel/özel ağ adresleri engellidir (assertPublicUrl).
+  if (req.url === "/api/fetch-url" && req.method === "POST") {
+    const body = await readJsonBody(req, res);
+    if (!body) return;
+    const target = String(body.url || "").trim();
+    if (!/^https?:\/\//i.test(target)) return json(res, 400, { ok: false, error: "Geçerli bir http(s) adresi girin." });
+    try {
+      const page = await fetchPageContent(target, { timeoutMs: 15000, maxBytes: 2 * 1024 * 1024 });
+      return json(res, 200, { ok: true, url: target, title: page.title || target, text: String(page.text || "").slice(0, 400000) });
+    } catch (err) {
+      return json(res, 502, { ok: false, error: err.message || String(err) });
+    }
   }
 
   // GET /api/llm/recommend - llmfit recommendations

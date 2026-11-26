@@ -1,6 +1,8 @@
 // Class — tarayıcıda çalışan, kaynaklarla sohbet eden yerel yapay zekâ arayüzü.
-// Model: wllama (llama.cpp'nin WASM/WebGPU sürümü). Hiçbir veri sunucuya gönderilmez.
+// Motor: tarayıcıda wllama (WASM/WebGPU), kendi bilgisayarındaki yerel sunucu ya da seçtiğin OpenAI uyumlu API.
+// Veriler bu cihazda saklanır; yalnızca seçtiğin motora/sunucuya gönderilir.
 
+import { readDoc, toWav16k, DOC_RX, MEDIA_RX } from './extract.js';
 import { TYPES, parseJson, normalize, demo } from './rich.js';
 import { renderOutput } from './viewers.js';
 
@@ -140,7 +142,26 @@ async function readPdf(file) {
   }
   return out;
 }
+/* Yerel sunucu Whisper: ses/video → yazı (gerekirse konuşma motorunu başlatır) */
+async function srvJSON(url, opt) { const r = await fetch(url, opt); const t = await r.text(); let j = {}; try { j = JSON.parse(t || '{}'); } catch { throw new Error('Yerel sunucu yok ya da geçersiz yanıt (Class’ı başlatıcıyla açın).'); } if (!r.ok || j.ok === false) throw new Error(j.error || `HTTP ${r.status}`); return j; }
+async function transcribe(blob, { language = 'auto', name = 'ses.wav', onPhase } = {}) {
+  onPhase?.('Ses çözülüyor…'); const wav = await toWav16k(blob);
+  let st = {}; try { st = await srvJSON('/api/speech/status'); } catch (e) { throw new Error('Ses ve video için yerel sunucu gerekir (Whisper). Class’ı windows.bat / linux.sh / mac.sh ile açın.'); }
+  let model = st.settings?.model || '';
+  if (!st.ready) {
+    const ms = (await srvJSON('/api/speech/models')).models || []; const m = ms.find((x) => x.installed !== false) || ms[0];
+    if (!m) throw new Error('Sunucuda konuşma (Whisper) modeli yok. Stüdyolar > Modeller’den indirin.');
+    model = m.filename || m.id || m.name; onPhase?.('Konuşma motoru başlatılıyor…');
+    await srvJSON('/api/speech/start', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ model, language }) });
+  }
+  onPhase?.('Yazıya dökülüyor…');
+  const q = new URLSearchParams({ language, filename: name.replace(/\.[^.]+$/, '') + '.wav', ...(model ? { model } : {}) });
+  const j = await srvJSON('/api/speech/transcribe?' + q, { method: 'POST', headers: { 'Content-Type': 'audio/wav' }, body: wav });
+  return String(j.transcription?.text || '').trim();
+}
 async function readFile(file) {
+  if (DOC_RX.test(file.name)) return readDoc(file);
+  if (MEDIA_RX.test(file.name) || /^(audio|video)\//.test(file.type)) return transcribe(file, { name: file.name, onPhase: (t) => toast(`${file.name}: ${t}`) });
   if (/\.pdf$/i.test(file.name) || file.type === 'application/pdf') return readPdf(file);
   const t = await file.text();
   if (/\.html?$/i.test(file.name)) { const d = new DOMParser().parseFromString(t, 'text/html'); d.querySelectorAll('script,style,nav,footer').forEach((n) => n.remove()); return d.body.textContent.replace(/\n{3,}/g, '\n\n'); }
@@ -343,7 +364,11 @@ function msgNode(m, i) {
   const d = el('div', { className: `msg c ${me ? 'me' : ''} ${m.err ? 'err' : ''}` }); d.dataset.mid = m.id;
   d.append(msgHead(m, me, i));
   const bd = el('div', { className: 'mBd' }); d.append(bd);
+  if (m.audio) bd.append(el('figure', { className: 'mImg' }, el('audio', { controls: true, src: m.audio, preload: 'none' }), m.text ? el('figcaption', { textContent: m.text }) : ''));
+  if (m.video) bd.append(el('figure', { className: 'mImg' }, el('video', { controls: true, src: m.video, preload: 'metadata', playsInline: true }), m.text ? el('figcaption', { textContent: m.text }) : ''));
+  if (m.img) bd.append(el('figure', { className: 'mImg' }, el('img', { src: m.img, alt: m.text || 'Görsel', loading: 'lazy' }), m.text ? el('figcaption', { textContent: m.text }) : ''));
   if (m.kind === 'slides') bd.append(slidesNode(m));
+  else if (m.img || m.audio || m.video) {}
   else if (me) { if (m.reply) bd.append(quoteRef(m.reply)); if (m.text) bd.append(el('span', { className: 'mTx', textContent: m.text })); if (m.atts?.length) bd.append(el('div', { className: 'atts' }, ...m.atts.map((a) => attCard(a)))); }
   else bd.innerHTML = md(m.text);
   if (m.live || m.err || !m.text && !m.atts?.length) return d;
@@ -480,7 +505,7 @@ async function addSource(title, text, kind) {
 }
 $('#addFile').onclick = () => $('#srcDlg').showModal();
 async function ingestFiles(files) {
-  for (const f of files) { try { toast(`${f.name} okunuyor…`); await addSource(f.name, await readFile(f), /\.pdf$/i.test(f.name) ? 'PDF' : 'Dosya'); toast(''); } catch (err) { toast(`${f.name} okunamadı: ${err.message || err}`); } }
+  for (const f of files) { try { toast(`${f.name} okunuyor…`); await addSource(f.name, await readFile(f), /\.pdf$/i.test(f.name) ? 'PDF' : DOC_RX.test(f.name) ? f.name.split('.').pop().toUpperCase() : (MEDIA_RX.test(f.name) || /^(audio|video)\//.test(f.type)) ? 'Ses/Video' : 'Dosya'); toast(''); } catch (err) { toast(`${f.name} okunamadı: ${err.message || err}`); } }
 }
 $('#fileInput').onchange = async (e) => { const files = [...e.target.files]; e.target.value = ''; await ingestFiles(files); };
 let noteMode = false;
@@ -850,6 +875,9 @@ async function importAll(o) {
   let n = 0; for (const s of ['notebooks', 'sources', 'notes', 'outputs', 'kv']) for (const v of o[s] || []) { await DB.put(s, v); n++; }
   notebooks = await DB.all('notebooks'); goHome(); return n;
 }
+async function complete(messages, opts = {}) { if (needModel()) throw new Error('Önce bir model ya da motor seçin.'); let t = ''; await chatStream(messages, { ...opts, onToken: (x) => { t += x; } }); return t; }
+async function addSourceExt(title, text, kind) { if (!nb) throw new Error('Önce bir not defteri açın.'); await addSource(title, text, kind); }
+async function addChatMedia(m) { if (!nb) throw new Error('Önce bir not defteri açın.'); chat.push({ id: uid(), role: 'assistant', at: Date.now(), ...m }); renderChat(); await persistChat(); }
 function setEngine(kind, label, nctx) { engine.kind = kind; engine.label = label; if (nctx) engine.nctx = nctx; setModelUi(kind === 'none' ? '' : 'ok', label || 'Model yüklenmedi'); }
-window.defterApp = { CFG, saveCfg, engine, setEngine, exportAll, importAll, diagnose, setTab, searchData: async () => ({ notebooks, sources: await DB.all('sources'), notes: await DB.all('notes') }), notebooks: () => notebooks, current: () => nb, openNb, createNb, goHome, showMenu, closeMenu, setTheme, getTheme, IC, openModel: () => $('#modelDlg').showModal() };
+window.defterApp = { putOutput: async (o) => { await DB.put('outputs', o); }, openOutput, complete, addSource: addSourceExt, addChatMedia, transcribe, enabledSources: () => enabledSources(), toast, CFG, saveCfg, engine, setEngine, exportAll, importAll, diagnose, setTab, searchData: async () => ({ notebooks, sources: await DB.all('sources'), notes: await DB.all('notes') }), notebooks: () => notebooks, current: () => nb, openNb, createNb, goHome, showMenu, closeMenu, setTheme, getTheme, IC, openModel: () => $('#modelDlg').showModal() };
 document.dispatchEvent(new Event('defter-ready'));

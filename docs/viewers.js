@@ -118,7 +118,7 @@ function viewInfographic(d, out, actions) {
 }
 
 /* ---------------- Sesli özet (tarayıcının konuşma sentezi) ---------------- */
-function viewPodcast(d) {
+function viewPodcast(d, out) {
   const synth = window.speechSynthesis; let idx = -1, playing = false, rate = 1, token = 0;
   const lines = d.turns.map((t, i) => el('div', { className: `pcLine ${t.speaker === 'Can' ? 'b' : 'a'}`, tabIndex: 0 }, el('b', { textContent: t.speaker }), el('span', { textContent: t.text }))); lines.forEach((l, i) => { l.onclick = () => start(i); });
   const status = el('div', { className: 'muted pcSt' });
@@ -138,7 +138,35 @@ function viewPodcast(d) {
   }
   playBtn.onclick = () => { if (!synth) return start(0); if (playing && synth.speaking && !synth.paused) { synth.pause(); playBtn.textContent = '▶ Sürdür'; } else if (synth.paused) { synth.resume(); playBtn.textContent = '⏸ Duraklat'; } else start(0); };
   stopBtn.onclick = () => { token++; synth?.cancel(); playing = false; mark(-1); playBtn.textContent = '▶ Dinle'; };
-  return { node: el('div', { className: 'vwPod' }, el('div', { className: 'row' }, playBtn, stopBtn, speed), status, el('div', { className: 'pcList' }, lines), el('p', { className: 'hint small', textContent: 'Sesler cihazının konuşma sentezinden gelir (ses dosyası olarak indirilemez). Bir satıra dokunarak oradan başlayabilirsin.' })), cleanup: () => { token++; synth?.cancel(); } };
+  return { node: el('div', { className: 'vwPod' }, realAudio(d, out), el('div', { className: 'row' }, playBtn, stopBtn, speed), status, el('div', { className: 'pcList' }, lines), el('p', { className: 'hint small', textContent: 'Sesler cihazının konuşma sentezinden gelir (ses dosyası olarak indirilemez). Bir satıra dokunarak oradan başlayabilirsin.' })), cleanup: () => { token++; synth?.cancel(); } };
+}
+
+/* Gerçek sesli özet: yerel sunucunun TTS motoruyla iki sesli podcast dosyası (WAV). Dosya çıktıyla birlikte saklanır. */
+function realAudio(d, out) {
+  const box = el('div', { className: 'pcReal' }); const H = window.defterHub, X = window.ClassExtract;
+  const player = (blob) => { const u = URL.createObjectURL(blob); return el('div', { className: 'pcPlay' }, el('audio', { controls: true, src: u }), el('div', { className: 'row' }, el('a', { className: 'btn', href: u, download: `${(out?.title || 'sesli-ozet').replace(/[^\w\u00C0-\u024F -]+/g, '').trim() || 'sesli-ozet'}.wav`, textContent: 'İndir (.wav)' }))); };
+  if (out?.audioBlob) box.append(el('b', { textContent: 'Sesli özet dosyası' }), player(out.audioBlob));
+  if (!H || !X) return box;
+  H.server().then(async (s) => {
+    if (!s.ok) { box.append(el('p', { className: 'hint small', textContent: 'Gerçek insan sesiyle podcast dosyası için Class’ı yerel sunucuyla (başlatıcı) aç.' })); return; }
+    let vs = []; try { vs = (await H.ttsVoices()).voices || []; } catch {}
+    const opt = (sel) => vs.map((v) => el('option', { value: v.id, selected: v.id === sel, textContent: `${v.name || v.id}${v.language ? ' · ' + v.language : ''}` }));
+    const fem = (vs.find((v) => /ema_kadin|^tr.*f|female/i.test(v.id + ' ' + v.gender)) || vs[0])?.id, mal = (vs.find((v) => /ema_erkek|antalia|^tr.*m|male/i.test(v.id + ' ' + v.gender) && !/female/i.test(v.gender || '')) || vs[1] || vs[0])?.id;
+    const va = el('select', { ariaLabel: 'Ayşe’nin sesi' }, ...opt(fem)), vb = el('select', { ariaLabel: 'Can’ın sesi' }, ...opt(mal));
+    const st = el('div', { className: 'muted pcSt' }); const slot = el('div');
+    const go = el('button', { className: 'btn primary', type: 'button', textContent: out?.audioBlob ? 'Yeniden oluştur' : '🎙 Gerçek sesle oluştur' });
+    go.onclick = async () => {
+      go.disabled = true; const urls = [];
+      try {
+        for (const [k, t] of d.turns.entries()) { st.textContent = `Seslendiriliyor ${k + 1}/${d.turns.length}…`; const o = await H.speak(t.text, { voice: t.speaker === 'Can' ? vb.value : va.value }); urls.push(o.url); }
+        st.textContent = 'Birleştiriliyor…'; const blob = await X.joinAudio(urls, 0.35);
+        if (out) { out.audioBlob = blob; await window.defterApp?.putOutput?.(out); }
+        slot.replaceChildren(player(blob)); st.textContent = 'Hazır. Dosya bu çıktıyla birlikte saklandı.';
+      } catch (e) { st.textContent = 'Oluşturulamadı: ' + (e.message || e); } finally { go.disabled = false; }
+    };
+    box.append(el('div', { className: 'row pcVoices' }, el('label', {}, 'Ayşe ', va), el('label', {}, 'Can ', vb), go), st, slot);
+  });
+  return box;
 }
 
 export function renderOutput(out, actions) {

@@ -70,6 +70,7 @@ function items() {
     L.push({ t: 'Sohbeti indir (.md)', i: 'doc', run: () => $('#expChat')?.click() });
     L.push({ t: 'Tüm not defterleri', i: 'home', run: () => a.goHome() });
   }
+  L.push({ t: 'Stüdyolar', i: 'palette', run: () => window.defterHub?.open() });
   L.push({ t: 'Ayarlar', i: 'gear', run: () => window.defterSettings?.open() });
   L.push({ t: 'Model seç', i: 'cpu', run: () => a.openModel() });
   L.push({ t: isDark() ? 'Açık mod' : 'Koyu mod', i: isDark() ? 'sun' : 'moon', run: () => a.setTheme(isDark() ? 'light' : 'dark') });

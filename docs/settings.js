@@ -5,7 +5,7 @@ const el = (t, p = {}, ...k) => { const e = document.createElement(t); for (cons
 const A = () => window.defterApp;
 const lsGet = (k, d) => { try { const v = localStorage.getItem(k); return v == null ? d : JSON.parse(v); } catch { return d; } };
 const lsSet = (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); } catch {} };
-const VERSION = '24';
+const VERSION = '25';
 const svg = (p, s = 18) => `<svg viewBox="0 0 24 24" width="${s}" height="${s}" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">${p}</svg>`;
 const ICO = {
   look: svg('<circle cx="13.5" cy="6.5" r="1"/><circle cx="17.5" cy="10.5" r="1"/><circle cx="8.5" cy="7.5" r="1"/><circle cx="6.5" cy="12.5" r="1"/><path d="M12 2a10 10 0 1 0 0 20c.9 0 1.6-.7 1.6-1.6 0-.4-.2-.8-.4-1.1-.3-.3-.4-.6-.4-1 0-.9.7-1.6 1.6-1.6H16a6 6 0 0 0 6-6c0-4.9-4.5-8.7-10-8.7z"/>'),
@@ -73,7 +73,7 @@ function engineCard(onDone) {
   const server = el('div', { className: 'stOpt' }, el('b', { textContent: 'Yerel sunucu (Class başlatıcısı)' }),
     el('small', { textContent: isLocalHost() ? 'windows.bat / linux.sh / mac.sh ile açtığın sunucunun LLM motorunu kullanır; bilgisayarın GPU’su ile çok daha hızlıdır.' : 'Bu sayfa GitHub Pages’ten açıldı. Yerel sunucu için Class’ı başlatıcıyla (windows.bat / linux.sh / mac.sh) aç; adres localhost olur.' }),
     srvBox);
-  if (isLocalHost()) srvBox.append(btn('Sunucuya bağlan', () => connectServer(srvBox, upd)));
+  if (isLocalHost()) srvBox.append(el('div', { className: 'stBtns' }, btn('Sunucuya bağlan', () => connectServer(srvBox, upd)), btn('Model Merkezi', () => window.defterHub?.open('models'))));
   /* OpenAI uyumlu */
   const base = el('input', { className: 'stIn', placeholder: 'http://localhost:1234/v1', value: C.api.base, 'aria-label': 'API adresi' });
   const key = el('input', { className: 'stIn', type: 'password', placeholder: 'Anahtar (gerekmiyorsa boş)', value: C.api.key, autocomplete: 'off', 'aria-label': 'API anahtarı' });
@@ -140,6 +140,7 @@ function openSettings(section) {
       row('Tema', seg('Tema', [['dark', 'Koyu'], ['light', 'Açık'], ['system', 'Cihaz']], A().getTheme(), (v) => A().setTheme(v))),
       el('div', { className: 'stRow stCol' }, el('span', { className: 'stL' }, el('b', { textContent: 'Tema rengi' }), el('small', { textContent: 'Düğmeler, seçili sekme ve vurgular' })), el('div', { className: 'stColors' }, ...colors)),
       row('Yazı ve arayüz boyutu', seg('Boyut', [[0.9, 'Küçük'], [1, 'Normal'], [1.1, 'Büyük'], [1.2, 'Çok büyük']], lsGet('class-zoom', 1), (v) => { lsSet('class-zoom', v); applyPrefs(); })),
+      ...(window.defterDock?.wide() ? [row('Pencere düzeni', seg('Pencere düzeni', [['off', 'Klasik'], ...Object.entries(window.defterDock.WS).map(([k, w]) => [k, w.t])], window.defterDock.enabled() ? window.defterDock.ws() : 'off', (v) => { if (v === 'off') window.defterDock.setOn(false); else { window.defterDock.setWs(v); window.defterDock.setOn(true); } }), 'Krita gibi: sekmeleri sürükle, böl, yüzdür. Düzen yatay ve dikey için ayrı saklanır.')] : []),
       sw('Animasyonlar', lsGet('class-motion', 'auto') !== 'off', (on) => { lsSet('class-motion', on ? 'auto' : 'off'); applyPrefs(); }, 'Kapalıyken kaydırma belirmesi ve geçişler durur'),
       sw('Ayna (sağdan sola)', document.documentElement.dir === 'rtl', (on) => { document.documentElement.dir = on ? 'rtl' : 'ltr'; try { localStorage.setItem('class-dir', on ? 'rtl' : 'ltr'); } catch {} }),
       sw('CLASS & SAVED şeridi', !(lsGet('class-ntf-x', 0) > Date.now() - 864e5), (on) => { lsSet('class-ntf-x', on ? 0 : Date.now() + 3650 * 864e5); }, 'Ana sayfanın üstündeki bağlantı şeridi (yenileyince uygulanır)')),
@@ -164,7 +165,7 @@ function openSettings(section) {
       diag, el('div', { className: 'stBtns' }, btn('Tanılamayı kopyala', () => navigator.clipboard?.writeText(diag.textContent)))),
     card('about', ICO.info, 'Hakkında',
       row('Sürüm', el('small', { textContent: 'Class v' + VERSION + ' · yerel, gizli, açık kaynak' })),
-      el('div', { className: 'stBtns' }, btn('Klavye ve oyun kolu', () => window.defterHelp?.()), window.defterShell?.wide?.() ? btn('Pencere düzeni aç / kapat', () => { d.close(); window.defterShell.toggleWm(); }) : null, window.defterShell?.standalone?.() ? null : btn('Uygulama olarak kur', () => { d.close(); window.defterShell?.install(); }), btn('Kurulumu yeniden başlat', () => { d.close(); openSetup(); }), el('a', { className: 'btn', href: 'https://github.com/Aleyulala/Class', target: '_blank', rel: 'noopener noreferrer', textContent: 'GitHub' }))));
+      el('div', { className: 'stBtns' }, btn('Klavye ve oyun kolu', () => window.defterHelp?.()), window.defterDock?.wide() ? btn('Pencere düzeni aç / kapat', () => { d.close(); window.defterDock.toggle(); }) : null, window.defterShell?.standalone?.() ? null : btn('Uygulama olarak kur', () => { d.close(); window.defterShell?.install(); }), btn('Kurulumu yeniden başlat', () => { d.close(); openSetup(); }), el('a', { className: 'btn', href: 'https://github.com/Aleyulala/Class', target: '_blank', rel: 'noopener noreferrer', textContent: 'GitHub' }))));
   if (!d.open) d.showModal();
   if (section) setTimeout(() => body.querySelector('#st-' + section)?.scrollIntoView({ block: 'start' }), 60);
 }
