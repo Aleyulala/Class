@@ -32,7 +32,7 @@ TTS_RUNTIME_PATH="$APP_DIR/tts-runtime/node_modules/kokoro-js"
 SPEECH_BACKEND_PATH="$APP_DIR/speech-backend/mac/cpu/whisper-cli"
 PLATFORM_LABEL="macOS"
 
-DIST_INDEX="$APP_DIR/dist/index.html"
+DIST_INDEX="$SCRIPT_DIR/docs/index.html"
 SETUP_SCRIPT="$SCRIPT_DIR/scripts/setup/setup.sh"
 SERVE_SCRIPT="$SCRIPT_DIR/scripts/server/serve.cjs"
 

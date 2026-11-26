@@ -47,7 +47,8 @@ let PORT_TTS = PREFERRED_TTS_PORT;
 const MAX_JSON_BODY_BYTES = 64 * 1024 * 1024;
 const SERVER_BUILD = "text-image-v1";
 const ROOT    = path.join(__dirname, "..", "..");
-const DIST    = path.join(ROOT, "app", "dist");
+// Arayuz: yeni Class (docs/ klasoru). Eski React stüdyosu (app/dist) artik sunulmaz.
+const DIST    = path.join(ROOT, "docs");
 const TOOLS   = path.join(ROOT, "app", "tools");
 const osPlatform = process.platform;
 const BACKEND_PATHS = {
@@ -7447,7 +7448,7 @@ const MIME = {
   ".jpg":  "image/jpeg", ".jpeg": "image/jpeg", ".webp": "image/webp", ".svg": "image/svg+xml",
   ".ico":  "image/x-icon", ".json": "application/json", ".wav": "audio/wav", ".txt": "text/plain",
   ".woff2":"font/woff2", ".woff": "font/woff", ".ttf": "font/ttf",
-  ".mp4":  "video/mp4", ".webm": "video/webm", ".mp3": "audio/mpeg", ".ogg": "audio/ogg",
+  ".wasm": "application/wasm", ".webmanifest": "application/manifest+json", ".mjs": "application/javascript", ".mp4":  "video/mp4", ".webm": "video/webm", ".mp3": "audio/mpeg", ".ogg": "audio/ogg",
 };
 
 function isModelFile(filename) {
@@ -12163,7 +12164,7 @@ async function getLlmfitRecommendations(useCase = "chat", limit = 10) {
   fs.readFile(filePath, (err, data) => {
     if (err) { res.writeHead(404); res.end("Not found"); return; }
     // Only Vite's content-hashed bundles are safe to cache forever; fixed names like logo.png must revalidate.
-    const cacheControl = ext === ".html"
+    const cacheControl = ext === ".html" || ext === ".js" || ext === ".css"
       ? "no-cache, no-store, must-revalidate"
       : requestPath.startsWith("/assets/")
         ? "public, max-age=31536000, immutable"

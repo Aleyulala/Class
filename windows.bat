@@ -9,7 +9,7 @@ set NODE=%APP%\tools\node-win\node.exe
 set NPM=%APP%\tools\node-win\npm.cmd
 :: Keep in sync with $nodeVersion in scripts\setup\setup.ps1 (October 2026 Node.js security release).
 set REQUIRED_NODE=v22.23.4
-set DIST=%APP%\dist\index.html
+set DIST=%~dp0docs\index.html
 set SETUP=%~dp0scripts\setup\setup.ps1
 set CUDA_BACKEND=%APP%\backend\win\cuda\sd-cuda.exe
 set VULKAN_BACKEND=%APP%\backend\win\vulkan\sd-vulkan.exe
