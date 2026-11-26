@@ -28,6 +28,18 @@ Telefonda düzen NotebookLM'in mobil web arayüzü gibidir: üstte **Tümü** fi
    Üretilen çıktılar not defterinde **Çıktılar** listesinde kalır. Model, çıktıyı JSON şemasına uyarak üretir; küçük modeller bazen başarısız olur, "tekrar dene" ya da daha büyük model.
 5. **Demo (model yok)** düğmesi modeli indirmeden arayüzü dener (cevap yerine eşleşen kaynak parçalarını gösterir). Adrese `?demo` eklersen doğrudan demo açılır.
 
+## Sohbet: komutlar, tepki, yanıt, dosya
+
+Blogger şablonundaki yorum sistemiyle aynı mantık:
+
+- **/komutlar:** yazma alanına `/` yaz, liste açılır (↑ ↓ ile gez, Enter ya da Tab ile seç, Esc ile kapat). Yazma alanının üstündeki **/ Komutlar** düğmesi aynı komutları yana kayan kutucuklar olarak açar/kapatır (telefonda varsayılan kapalı, tercih hatırlanır).
+  `/ozet` `/fikir` `/sss` `/rehber` `/sesli` `/harita` `/gorsel` `/kart` `/quiz` `/ekle` `/not` `/yanitla` `/indir` `/model` `/temizle`
+- **Tepki:** her mesajın altındaki gülen yüz düğmesi emoji menüsünü açar; seçilen tepki mavi rozet olarak kalır, rozete basınca kalkar.
+- **Yanıtla:** mesajı alıntılayarak yazarsın; gönderilen mesajın üstündeki alıntı çubuğuna basınca yanıtlanan mesaja gider ve onu parlatır. Model yanıtlanan mesajı da bağlam olarak görür.
+- **Dosya ekleme:** ataç düğmesi, sürükle bırak ya da yapıştır. Ekler gönderilmeden önce kart olarak önizlenir, ✕ ile kaldırılır; gönderince okunabilen dosyalar (PDF, TXT, MD, HTML, CSV, JSON) not defterine kaynak olarak eklenir.
+
+Geniş ekranda (900 px üstü) sol kenarda kalıcı bir ray durur: kapalıyken yalnız ikonlar (75 px), gruba basınca sağda sol üst köşesi 5 px olan bir çekmece açılır; üstteki menü düğmesi ya da alttaki panel düğmesiyle açılınca ikonların yanında yazılar ve alt menüler görünür (230 px). Telefonda menü eskisi gibi soldan kayan çekmecedir.
+
 ## Klavye ve oyun kolu
 
 Blogger şablonundaki TV/oyun kolu gezinmesi gibi çalışır (ayarlar menüsünde **Klavye ve oyun kolu** ile yardım penceresi açılır):

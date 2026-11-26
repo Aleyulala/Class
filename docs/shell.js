@@ -255,9 +255,75 @@ function buildMobileMenu() {
   matchMedia('(prefers-color-scheme:dark)').addEventListener?.('change', render);
 }
 
+
+/* ---------- Masaüstü ray (XML: .navI, ≥896px — kapalıyken 75px yalnız ikon, açıkken 230px ikon + yazı) ---------- */
+const RKEY = 'defter-rail';
+let rail = null, railFly = null;
+const railOpen = () => lsGet(RKEY, false) === true;
+function railGroups(app) {
+  const cur = app.current(); const th = app.getTheme();
+  const recent = [...app.notebooks()].sort((a, b) => (b.updatedAt || 0) - (a.updatedAt || 0)).filter((n) => !cur || n.id !== cur.id).slice(0, 3);
+  return [
+    { id: 'nb', icon: 'tree', title: 'Not defterleri', badge: 'Yeni!', items: [
+      ['plus', 'Yeni not defteri', () => app.createNb()],
+      ...(recent.length ? recent.map((n) => ['note', n.title, () => app.openNb(n.id)]) : [['note', 'Henüz başka defter yok', null]])] },
+    { id: 'tools', icon: 'flash', title: 'Araçlar', badge: 'Canlı', items: [
+      ['cpu', 'Model seç', () => app.openModel()],
+      ['win', 'Pencere düzeni', () => setWm(!wm.on), wm.on],
+      ['gamepad', 'Klavye ve oyun kolu', () => window.defterHelp?.()]] },
+    { id: 'look', icon: 'tools', title: 'Görünüm', items: [
+      ['sun', 'Açık mod', () => app.setTheme('light'), th === 'light'],
+      ['moon', 'Koyu mod', () => app.setTheme('dark'), th === 'dark'],
+      ['auto', 'Cihaz teması', () => app.setTheme('system'), th === 'system']] },
+  ];
+}
+function railItem([icon, label, run, on]) {
+  return el('button', { type: 'button', className: 'rlSubItem' + (on ? ' on' : ''), disabled: !run, title: label, onclick: () => { closeFly(); run?.(); renderRail(); } },
+    el('span', { className: 'mi', innerHTML: ico(icon) }), el('span', { className: 'ml', textContent: label }), on ? el('span', { className: 'mc', textContent: '✓' }) : '');
+}
+function closeFly() { if (!railFly) return; railFly.classList.remove('fly'); railFly.querySelector('.rlFolder')?.setAttribute('aria-expanded', 'false'); railFly = null; }
+function renderRail() {
+  const app = A(); if (!app || !rail) return;
+  const open = railOpen(); const fo = lsGet(FKEY, { nb: true });
+  rail.classList.toggle('open', open); document.body.style.setProperty('--railW', open ? '230px' : '75px');
+  const home = el('button', { type: 'button', className: 'rlItem' + (app.current() ? '' : ' on'), title: 'Ana Sayfa', 'aria-label': 'Ana Sayfa', onclick: () => { closeFly(); app.goHome(); renderRail(); } },
+    el('span', { className: 'mi', innerHTML: ico('home') || MI.home }), el('span', { className: 'ml', textContent: 'Ana Sayfa' }));
+  const groups = railGroups(app).map((g) => {
+    const isOpen = open && fo[g.id] === true;
+    const btn = el('button', { type: 'button', className: 'rlItem rlFolder', title: g.title, 'aria-label': g.title, 'aria-expanded': String(isOpen), 'aria-haspopup': open ? null : 'true' },
+      el('span', { className: 'mi', innerHTML: ico(g.icon) }), el('span', { className: 'ml', textContent: g.title }), g.badge ? el('span', { className: 'rlBadge', textContent: g.badge }) : '', el('span', { className: 'rlChev', innerHTML: SVG('<path d="m9 6 6 6-6 6"/>') }));
+    const sub = el('div', { className: 'rlSub', role: 'group', 'aria-label': g.title }, el('div', { className: 'rlFlyHead', textContent: g.title }), ...g.items.map(railItem));
+    const wrap = el('div', { className: 'rlGroup' + (isOpen ? ' x' : '') }, btn, sub);
+    btn.onclick = (e) => {
+      e.stopPropagation();
+      if (railOpen()) { const o = lsGet(FKEY, { nb: true }); o[g.id] = !wrap.classList.contains('x'); lsSet(FKEY, o); wrap.classList.toggle('x', o[g.id]); btn.setAttribute('aria-expanded', String(o[g.id])); return; }
+      const same = railFly === wrap; closeFly(); if (same) return;
+      railFly = wrap; wrap.classList.add('fly'); btn.setAttribute('aria-expanded', 'true'); setTimeout(() => sub.querySelector('button:not([disabled])')?.focus(), 30);
+    };
+    return wrap;
+  });
+  const tog = el('button', { type: 'button', className: 'rlItem rlTog', title: open ? 'Menüyü daralt' : 'Menüyü genişlet', 'aria-label': open ? 'Menüyü daralt' : 'Menüyü genişlet', 'aria-expanded': String(open), onclick: toggleRail },
+    el('span', { className: 'mi', innerHTML: SVG('<rect x="3" y="4" width="18" height="16" rx="3"/><path d="M9 4v16"/>') }), el('span', { className: 'ml', textContent: 'Daralt' }));
+  rail.replaceChildren(el('nav', { className: 'rlList', 'aria-label': 'Kenar menüsü' }, home, el('div', { className: 'rlBr' }), ...groups), tog);
+  $('#menuBtn')?.setAttribute('aria-expanded', String(open));
+}
+function toggleRail() { closeFly(); lsSet(RKEY, !railOpen()); renderRail(); setTimeout(() => layoutAll(false), 260); }
+function syncRail() {
+  const on = wide();
+  document.body.classList.toggle('hasRail', on);
+  if (on && !rail) { rail = el('aside', { className: 'rail', id: 'rail' }); document.body.append(rail); renderRail(); }
+  if (!on && rail) { rail.remove(); rail = null; railFly = null; }
+  const top = $('#top'); if (top) document.body.style.setProperty('--railTop', top.offsetHeight + 'px');
+}
+document.addEventListener('pointerdown', (e) => { if (railFly && !railFly.contains(e.target)) closeFly(); });
+document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && railFly) { const b = railFly.querySelector('.rlFolder'); e.stopPropagation(); closeFly(); b?.focus(); } }, true);
+
 function boot() {
   buildMobileMenu();
-  $('#menuBtn').onclick = openDrawer;
+  $('#menuBtn').onclick = () => (wide() ? toggleRail() : openDrawer());
+  syncRail(); addEventListener('resize', () => { if (wide() && drawer) closeDrawer(); syncRail(); });
+  new MutationObserver(() => renderRail()).observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
+  new MutationObserver(() => renderRail()).observe(cols(), { attributes: true, attributeFilter: ['hidden'] });
   if (wm.on) setWm(true); else cols().dataset.wm = 'off';
   window.defterShell = {
     menuItems: () => [

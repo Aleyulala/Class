@@ -25,6 +25,10 @@ const IC = {
   sun: svg('<circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/>', 'width="18" height="18"'),
   moon: svg('<path d="M21 13a8 8 0 1 1-10-10 7 7 0 0 0 10 10z"/>', 'width="18" height="18"'), auto: svg('<rect x="3" y="4" width="18" height="12" rx="2"/><path d="M8 20h8M12 16v4"/>', 'width="18" height="18"'),
   cpu: svg('<rect x="6" y="6" width="12" height="12" rx="2"/><path d="M9 2v4M15 2v4M9 18v4M15 18v4M2 9h4M2 15h4M18 9h4M18 15h4"/>', 'width="18" height="18"'),
+  smile: svg('<circle cx="12" cy="12" r="9"/><path d="M8.5 14s1.2 2 3.5 2 3.5-2 3.5-2M9 9.5h.01M15 9.5h.01"/>', 'width="16" height="16"'),
+  reply: svg('<path d="M10 8 5 12.5l5 4.5"/><path d="M5 12.5h9a5 5 0 0 1 5 5V19"/>', 'width="16" height="16"'),
+  clip: svg('<path d="m20 11.5-8.2 8.2a5 5 0 0 1-7.1-7.1l8.5-8.5a3.4 3.4 0 0 1 4.8 4.8l-8.4 8.4a1.7 1.7 0 0 1-2.4-2.4l7.7-7.7"/>', 'width="20" height="20"'),
+  jump: svg('<path d="M7 17 17 7M9 7h8v8"/>', 'width="14" height="14"'),
   pdf: svg('<path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5"/>', 'width="22" height="22" style="color:#ef4444"'), txt: svg('<path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5M9 13h6M9 17h6"/>'),
 };
 document.querySelectorAll('[data-ic]').forEach((n) => (n.innerHTML = IC[n.dataset.ic] || ''));
@@ -214,18 +218,78 @@ function renderChat() {
   chat.forEach((m, i) => box.append(msgNode(m, i)));
   box.scrollTop = box.scrollHeight;
 }
+const RX = ['👍', '❤️', '🔥', '😂', '🎉', '🚀', '👀', '💯'];
+const fmtSize = (b) => (b < 1024 ? b + ' B' : b < 1048576 ? Math.round(b / 1024) + ' KB' : (b / 1048576).toFixed(1) + ' MB');
+const snip = (t, n = 90) => { t = String(t || '').replace(/\s+/g, ' ').trim(); return t.length > n ? t.slice(0, n) + '…' : t; };
+/* XML: .btt-cr-att-row / .btt-cr-att-card — bilgi solda, küçük önizleme sağda */
+function attCard(a, onRemove) {
+  const thumb = el('div', { className: 'attThumb' });
+  if (a.url) thumb.append(el('img', { src: a.url, alt: '' })); else thumb.textContent = (a.name.split('.').pop() || '').slice(0, 4).toUpperCase();
+  const card = el('div', { className: 'attCard' }, el('div', { className: 'attInfo' }, el('span', { className: 'attTitle', textContent: a.name }), el('span', { className: 'attSub', textContent: a.sub || fmtSize(a.size) })), thumb);
+  const row = el('div', { className: 'attRow' }, card);
+  if (onRemove) row.append(el('button', { type: 'button', className: 'attRm', title: 'Eki kaldır', ariaLabel: 'Eki kaldır', textContent: '✕', onclick: onRemove }));
+  return row;
+}
+/* XML: .btt-reply-quote-ref — basınca yanıtlanan mesaja gider ve parlatır */
+function quoteRef(r) {
+  const b = el('button', { type: 'button', className: 'rqRef', title: 'Yanıtlanan mesaja gitmek için tıklayın' },
+    el('span', { className: 'rqTx' }, el('b', { textContent: '@' + r.who }), document.createTextNode(' ' + r.text)), el('span', { className: 'rqJump', innerHTML: IC.jump }));
+  b.onclick = (e) => { e.stopPropagation(); flashMsg(r.id); };
+  return b;
+}
+function flashMsg(id) {
+  const t = $('#msgs').querySelector(`[data-mid="${CSS.escape(id)}"]`); if (!t) { toast('Yanıtlanan mesaj artık sohbette yok.'); return; }
+  t.scrollIntoView({ behavior: 'smooth', block: 'center' }); t.classList.remove('flash'); void t.offsetWidth; t.classList.add('flash'); setTimeout(() => t.classList.remove('flash'), 3200);
+}
 function msgNode(m, i) {
-  const d = el('div', { className: `msg ${m.role === 'user' ? 'me' : ''} ${m.err ? 'err' : ''}` });
-  if (m.role === 'user') d.textContent = m.text; else d.innerHTML = md(m.text);
-  if (m.role !== 'user' && !m.err && m.text && !m.live) {
-    const save = el('button', { className: 'ib sm', title: 'Nota kaydet', ariaLabel: 'Nota kaydet', innerHTML: IC.pin });
+  if (!m.id) m.id = uid();
+  const d = el('div', { className: `msg ${m.role === 'user' ? 'me' : ''} ${m.err ? 'err' : ''}` }); d.dataset.mid = m.id;
+  if (m.role === 'user') { if (m.reply) d.append(quoteRef(m.reply)); if (m.text) d.append(el('span', { className: 'mTx', textContent: m.text })); if (m.atts?.length) d.append(el('div', { className: 'atts' }, ...m.atts.map((a) => attCard(a)))); }
+  else d.innerHTML = md(m.text);
+  if (m.live || m.err || !m.text && !m.atts?.length) return d;
+  /* XML: .btt-cm-rx-wrap — seçili tepki rozeti + tepki ekle, sağda Yanıtla */
+  const rxWrap = el('span', { className: 'rxWrap' });
+  if (m.rx) rxWrap.append(el('button', { type: 'button', className: 'rxPill', title: 'Tepkiyi kaldır', ariaLabel: 'Tepkiyi kaldır', onclick: () => setRx(m, m.rx) }, el('span', { className: 'rxEmo', textContent: m.rx }), el('span', { className: 'rxCount', textContent: '1' })));
+  const trig = el('button', { type: 'button', className: 'rxBtn', title: 'Tepki Ekle', ariaLabel: 'Tepki ekle', innerHTML: IC.smile, ariaExpanded: 'false' });
+  const pop = el('div', { className: 'rxPop', role: 'menu' }, ...RX.map((e) => el('button', { type: 'button', className: 'rxOpt' + (m.rx === e ? ' on' : ''), textContent: e, ariaLabel: 'Tepki: ' + e, onclick: () => setRx(m, e) })));
+  trig.onclick = (e) => { e.stopPropagation(); const open = !pop.classList.contains('open'); closeRx(); pop.classList.toggle('open', open); trig.setAttribute('aria-expanded', open); if (open) pop.firstChild.focus(); };
+  rxWrap.append(trig, pop);
+  const reply = el('button', { type: 'button', className: 'rxBtn', title: 'Yanıtla', ariaLabel: 'Yanıtla', innerHTML: IC.reply, onclick: () => startReply(m) });
+  const acts = el('div', { className: 'acts' }, rxWrap, reply);
+  if (m.role !== 'user') {
+    const save = el('button', { className: 'rxBtn', title: 'Nota kaydet', ariaLabel: 'Nota kaydet', innerHTML: IC.pin });
     save.onclick = () => saveNote(m.title || (chat[i - 1]?.text || 'Not').slice(0, 60), m.text);
-    const copy = el('button', { className: 'ib sm', title: 'Kopyala', ariaLabel: 'Kopyala', innerHTML: IC.copy });
+    const copy = el('button', { className: 'rxBtn', title: 'Kopyala', ariaLabel: 'Kopyala', innerHTML: IC.copy });
     copy.onclick = () => { navigator.clipboard?.writeText(m.text).then(() => { copy.innerHTML = IC.check; setTimeout(() => (copy.innerHTML = IC.copy), 1200); }).catch(() => {}); };
-    d.append(el('div', { className: 'acts' }, save, copy));
+    acts.append(save, copy);
   }
-  if (m.role !== 'user' && m.at && !m.live) d.append(el('div', { className: 'stamp', textContent: `${new Date(m.at).toDateString() === new Date().toDateString() ? 'Bugün' : fmtDate(m.at)} • ${new Date(m.at).toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' })}` }));
+  d.append(acts);
+  if (m.role !== 'user' && m.at) d.append(el('div', { className: 'stamp', textContent: `${new Date(m.at).toDateString() === new Date().toDateString() ? 'Bugün' : fmtDate(m.at)} • ${new Date(m.at).toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' })}` }));
   return d;
+}
+function closeRx() { document.querySelectorAll('.rxPop.open').forEach((p) => { p.classList.remove('open'); p.previousElementSibling?.setAttribute('aria-expanded', 'false'); }); }
+document.addEventListener('pointerdown', (e) => { if (!e.target.closest('.rxWrap')) closeRx(); });
+document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && document.querySelector('.rxPop.open')) { e.stopPropagation(); closeRx(); } }, true);
+function setRx(m, e) { m.rx = m.rx === e ? '' : e; if (!m.rx) delete m.rx; const y = $('#msgs').scrollTop; renderChat(); $('#msgs').scrollTop = y; persistChat(); }
+
+/* Yanıtla: yazma alanının üstünde alıntı çubuğu */
+let replyTo = null;
+function startReply(m) {
+  replyTo = { id: m.id, who: m.role === 'user' ? 'Sen' : 'Class', text: snip(m.text || m.atts?.map((a) => a.name).join(', ')) };
+  const bar = $('#replyBar'); bar.replaceChildren(quoteRef(replyTo), el('button', { type: 'button', className: 'attRm', title: 'Yanıtı iptal et', ariaLabel: 'Yanıtı iptal et', textContent: '✕', onclick: cancelReply }));
+  bar.hidden = false; setTab('chat'); $('#q').focus();
+}
+function cancelReply() { replyTo = null; $('#replyBar').hidden = true; $('#replyBar').replaceChildren(); }
+
+/* Sohbete dosya ekleme: önizle, gönderince kaynak olarak ekle */
+let pending = [];
+function renderPending() { const box = $('#attList'); box.replaceChildren(...pending.map((f, i) => attCard(f, () => { if (f.url) URL.revokeObjectURL(f.url); pending.splice(i, 1); renderPending(); }))); box.hidden = !pending.length; }
+function addPending(files) {
+  for (const f of files) {
+    const ok = /\.(pdf|txt|md|markdown|csv|html?|json)$/i.test(f.name) || /^text\//.test(f.type);
+    pending.push({ file: f, name: f.name, size: f.size, sub: ok ? fmtSize(f.size) + ' · kaynak olarak eklenecek' : fmtSize(f.size) + ' · okunamaz, yalnızca ad gider', ok, url: /^image\//.test(f.type) ? URL.createObjectURL(f) : '' });
+  }
+  renderPending(); setTab('chat'); $('#q').focus();
 }
 async function saveNote(title, text) { const n = { id: uid(), nbId: nb.id, title, text, addedAt: Date.now() }; notes.push(n); await DB.put('notes', n); renderNotes(); touchNb(); toast('Nota kaydedildi'); }
 function toast(t) { $('#ctxInfo').textContent = t; }
@@ -240,12 +304,12 @@ function needModel() {
 }
 async function persistChat() { if (nb) { await DB.set('chat:' + nb.id, chat.filter((m) => !m.live).slice(-60)); touchNb(); } }
 
-async function run({ userText, shownText, messages, cites, title, maxTokens, demo }) {
+async function run({ userText, shownText, messages, cites, title, maxTokens, demo, reply: rq, atts }) {
   if (busy) return;
   busy = true; abortCtl = new AbortController();
   $('#send').hidden = true; $('#stop').hidden = false;
-  chat.push({ role: 'user', text: shownText ?? userText });
-  const reply = { role: 'assistant', text: '', live: true, cites, title, at: Date.now() };
+  chat.push({ id: uid(), role: 'user', text: shownText ?? userText, ...(rq ? { reply: rq } : {}), ...(atts?.length ? { atts } : {}) });
+  const reply = { id: uid(), role: 'assistant', text: '', live: true, cites, title, at: Date.now() };
   chat.push(reply); renderChat();
   const node = () => $('#msgs').lastElementChild;
   try {
@@ -273,10 +337,11 @@ function demoAnswer(cites) {
   return 'Demo kipi — gerçek model yüklü değil. Sorunla en çok eşleşen kaynak parçaları:\n\n' + cites.slice(0, 3).map((c) => `- ${c.text.replace(/\s+/g, ' ').slice(0, 220)}… [${c.n}]`).join('\n');
 }
 
-async function ask(question) {
-  const { messages, cites } = buildChatMessages(question);
+async function ask(question, { reply: rq, atts } = {}) {
+  const full = rq ? `(${rq.who} mesajına yanıt: "${(chat.find((m) => m.id === rq.id)?.text || rq.text).slice(0, 600)}")\n\n${question}` : question;
+  const { messages, cites } = buildChatMessages(full);
   $('#ctxInfo').textContent = cites.length ? `${cites.length} kaynak parçası kullanıldı · bağlam ${engine.nctx}` : '';
-  await run({ userText: question, messages, cites, maxTokens: 700, demo: demoAnswer(cites) });
+  await run({ userText: question, messages, cites, maxTokens: 700, demo: demoAnswer(cites), reply: rq, atts });
 }
 
 const STUDIO = [
@@ -355,11 +420,84 @@ $('#loadBtn').onclick = async () => {
 const q = $('#q');
 q.addEventListener('input', () => { q.style.height = 'auto'; q.style.height = Math.min(q.scrollHeight, 140) + 'px'; });
 q.addEventListener('keydown', (e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); $('#composer').requestSubmit(); } });
-$('#composer').onsubmit = (e) => { e.preventDefault(); const t = q.value.trim(); if (!t || busy || needModel()) return; q.value = ''; q.style.height = 'auto'; ask(t); };
+$('#composer').onsubmit = async (e) => {
+  e.preventDefault(); const t = q.value.trim();
+  if (t.startsWith('/') && runSlash(t)) return;
+  if ((!t && !pending.length) || busy) return;
+  if (t && needModel()) return;
+  const atts = pending.map(({ name, size, sub, url }) => ({ name, size, sub: sub.split(' · ')[0], url: '' })); const files = pending; pending = []; renderPending();
+  const rq = replyTo; cancelReply(); q.value = ''; q.style.height = 'auto'; closeCmds();
+  for (const f of files) { if (f.url) URL.revokeObjectURL(f.url); if (f.ok) await ingestFiles([f.file]); }
+  if (!t) { chat.push({ id: uid(), role: 'user', text: '', atts, ...(rq ? { reply: rq } : {}) }); renderChat(); persistChat(); toast(`${files.filter((f) => f.ok).length} dosya kaynak olarak eklendi.`); return; }
+  ask(t, { reply: rq, atts });
+};
+$('#attBtn').onclick = () => $('#chatFile').click();
+$('#chatFile').onchange = (e) => { const f = [...e.target.files]; e.target.value = ''; addPending(f); };
+{ const pc = $('#panelChat'); let dn = 0;
+  pc.addEventListener('dragenter', (e) => { if (e.dataTransfer?.types?.includes('Files')) { dn++; pc.classList.add('dropOn'); } });
+  pc.addEventListener('dragover', (e) => { if (e.dataTransfer?.types?.includes('Files')) e.preventDefault(); });
+  pc.addEventListener('dragleave', () => { if (--dn <= 0) { dn = 0; pc.classList.remove('dropOn'); } });
+  pc.addEventListener('drop', (e) => { if (!e.dataTransfer?.files?.length) return; e.preventDefault(); dn = 0; pc.classList.remove('dropOn'); addPending([...e.dataTransfer.files]); });
+  q.addEventListener('paste', (e) => { const f = [...(e.clipboardData?.files || [])]; if (f.length) { e.preventDefault(); addPending(f); } }); }
+
+/* ---------------- /komutlar (XML: BTT_CMD_CATALOG + .btt-cmd-slides-bar) ---------------- */
+const CI = (d) => `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.85" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${d}</svg>`;
+const CMDS = [
+  { cmd: '/ozet', label: 'özet', title: 'Özet', hint: 'Seçili kaynakların kısa özeti', svg: '<path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5M9 13h6M9 17h4"/>', run: () => studio(STUDIO[0]) },
+  { cmd: '/fikir', label: 'fikirler', title: 'Ana fikirler', hint: 'Madde madde ana fikirler', svg: '<path d="M9 18h6M10 21h4"/><path d="M12 3a6 6 0 0 0-3.5 10.9c.6.5 1 1.2 1 2.1h5c0-.9.4-1.6 1-2.1A6 6 0 0 0 12 3z"/>', run: () => studio(STUDIO[1]) },
+  { cmd: '/sss', label: 'sss', title: 'SSS', hint: 'Sık sorulan sorular ve cevapları', svg: '<circle cx="12" cy="12" r="10"/><path d="M9.5 9.5a2.5 2.5 0 1 1 3.5 2.3c-.7.4-1 .9-1 1.7M12 17h.01"/>', run: () => studio(STUDIO[2]) },
+  { cmd: '/rehber', label: 'rehber', title: 'Çalışma rehberi', hint: 'Kavramlar ve tekrar soruları', svg: '<path d="M9 6h12M9 12h12M9 18h12"/><circle cx="4" cy="6" r="1.2"/><circle cx="4" cy="12" r="1.2"/><circle cx="4" cy="18" r="1.2"/>', run: () => studio(STUDIO[3]) },
+  { cmd: '/sesli', label: 'sesli', title: 'Sesli özet', hint: 'İki kişilik sesli özet', svg: '<path d="M11 5L6 9H3v6h3l5 4z"/><path d="M15.5 8.5a5 5 0 0 1 0 7M18.5 6a9 9 0 0 1 0 12"/>', run: () => makeRich('podcast') },
+  { cmd: '/harita', label: 'harita', title: 'Zihin haritası', hint: 'Renkli zihin haritası', svg: '<circle cx="12" cy="12" r="2.5"/><circle cx="4.5" cy="6" r="2"/><circle cx="19.5" cy="6" r="2"/><circle cx="4.5" cy="18" r="2"/><circle cx="19.5" cy="18" r="2"/><path d="M6.2 7.2l4 3.3M17.8 7.2l-4 3.3M6.2 16.8l4-3.3M17.8 16.8l-4-3.3"/>', run: () => makeRich('map') },
+  { cmd: '/gorsel', label: 'görsel', title: 'Görsel özet', hint: 'Bilgi grafiği', svg: '<rect x="3" y="4" width="18" height="16" rx="2"/><circle cx="9" cy="10" r="2"/><path d="m21 16-5-5-9 9"/>', run: () => makeRich('infographic') },
+  { cmd: '/kart', label: 'kartlar', title: 'Bilgi kartları', hint: 'Çevirmeli çalışma kartları', svg: '<rect x="3" y="6" width="14" height="14" rx="2"/><path d="M7 6V4h14v14h-4"/>', run: () => makeRich('cards') },
+  { cmd: '/quiz', label: 'quiz', title: 'Quiz', hint: 'Çoktan seçmeli test', svg: '<circle cx="12" cy="12" r="10"/><path d="M8 12.5l2.7 2.7L16 9.5"/>', run: () => makeRich('quiz') },
+  { cmd: '/ekle', label: 'ekle', title: 'Dosya ekle', hint: 'Sohbete dosya ekle (kaynak olur)', svg: '<path d="m20 11.5-8.2 8.2a5 5 0 0 1-7.1-7.1l8.5-8.5a3.4 3.4 0 0 1 4.8 4.8l-8.4 8.4a1.7 1.7 0 0 1-2.4-2.4l7.7-7.7"/>', run: () => $('#chatFile').click() },
+  { cmd: '/not', label: 'not', title: 'Nota kaydet', hint: 'Son cevabı nota kaydet', svg: '<path d="M5 4h11l3 3v13H5z"/><path d="M8 11h8M8 15h5"/>', run: () => { const i = chat.map((m) => m.role !== 'user' && !m.err && !m.live).lastIndexOf(true); if (i < 0) toast('Kaydedilecek cevap yok.'); else saveNote(chat[i].title || (chat[i - 1]?.text || 'Not').slice(0, 60), chat[i].text); } },
+  { cmd: '/yanitla', label: 'yanıtla', title: 'Son cevaba yanıt', hint: 'Son cevabı alıntılayarak yaz', svg: '<path d="M10 8 5 12.5l5 4.5"/><path d="M5 12.5h9a5 5 0 0 1 5 5V19"/>', run: () => { const m = [...chat].reverse().find((x) => x.role !== 'user' && !x.err && !x.live); if (m) startReply(m); else toast('Yanıtlanacak cevap yok.'); } },
+  { cmd: '/indir', label: 'indir', title: 'Sohbeti indir', hint: 'Sohbeti .md olarak indir', svg: '<path d="M12 3v12M7 10l5 5 5-5M5 19h14"/>', run: () => $('#expChat').click() },
+  { cmd: '/model', label: 'model', title: 'Model seç', hint: 'Model penceresini aç', svg: '<rect x="6" y="6" width="12" height="12" rx="2"/><path d="M9 2v4M15 2v4M9 18v4M15 18v4M2 9h4M2 15h4M18 9h4M18 15h4"/>', run: () => $('#modelDlg').showModal() },
+  { cmd: '/temizle', label: 'temizle', title: 'Sohbeti temizle', hint: 'Bu defterin sohbetini sil', svg: '<path d="M4 7h16M10 11v6M14 11v6M6 7l1 13h10l1-13M9 7V4h6v3"/>', run: () => $('#clearChat').click() },
+];
+const fold = (t) => t.toLocaleLowerCase('tr').replace(/[çğıöşü]/g, (c) => ({ ç: 'c', ğ: 'g', ı: 'i', ö: 'o', ş: 's', ü: 'u' }[c]));
+function runSlash(t) {
+  const [head] = t.split(/\s+/); const c = CMDS.find((x) => x.cmd === fold(head)); if (!c) return false;
+  q.value = ''; q.style.height = 'auto'; closeCmds(); c.run(); return true;
+}
+/* Yazarken açılan komut listesi */
+let cmdSel = 0, cmdList = [];
+const cmdPop = $('#cmdPop');
+function closeCmds() { cmdPop.hidden = true; q.removeAttribute('aria-activedescendant'); q.setAttribute('aria-expanded', 'false'); }
+function showCmds() {
+  const v = q.value; if (!/^\/\S*$/.test(v)) { closeCmds(); return; }
+  cmdList = CMDS.filter((c) => c.cmd.startsWith(fold(v)) || fold(c.title).includes(fold(v.slice(1))));
+  cmdSel = Math.min(cmdSel, Math.max(0, cmdList.length - 1));
+  cmdPop.replaceChildren(...(cmdList.length ? cmdList.map((c, i) => el('button', { type: 'button', id: 'cmd-' + i, className: 'cmdOpt' + (i === cmdSel ? ' on' : ''), role: 'option', ariaSelected: String(i === cmdSel), tabIndex: -1, onmousedown: (e) => e.preventDefault(), onclick: () => pickCmd(i) },
+    el('span', { className: 'cmdIc', innerHTML: CI(c.svg) }), el('code', { textContent: c.cmd }), el('span', { className: 'cmdHint', textContent: c.hint }))) : [el('div', { className: 'cmdNone', textContent: 'Komut bulunamadı' })]));
+  cmdPop.hidden = false; q.setAttribute('aria-expanded', 'true'); if (cmdList.length) q.setAttribute('aria-activedescendant', 'cmd-' + cmdSel);
+  cmdPop.querySelector('.on')?.scrollIntoView({ block: 'nearest' });
+}
+function pickCmd(i) { const c = cmdList[i]; if (!c) return; q.value = ''; q.style.height = 'auto'; closeCmds(); c.run(); }
+q.addEventListener('input', () => { cmdSel = 0; showCmds(); });
+q.addEventListener('blur', () => setTimeout(closeCmds, 120));
+q.addEventListener('keydown', (e) => {
+  if (cmdPop.hidden || !cmdList.length) { if (e.key === 'Escape' && replyTo) { e.stopPropagation(); cancelReply(); } return; }
+  if (e.key === 'ArrowDown' || e.key === 'ArrowUp') { e.preventDefault(); e.stopPropagation(); cmdSel = (cmdSel + (e.key === 'ArrowDown' ? 1 : -1) + cmdList.length) % cmdList.length; showCmds(); }
+  else if (e.key === 'Enter' || e.key === 'Tab') { e.preventDefault(); e.stopImmediatePropagation(); pickCmd(cmdSel); }
+  else if (e.key === 'Escape') { e.stopPropagation(); closeCmds(); }
+}, true);
+/* XML: "/ Komutlar" aç-kapa düğmesi + yana kayan kare kutucuklar */
+{ const bar = $('#cmdBar'), track = $('#cmdTrack'), tg = $('#cmdToggle');
+  const KEY = 'defter-cmdbar'; let col; try { const v = localStorage.getItem(KEY); col = v === '1' ? true : v === '0' ? false : innerWidth <= 640; } catch { col = innerWidth <= 640; }
+  const set = (c) => { bar.classList.toggle('collapsed', c); tg.setAttribute('aria-expanded', String(!c)); };
+  set(col);
+  tg.onclick = () => { const c = !bar.classList.contains('collapsed'); set(c); try { localStorage.setItem(KEY, c ? '1' : '0'); } catch {} };
+  track.append(...CMDS.map((c) => el('button', { type: 'button', className: 'cmdTile', title: `${c.title} (${c.cmd})`, onclick: () => c.run() }, el('span', { className: 'cmdOrb', innerHTML: CI(c.svg) }), el('span', { className: 'cmdLbl', textContent: c.label }))));
+}
 $('#stop').onclick = () => abortCtl?.abort();
-$('#clearChat').onclick = async () => { if (busy) return; chat = []; await DB.set('chat:' + nb.id, []); renderChat(); };
+$('#clearChat').onclick = async () => { if (busy) return; chat = []; cancelReply(); await DB.set('chat:' + nb.id, []); renderChat(); };
 function download(name, text) { const a = el('a', { href: URL.createObjectURL(new Blob([text], { type: 'text/markdown' })), download: name }); document.body.append(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(a.href), 2000); }
-$('#expChat').onclick = () => download('defter-sohbet.md', '# Class sohbeti\n\n' + chat.map((m) => (m.role === 'user' ? `**Sen:** ${m.text}` : `**Class:**\n\n${m.text}`)).join('\n\n---\n\n') + '\n');
+$('#expChat').onclick = () => download('defter-sohbet.md', '# Class sohbeti\n\n' + chat.map((m) => (m.role === 'user' ? `${m.reply ? `> @${m.reply.who}: ${m.reply.text}\n\n` : ''}**Sen:** ${m.text}${m.atts?.length ? `\n\n📎 ${m.atts.map((a) => a.name).join(', ')}` : ''}` : `**Class:**\n\n${m.text}`) + (m.rx ? `\n\n${m.rx}` : '')).join('\n\n---\n\n') + '\n');
 $('#expNotes').onclick = () => download('defter-notlar.md', '# Class notları\n\n' + notes.slice().sort((a, b) => a.addedAt - b.addedAt).map((n) => `## ${n.title}\n\n${n.text}`).join('\n\n---\n\n') + '\n');
 function setTab(t) { $('#cols').dataset.tab = t; document.querySelectorAll('#tabs button').forEach((b) => b.classList.toggle('on', b.dataset.tab === t)); }
 document.querySelectorAll('#tabs button').forEach((b) => (b.onclick = () => setTab(b.dataset.tab)));
@@ -433,6 +571,7 @@ async function openNb(id) {
   [sources, notes, outputs, chat] = await Promise.all([DB.all('sources').then((a) => a.filter((x) => x.nbId === id).sort((a, b) => a.addedAt - b.addedAt)), DB.all('notes').then((a) => a.filter((x) => x.nbId === id)), DB.all('outputs').then((a) => a.filter((x) => x.nbId === id)), DB.get('chat:' + id).then((c) => c || [])]);
   setView('nb'); $('#nbTitle').value = n.title; document.title = `${n.title} — Class`;
   if (location.hash !== '#nb-' + id) history.pushState(null, '', '#nb-' + id);
+  cancelReply(); pending.forEach((f) => f.url && URL.revokeObjectURL(f.url)); pending = []; renderPending();
   setTab('chat'); renderSources(); renderNotes(); renderOutputs(); renderChat();
 }
 function goHome() {
