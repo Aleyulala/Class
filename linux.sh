@@ -22,7 +22,7 @@ BACKEND_PATH="$APP_DIR/backend/linux/vulkan/sd-vulkan"
 CPU_BACKEND_PATH="$APP_DIR/backend/linux/cpu/sd-cpu"
 PLATFORM_LABEL="Linux"
 
-DIST_INDEX="$APP_DIR/dist/index.html"
+DIST_INDEX="$SCRIPT_DIR/docs/index.html"
 SETUP_SCRIPT="$SCRIPT_DIR/scripts/setup/setup.sh"
 SERVE_SCRIPT="$SCRIPT_DIR/scripts/server/serve.cjs"
 

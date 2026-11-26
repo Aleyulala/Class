@@ -135,6 +135,7 @@ SansursuzLokalAIStudyosu-V2/
 ├── mac.sh                     # macOS Başlatıcı (Terminal üzerinden çalıştırın)
 ├── LICENSE                    # MIT Açık Kaynak Lisansı
 ├── README.md                  # Ayrıntılı Türkçe sistem dokümantasyonu
+├── docs/                      # Class arayüzü (Plus UI, NotebookLM tarzı) — sunucu bunu açar
 ├── scripts/
 │   ├── setup/                 # Platforma özel otomatik kurulum betikleri
 │   ├── reset/                 # Temiz kurulum ve ortam sıfırlama araçları
@@ -142,7 +143,6 @@ SansursuzLokalAIStudyosu-V2/
 │   ├── workers/               # Python / Node TTS, ses tanıma, müzik ve video işçileri
 │   └── build/                 # İsteğe bağlı kaynaktan derleme yardımcıları
 └── app/
-    ├── frontend/              # Web arayüzü kaynak kodları (React + Vite)
     ├── models/                # Görsel modelleri (.safetensors, .ckpt)
     ├── llm-models/            # Dil modelleri (.gguf)
     ├── speech-models/         # Whisper (.bin), Duyu ve Seda ses tanıma modelleri

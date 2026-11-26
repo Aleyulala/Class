@@ -216,7 +216,7 @@ function Expand-WithProgress {
 # 
 Print-Header
 
-$steps = 9
+$steps = 7
 
 # -- Step 1: Portable Node.js --------------------------------------------------
 Print-Step 1 $steps "Setting up portable Node.js (app/tools/node-win/)"
@@ -616,80 +616,8 @@ if ($LASTEXITCODE -ne 0) {
     Print-Warn "Python AI components could not be installed. Retry later with scripts\setup\setup-python.ps1"
 }
 
-$distHtml = Join-Path $distDir "index.html"
-if ((Test-Path $distHtml) -and (-not $RebuildFrontend)) {
-    Print-Step 8 $steps "Checking prebuilt frontend (app/dist/)"
-    Print-OK "Prebuilt frontend found ($distHtml)."
-} else {
-    Print-Step 8 $steps "Installing frontend dependencies (app/frontend/)"
-    Write-Host ""
-
-    if (-not (Test-Path $npmCmd)) {
-        Print-Fail "npm.cmd was not found at $npmCmd"
-        Print-Fail "Close any running Sansursuz Lokal AI Studyosu - DD:YZ windows, delete app/tools/node-win, then run setup again."
-        Read-Host; exit 1
-    }
-
-    # If node_modules is a Unix symlink/junction, remove it so Windows can install natively into a real directory
-    $nodeModulesDir = Join-Path $frontendDir "node_modules"
-    $activeOsFile = Join-Path $frontendDir ".active_modules_os"
-    $prevOs = ""
-    if (Test-Path $activeOsFile) {
-        $prevOs = (Get-Content $activeOsFile -Raw).Trim()
-    }
-
-    if (Test-Path $nodeModulesDir) {
-        $item = Get-Item $nodeModulesDir
-        if ($item.Attributes -match "ReparsePoint") {
-            Print-Info "Removing Unix symlink for node_modules on Windows..."
-            Remove-Item $nodeModulesDir -Force -ErrorAction SilentlyContinue
-        } elseif ($prevOs -ne "windows" -and $prevOs -ne "") {
-            # It's a real folder, but it belongs to another OS (e.g. linux or mac)
-            Print-Info "Swapping out node_modules to node_modules_$prevOs..."
-            $targetDir = Join-Path $frontendDir "node_modules_$prevOs"
-            if (Test-Path $targetDir) { Remove-Item $targetDir -Recurse -Force -ErrorAction SilentlyContinue }
-            Move-Item $nodeModulesDir $targetDir -Force
-        }
-    }
-
-    # Now swap in node_modules_windows if it exists
-    $winModulesDir = Join-Path $frontendDir "node_modules_windows"
-    if ((Test-Path $winModulesDir) -and -not (Test-Path $nodeModulesDir)) {
-        Print-Info "Swapping in node_modules_windows..."
-        Move-Item $winModulesDir $nodeModulesDir -Force
-    }
-
-    # Mark windows as active
-    "windows" | Out-File -FilePath $activeOsFile -NoNewline -Encoding utf8
-
-    Push-Location $frontendDir
-    $oldPath = $env:PATH
-    try {
-        $env:PATH = "$nodeDir;$env:PATH"
-        & $npmCmd install --prefer-offline --loglevel=error
-        if ($LASTEXITCODE -ne 0) {
-            Print-Fail "npm install failed."
-            Read-Host; exit 1
-        }
-        Write-Host ""
-        Print-OK "Dependencies installed!"
-
-        # -- Step 4: Build frontend ------------------------------------------------
-        Print-Step 9 $steps "Building frontend -> app/dist/"
-        Write-Host ""
-
-        & $npmCmd run build
-        if ($LASTEXITCODE -ne 0) {
-            Print-Fail "Frontend build failed."
-            Read-Host; exit 1
-        }
-        Write-Host ""
-        Print-OK "Frontend built!"
-    } finally {
-        $env:PATH = $oldPath
-        Pop-Location
-    }
-}
+# Arayuz: Class (docs/). Derleme ve npm install gerekmez.
+Print-OK "UI ready: Class (docs/). No build required."
 
 # -- Done ---------------------------------------------------------------------
 Write-Host ""
