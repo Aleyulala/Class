@@ -627,3 +627,15 @@ dialog.ct .ctBody{display:flex;flex-direction:column;gap:14px}
 .ctChip{display:inline-flex;align-items:center;gap:8px;margin-inline-start:10px;padding:5px 12px;border-radius:10px;background:rgba(127,127,127,.18);font-size:14px;font-weight:500}.ctChip i{width:9px;height:9px;border-radius:50%;background:var(--ok)}
 dialog.fs .fsBar b{display:inline-flex;align-items:center}dialog.fs .fsBar b+.ctChip{margin-inline-end:auto}
 dialog.ct .chSearch{flex-direction:row;align-items:center}
+/* ---- Tek tip düğmeler: "Tümü" düğmesiyle aynı boy (42px), köşe (10px), yazı ve üzerine gelme ---- */
+:root{--ctlH:42px}
+:root .pillBtn,:root .newPill,:root .pillAct,:root .btn:not(.sm):not(.back),:root .cmdToggle,:root .ctSend,:root .ctStep{min-height:var(--ctlH);box-sizing:border-box;display:inline-flex;align-items:center;justify-content:center;gap:8px;padding:0 16px;border-radius:var(--rb);font-size:14px;font-weight:600;line-height:1;white-space:nowrap}
+:root .newPill{background:var(--ac);color:var(--acfg);border:0}
+:root .pillAct{background:var(--btn);border:0}
+:root .btn:not(.primary):not(.sm){background:var(--btn)}
+:root .ctSend,:root .ctStep{border:0;background:var(--btn)}:root .ctStep.on{background:color-mix(in srgb,var(--ac) 18%,var(--btn));color:var(--ac)}
+:root .sendBtn,:root .composer .sendBtn{width:var(--ctlH);height:var(--ctlH);border-radius:var(--rb)}
+:root .pillBtn:hover,:root .pillAct:hover,:root .btn:not(.sm):hover,:root .cmdToggle:hover,:root .ctSend:hover,:root .ctStep:hover,:root .sendBtn:hover,:root .newPill:hover{transform:translateY(-2px);box-shadow:0 4px 14px rgba(0,0,0,.28)}
+:root .pillBtn:hover,:root .pillAct:hover,:root .btn:not(.primary):not(.sm):hover,:root .cmdToggle:hover,:root .ctSend:hover{background:var(--btnh)}
+:root .pillAct svg,:root .newPill svg,:root .btn svg,:root .pillBtn svg{width:18px;height:18px}
+@media (max-width:900px){:root .pillAct{padding:0 12px;font-size:14px}}
