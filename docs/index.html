@@ -120,6 +120,10 @@
       <select id="nctx"><option value="2048">2048 (hafif)</option><option value="4096" selected>4096</option><option value="8192">8192 (daha çok RAM)</option></select>
     </label>
     <label class="chk"><input type="checkbox" id="useGpu" checked> Ekran kartını (WebGPU) kullan</label>
+    <details id="diagBox"><summary>Cihaz tanılama (çalışmazsa bunu kopyalayıp gönder)</summary>
+      <pre class="cite" id="diag"></pre>
+      <div class="row"><button class="btn" type="button" id="diagCopy">Kopyala</button></div>
+    </details>
     <div class="bar" id="dlBar" hidden><div id="dlFill"></div></div>
     <div class="muted" id="dlText"></div>
     <div class="row end">

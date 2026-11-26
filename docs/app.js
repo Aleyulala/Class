@@ -537,6 +537,25 @@ function openOutput(o) {
 $('#vwClose').onclick = () => $('#vwDlg').close();
 $('#vwDlg').addEventListener('close', () => { vwCleanup?.(); vwCleanup = null; });
 
+/* ---------------- Cihaz tanılama ---------------- */
+function diagnose() {
+  const ua = navigator.userAgent; const yes = (v) => (v ? 'var' : 'YOK');
+  let wasmOk = 'YOK';
+  try { if (typeof WebAssembly === 'object') wasmOk = WebAssembly.validate(new Uint8Array([0, 97, 115, 109, 1, 0, 0, 0])) ? 'var (çalışıyor)' : 'var ama doğrulama başarısız'; } catch (e) { wasmOk = 'hata: ' + e.message; }
+  const hint = [];
+  if (/; wv\)/.test(ua) || /FBAN|FBAV|Instagram|WhatsApp|Line\/|Telegram|Snapchat|Twitter/i.test(ua)) hint.push('Uygulama içi tarayıcı (WebView) görünüyor; sayfayı Chrome\'da aç.');
+  if (/VivoBrowser|vivo/i.test(ua) && /Browser/i.test(ua)) hint.push('Vivo Tarayıcı görünüyor; Chrome ya da Firefox dene.');
+  if (typeof WebAssembly !== 'object') hint.push('WebAssembly yok: tarayıcıda JIT/V8 optimizasyonu kapalı olabilir ya da bu tarayıcı desteklemiyor.');
+  return [
+    `Tarayıcı kimliği: ${ua}`, `WebAssembly: ${wasmOk}`, `SharedArrayBuffer: ${yes(typeof SharedArrayBuffer !== 'undefined')}`, `crossOriginIsolated: ${window.crossOriginIsolated}`,
+    `WebGPU: ${yes(navigator.gpu)}`, `Güvenli bağlam (https): ${window.isSecureContext}`, `Çekirdek sayısı: ${navigator.hardwareConcurrency || '?'}`, `Bellek (yaklaşık, GB): ${navigator.deviceMemory || '?'}`,
+    `Depolama sürekli izni: ${navigator.storage?.persist ? 'desteklenir' : 'yok'}`, hint.length ? `\nİpucu: ${hint.join(' ')}` : '',
+  ].filter((x) => x !== '').join('\n');
+}
+$('#diagBox').addEventListener('toggle', () => { if ($('#diagBox').open) $('#diag').textContent = diagnose(); });
+$('#diagCopy').onclick = async () => { const t = diagnose(); try { await navigator.clipboard.writeText(t); $('#diagCopy').textContent = 'Kopyalandı'; } catch { $('#diag').textContent = t; const r = document.createRange(); r.selectNodeContents($('#diag')); getSelection().removeAllRanges(); getSelection().addRange(r); $('#diagCopy').textContent = 'Seçildi, elle kopyala'; } setTimeout(() => ($('#diagCopy').textContent = 'Kopyala'), 1800); };
+$('#loadBtn').addEventListener('click', () => { if (typeof WebAssembly === 'undefined') { $('#diagBox').open = true; } });
+
 /* ---------------- Başlangıç ---------------- */
 (async () => {
   notebooks = await DB.all('notebooks');
