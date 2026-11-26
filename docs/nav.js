@@ -65,6 +65,7 @@ function click(sel) { const e = $(sel); if (e && !e.hidden && !e.disabled) { e.c
 function goBack() {
   if ($('.menu')) { document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true })); return true; }
   const dlg = [...document.querySelectorAll('dialog[open]')].pop(); if (dlg) { dlg.close(); return true; }
+  if (window.defterSlide?.back()) return true; /* telefonda açık kayan panel / stüdyo sayfası */
   if (click('#backBtn')) return true;
   if (!$('#searchBar')?.hidden && click('#searchClose')) return true;
   return false;

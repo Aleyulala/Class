@@ -24,6 +24,7 @@ app/audio-outputs/
 app/music-models/
 app/video-models/
 app/video-outputs/
+app/convert-outputs/
 app/rvc-models/
 
 # Personal voice recordings used for voice cloning (never publish)

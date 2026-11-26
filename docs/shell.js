@@ -175,13 +175,14 @@ function buildMobileMenu() {
   const isDark = () => { const t = A().getTheme(); return t === 'dark' || (t === 'system' && matchMedia('(prefers-color-scheme:dark)').matches); };
   const view = () => (cols().hidden ? 'home' : 'nb');
   const tab = () => cols().dataset.tab;
+  const sheet = () => cols().dataset.sheet || '';
   const press = (t) => $(`#tabs [data-tab="${t}"]`)?.click();
   const defs = () => view() === 'nb'
     ? [{ k: 'back', i: 'back', t: 'Defterler', run: () => A().goHome() },
-       { k: 'sources', i: 'src', t: 'Kaynaklar', on: tab() === 'sources', run: () => press('sources') },
+       { k: 'sources', i: 'src', t: 'Kaynaklar', on: tab() === 'sources' || sheet() === 'sources', run: () => press('sources') },
        { k: 'menu', i: 'menu', t: 'Menü', run: openDrawer },
-       { k: 'studio', i: 'studio', t: 'Stüdyo', on: tab() === 'studio', run: () => press('studio') },
-       { k: 'chat', i: 'chat', t: 'Sohbet', on: tab() === 'chat', run: () => press('chat') }]
+       { k: 'studio', i: 'studio', t: 'Stüdyo', on: tab() === 'studio' || sheet() === 'studio', run: () => press('studio') },
+       { k: 'chat', i: 'chat', t: 'Sohbet', on: tab() === 'chat' && !sheet(), run: () => press('chat') }]
     : [{ k: 'home', i: 'home', t: 'Ana sayfa', on: true, run: () => scrollTo({ top: 0 }) || $('#home').scrollTo?.({ top: 0, behavior: 'smooth' }) },
        { k: 'search', i: 'search', t: 'Ara', run: () => $('#searchBtn').click() },
        { k: 'menu', i: 'menu', t: 'Menü', run: openDrawer },
@@ -196,7 +197,7 @@ function buildMobileMenu() {
     }
   }
   render();
-  new MutationObserver(render).observe(cols(), { attributes: true, attributeFilter: ['hidden', 'data-tab'] });
+  new MutationObserver(render).observe(cols(), { attributes: true, attributeFilter: ['hidden', 'data-tab', 'data-sheet'] });
   new MutationObserver(render).observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
   matchMedia('(prefers-color-scheme:dark)').addEventListener?.('change', render);
 }

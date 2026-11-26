@@ -35,6 +35,7 @@ function commands() {
     { t: 'Yazıya dök', s: 'Ses ya da videoyu metne çevir (Whisper)', run: () => window.defterHub?.open('stt') },
     { t: 'Müzik stüdyosu', s: 'Müzik ve ses efekti üret', run: () => window.defterHub?.open('music') },
     { t: 'Video stüdyosu', s: 'Metinden video üret', run: () => window.defterHub?.open('video') },
+    { t: 'Dönüştürücü', s: 'Görsel, PDF, ses, video, altyazı, yazı tipi, belge, gizlilik', run: () => window.defterHub?.open('convert') },
     { t: 'Web’de kaynak ara', s: 'Web araması ve adresten kaynak ekle', run: () => window.defterHub?.open('web') },
     { t: 'Model Merkezi', s: 'Model indir, ara, sil', run: () => window.defterHub?.open('models') },
     { t: 'Sistem', s: 'Güncelleme, temizlik, Hugging Face anahtarı', run: () => window.defterHub?.open('system') },

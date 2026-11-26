@@ -167,6 +167,82 @@ const AUDIO_OUTPUTS = path.join(ROOT, "app", "audio-outputs");
 if (!fs.existsSync(AUDIO_OUTPUTS)) {
   fs.mkdirSync(AUDIO_OUTPUTS, { recursive: true });
 }
+// Class Dönüştürücü: ffmpeg çıktıları (yalnızca yerel; 24 saatten eski dosyalar her yeni işte silinir)
+const CONVERT_OUTPUTS = path.join(ROOT, "app", "convert-outputs");
+const CONVERT_MAX_BYTES = 16 * 1024 * 1024 * 1024;
+let convertJob = null;
+let convertFfmpegCache = null;
+function convertFfmpegBin() {
+  const winget = path.join(os.homedir(), "AppData", "Local", "Microsoft", "WinGet", "Links", "ffmpeg.exe");
+  if (fs.existsSync(winget)) return winget;
+  try {
+    const w = spawnSync(os.platform() === "win32" ? "where" : "which", ["ffmpeg"], { encoding: "utf8", windowsHide: true, timeout: 5000 });
+    const line = w.status === 0 ? String(w.stdout || "").trim().split(/\r?\n/)[0].trim() : "";
+    if (line && fs.existsSync(line)) return line;
+  } catch (_) {}
+  return "ffmpeg";
+}
+function convertFfmpegInfo() {
+  if (convertFfmpegCache) return convertFfmpegCache;
+  const bin = convertFfmpegBin();
+  try {
+    const r = spawnSync(bin, ["-hide_banner", "-version"], { encoding: "utf8", windowsHide: true, timeout: 10000 });
+    if (r.status === 0) return (convertFfmpegCache = { ok: true, bin, version: ((r.stdout || "").match(/ffmpeg version (\S+)/) || [])[1] || "" });
+  } catch (_) {}
+  return { ok: false, bin };
+}
+function convertSafeBase(name) {
+  const b = path.basename(String(name || "dosya")).replace(/\.[^.]+$/, "").replace(/[^\p{L}\p{N} ._()-]+/gu, "_").trim().slice(0, 80);
+  return b || "dosya";
+}
+/* İzinli seçeneklerden ffmpeg argümanları kurar; kabuk kullanılmaz, kullanıcı metni argümana girmez. */
+function convertFfmpegArgs(input, output, o) {
+  const a = ["-hide_banner", "-nostdin", "-y"];
+  const start = Number(o.start) > 0 ? Number(o.start) : 0;
+  const end = Number(o.end) > 0 ? Number(o.end) : 0;
+  if (start) a.push("-ss", start.toFixed(3));
+  a.push("-i", input);
+  if (end && end > start) a.push("-t", (end - start).toFixed(3));
+  if (o.stripMeta) a.push("-map_metadata", "-1", "-map_chapters", "-1");
+  if (o.kind === "audio") {
+    const br = [96, 128, 192, 256, 320].includes(Number(o.bitrate)) ? Number(o.bitrate) : 192;
+    a.push("-vn");
+    if (o.format === "mp3") a.push("-c:a", "libmp3lame", "-b:a", `${br}k`);
+    else if (o.format === "m4a") a.push("-c:a", "aac", "-b:a", `${br}k`);
+    else if (o.format === "opus") a.push("-c:a", "libopus", "-b:a", `${Math.min(br, 256)}k`);
+    else if (o.format === "flac") a.push("-c:a", "flac");
+    else if (o.format === "wav") a.push("-c:a", "pcm_s16le");
+    else throw new Error("Desteklenmeyen ses biçimi.");
+  } else {
+    const q = ["high", "balanced", "small"].includes(o.quality) ? o.quality : "balanced";
+    const filters = [];
+    if ([2160, 1440, 1080, 720, 480, 360].includes(Number(o.height))) filters.push(`scale=-2:${Number(o.height)}`);
+    if (filters.length) a.push("-vf", filters.join(","));
+    if ([24, 25, 30, 50, 60].includes(Number(o.fps))) a.push("-r", String(Number(o.fps)));
+    if (o.format === "webm") a.push("-c:v", "libvpx-vp9", "-b:v", "0", "-crf", String({ high: 28, balanced: 33, small: 38 }[q]), "-row-mt", "1", "-deadline", "good", "-cpu-used", "2");
+    else if (o.format === "mp4h265") a.push("-c:v", "libx265", "-preset", "medium", "-crf", String({ high: 22, balanced: 26, small: 30 }[q]), "-tag:v", "hvc1", "-pix_fmt", "yuv420p");
+    else if (["mp4", "mkv", "mov"].includes(o.format)) a.push("-c:v", "libx264", "-preset", "medium", "-crf", String({ high: 18, balanced: 23, small: 28 }[q]), "-pix_fmt", "yuv420p");
+    else throw new Error("Desteklenmeyen video biçimi.");
+    if (o.noAudio) a.push("-an");
+    else if (o.format === "webm") a.push("-c:a", "libopus", "-b:a", "128k");
+    else a.push("-c:a", "aac", "-b:a", "160k");
+    if (["mp4", "mp4h265", "mov"].includes(o.format)) a.push("-movflags", "+faststart");
+  }
+  a.push(output);
+  return a;
+}
+const CONVERT_EXT = { mp4: "mp4", mp4h265: "mp4", mkv: "mkv", mov: "mov", webm: "webm", mp3: "mp3", m4a: "m4a", opus: "opus", flac: "flac", wav: "wav" };
+const CONVERT_MIME = { ".mp4": "video/mp4", ".mkv": "video/x-matroska", ".mov": "video/quicktime", ".webm": "video/webm", ".mp3": "audio/mpeg", ".m4a": "audio/mp4", ".opus": "audio/ogg", ".flac": "audio/flac", ".wav": "audio/wav" };
+function convertSweep() {
+  try {
+    const now = Date.now();
+    for (const f of fs.readdirSync(CONVERT_OUTPUTS)) {
+      const fp = path.join(CONVERT_OUTPUTS, f);
+      try { if (now - fs.statSync(fp).mtimeMs > 24 * 3600 * 1000) fs.unlinkSync(fp); } catch (_) {}
+    }
+  } catch (_) {}
+}
+
 const MUSIC_MODELS = path.join(ROOT, "app", "music-models");
 if (!fs.existsSync(MUSIC_MODELS)) {
   fs.mkdirSync(MUSIC_MODELS, { recursive: true });
@@ -11327,6 +11403,82 @@ async function getLlmfitRecommendations(useCase = "chat", limit = 10) {
     return;
   }
 
+  // GET /api/convert/status — Class Dönüştürücü: ffmpeg var mı?
+  if (req.url === "/api/convert/status" && req.method === "GET") {
+    const info = convertFfmpegInfo();
+    return json(res, 200, { ok: true, ffmpeg: info.ok, version: info.version || "", busy: !!convertJob });
+  }
+  // GET /api/convert/progress
+  if (req.url === "/api/convert/progress" && req.method === "GET") {
+    if (!convertJob) return json(res, 200, { ok: true, active: false });
+    return json(res, 200, { ok: true, active: true, percent: convertJob.percent, speed: convertJob.speed, name: convertJob.name });
+  }
+  // POST /api/convert/cancel
+  if (req.url === "/api/convert/cancel" && req.method === "POST") {
+    if (convertJob?.proc) { convertJob.cancelled = true; try { convertJob.proc.kill("SIGKILL"); } catch (_) {} }
+    return json(res, 200, { ok: true });
+  }
+  // POST /api/convert/media?name=&opts= — gövde: ham dosya. Çıktı: /convert-outputs/<dosya>
+  if (req.url.startsWith("/api/convert/media") && req.method === "POST") {
+    const parsed = new URL(req.url, `http://${req.headers.host || "localhost"}`);
+    const info = convertFfmpegInfo();
+    if (!info.ok) { req.resume(); return json(res, 503, { ok: false, error: "ffmpeg bulunamadı. Kurup Class'ı yeniden başlatın." }); }
+    if (convertJob) { req.resume(); return json(res, 409, { ok: false, error: "Başka bir dönüştürme sürüyor; bitmesini bekleyin." }); }
+    let o;
+    try { o = JSON.parse(parsed.searchParams.get("opts") || "{}"); } catch (_) { req.resume(); return json(res, 400, { ok: false, error: "Geçersiz seçenekler." }); }
+    const fmt = String(o.format || "");
+    if (!CONVERT_EXT[fmt]) { req.resume(); return json(res, 400, { ok: false, error: "Desteklenmeyen biçim." }); }
+    fs.mkdirSync(CONVERT_OUTPUTS, { recursive: true });
+    convertSweep();
+    const safe = convertSafeBase(parsed.searchParams.get("name"));
+    const inExt = (path.extname(String(parsed.searchParams.get("name") || "")).toLowerCase().match(/^\.[a-z0-9]{1,5}$/) || [".bin"])[0];
+    const stamp = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+    const inPath = path.join(os.tmpdir(), `class-convert-${stamp}${inExt}`);
+    const outName = `${safe}.${CONVERT_EXT[fmt]}`;
+    const outFile = `${stamp}-${outName}`;
+    const outPath = path.join(CONVERT_OUTPUTS, outFile);
+    convertJob = { percent: 0, speed: "", name: safe, proc: null, cancelled: false };
+    try {
+      await new Promise((resolve, reject) => {
+        let n = 0;
+        const out = fs.createWriteStream(inPath);
+        req.on("data", (c) => { n += c.length; if (n > CONVERT_MAX_BYTES) { req.destroy(); out.destroy(); reject(new Error("Dosya çok büyük (en fazla 16 GB).")); } });
+        req.on("error", reject); out.on("error", reject); out.on("finish", resolve);
+        req.pipe(out);
+      });
+      let args;
+      try { args = convertFfmpegArgs(inPath, outPath, o); } catch (e) { throw Object.assign(e, { status: 400 }); }
+      await new Promise((resolve, reject) => {
+        const proc = trackJobProcess(spawn(info.bin, args, { windowsHide: true, stdio: ["ignore", "ignore", "pipe"] }));
+        convertJob.proc = proc;
+        let duration = 0, tail = "";
+        const clipStart = Number(o.start) > 0 ? Number(o.start) : 0, clipEnd = Number(o.end) > 0 ? Number(o.end) : 0;
+        const tsec = (t) => t.split(":").reduce((x, y) => x * 60 + Number(y), 0);
+        proc.stderr.on("data", (d) => {
+          const t = d.toString(); tail = (tail + t).slice(-4000);
+          const dm = t.match(/Duration: (\d+:\d+:\d+(?:\.\d+)?)/); if (dm && !duration) { duration = tsec(dm[1]); if (clipEnd > clipStart) duration = Math.min(duration - clipStart, clipEnd - clipStart); else if (clipStart) duration -= clipStart; }
+          const tm = [...t.matchAll(/time=(\d+:\d+:\d+(?:\.\d+)?)/g)].pop(); if (tm && duration > 0) convertJob.percent = Math.min(99, (tsec(tm[1]) / duration) * 100);
+          const sm = [...t.matchAll(/speed=\s*([\d.]+x)/g)].pop(); if (sm) convertJob.speed = sm[1];
+        });
+        proc.on("error", reject);
+        proc.on("exit", (code) => {
+          if (convertJob?.cancelled) return reject(new Error("Dönüştürme iptal edildi."));
+          if (code === 0) return resolve();
+          const last = tail.trim().split(/\r?\n/).filter(Boolean).slice(-3).join(" · ");
+          reject(new Error(`ffmpeg hata verdi (${code}): ${last.slice(0, 400)}`));
+        });
+      });
+      const size = fs.statSync(outPath).size;
+      return json(res, 200, { ok: true, name: outName, size, url: `/convert-outputs/${encodeURIComponent(outFile)}` });
+    } catch (err) {
+      try { fs.unlinkSync(outPath); } catch (_) {}
+      return json(res, err.status || 500, { ok: false, error: err.message || String(err) });
+    } finally {
+      try { fs.unlinkSync(inPath); } catch (_) {}
+      convertJob = null;
+    }
+  }
+
   // POST /api/fetch-url — Class: bir web sayfasını kaynak olarak ekler. Yerel/özel ağ adresleri engellidir (assertPublicUrl).
   if (req.url === "/api/fetch-url" && req.method === "POST") {
     const body = await readJsonBody(req, res);
@@ -11888,6 +12040,26 @@ async function getLlmfitRecommendations(useCase = "chat", limit = 10) {
     }
     fs.createReadStream(filePath).pipe(res);
     return;
+  }
+
+  if (req.url.startsWith("/convert-outputs/") && (req.method === "GET" || req.method === "HEAD")) {
+    const filename = path.basename(decodeURIComponent(req.url.replace(/^\/convert-outputs\//, "").split("?")[0] || ""));
+    const filePath = path.join(CONVERT_OUTPUTS, filename);
+    if (!filename || !pathInside(filePath, CONVERT_OUTPUTS) || !fs.existsSync(filePath)) return json(res, 404, { ok: false, error: "Çıktı bulunamadı" });
+    const stat = fs.statSync(filePath);
+    const type = CONVERT_MIME[path.extname(filePath).toLowerCase()] || "application/octet-stream";
+    const m = /^bytes=(\d*)-(\d*)$/.exec(req.headers.range || "");
+    if (m && (m[1] || m[2])) {
+      let start = m[1] ? Number(m[1]) : Math.max(0, stat.size - Number(m[2]));
+      let end = m[1] && m[2] ? Math.min(Number(m[2]), stat.size - 1) : stat.size - 1;
+      if (start > end || start >= stat.size) { res.writeHead(416, { "Content-Range": `bytes */${stat.size}` }); return res.end(); }
+      res.writeHead(206, { "Content-Type": type, "Content-Length": end - start + 1, "Content-Range": `bytes ${start}-${end}/${stat.size}`, "Accept-Ranges": "bytes" });
+      if (req.method === "HEAD") return res.end();
+      return fs.createReadStream(filePath, { start, end }).pipe(res);
+    }
+    res.writeHead(200, { "Content-Type": type, "Content-Length": stat.size, "Accept-Ranges": "bytes" });
+    if (req.method === "HEAD") return res.end();
+    return fs.createReadStream(filePath).pipe(res);
   }
 
   if (req.url.startsWith("/audio-outputs/") && (req.method === "GET" || req.method === "HEAD")) {
