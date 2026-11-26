@@ -710,3 +710,9 @@ dialog.ct .fsBar b{font-weight:800;font-size:17px}
 .cmpChip{min-height:28px;height:28px;padding:0 10px;font-size:12px;border-radius:8px;gap:6px}.cmpChip svg{width:16px;height:16px}
 :root #composer .sendBtn{height:30px;padding:0 10px;font-size:12.5px;gap:8px;border-radius:8px;background:rgba(0,0,0,.18)}
 :root #composer .sendBtn svg{width:16px;height:16px}
+
+/* ---- Aşağı kaydırdıkça belirme (Blogger yorumları gibi) ---- */
+.rv{opacity:0;transform:translateY(22px);transition:opacity .5s cubic-bezier(.16,1,.3,1) var(--rvd,0ms),transform .5s cubic-bezier(.16,1,.3,1) var(--rvd,0ms);will-change:opacity,transform}
+.rv.in{opacity:1;transform:none}
+.nbCard.rv,.nbCard.rv.in{transition-property:opacity,transform,border-color,box-shadow}
+@media (prefers-reduced-motion:reduce){.rv{opacity:1;transform:none;transition:none}}
