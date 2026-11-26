@@ -1,0 +1,160 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Defter — Tarayıcıda Yerel Yapay Zekâ</title>
+<meta name="description" content="Kaynaklarını yükle, onlarla sohbet et, özet ve çalışma rehberi çıkar. Her şey tarayıcında çalışır, hiçbir veri dışarı gitmez.">
+<link rel="stylesheet" href="style.css">
+<script src="coi-sw.js"></script>
+</head>
+<body>
+<header class="top" id="top">
+  <div class="tl">
+    <button class="ib" id="backBtn" hidden aria-label="Not defterlerine dön" title="Not defterlerine dön" data-ic="back"></button>
+    <a class="logoLink" href="#" id="homeLink" aria-label="Defter ana ekran"><span class="logo">D</span></a>
+    <button class="pillBtn" id="filterBtn" aria-haspopup="menu"><span id="filterLabel">Tümü</span><i data-ic="caret"></i></button>
+    <input id="nbTitle" class="nbTitle" hidden aria-label="Not defteri başlığı" maxlength="80">
+  </div>
+  <div class="tr">
+    <button class="ib" id="searchBtn" aria-label="Not defterlerinde ara" title="Ara" data-ic="search"></button>
+    <button class="ib" id="newNbBtn" hidden aria-label="Yeni not defteri" title="Yeni not defteri" data-ic="plus"></button>
+    <button class="ib" id="shareBtn" hidden aria-label="Sohbeti .md olarak indir" title="Sohbeti indir (.md)" data-ic="share"></button>
+    <button class="ib" id="moreBtn" hidden aria-label="Daha fazla" aria-haspopup="menu" title="Daha fazla" data-ic="more"></button>
+    <button class="ib gear" id="gearBtn" aria-label="Ayarlar" aria-haspopup="menu" title="Ayarlar"><span data-ic="gear"></span><span class="dot" id="modelDot"></span></button>
+    <span id="modelLabel" hidden></span>
+  </div>
+</header>
+
+<nav class="tabs" id="tabs" hidden>
+  <button data-tab="sources">Kaynaklar</button>
+  <button data-tab="chat" class="on">Sohbet</button>
+  <button data-tab="studio">Stüdyo</button>
+</nav>
+
+<section class="home" id="home" aria-label="Not defterleri">
+  <div class="searchBar" id="searchBar" hidden>
+    <i data-ic="search"></i><input id="nbSearch" type="search" placeholder="Not defterlerinde ara…" aria-label="Not defterlerinde ara" autocomplete="off">
+    <button class="ib sm" id="searchClose" aria-label="Aramayı kapat" data-ic="close"></button>
+  </div>
+  <div class="homeIn">
+    <div class="hRow"><h1 id="homeTitle">Son kullanılan not defterleri</h1><button class="ib" id="sortBtn" aria-haspopup="menu" aria-label="Sırala" title="Sırala" data-ic="sort"></button></div>
+    <button class="newPill" id="newPill"><i data-ic="plus"></i><span>Yeni not defteri</span></button>
+    <div class="nbGrid" id="nbGrid"></div>
+    <p class="muted empty" id="nbEmpty" hidden>Henüz not defterin yok. “Yeni not defteri” ile başla.</p>
+  </div>
+</section>
+
+<main class="cols" id="cols" data-tab="chat" hidden>
+  <!-- KAYNAKLAR -->
+  <section class="panel" id="panelSources" aria-label="Kaynaklar">
+    <div class="ph"><h2>Kaynaklar</h2><span class="muted" id="srcCount">0</span></div>
+    <div class="row two">
+      <button class="pillAct" id="addFile"><i data-ic="plus"></i><span>Kaynak ekle</span></button>
+      <button class="pillAct" id="addNote"><i data-ic="plus"></i><span>Not oluştur</span></button>
+      <input type="file" id="fileInput" accept=".pdf,.txt,.md,.markdown,.csv,.html,.htm,.json,text/*" multiple hidden>
+    </div>
+    <button class="linkBtn" id="addText"><i data-ic="plus"></i><span>Metin yapıştır</span></button>
+    <div class="selall"><i data-ic="layers"></i><span class="grow"></span><label for="selAll">Tümünü seç</label><input type="checkbox" id="selAll" class="chk" checked></div>
+    <ul class="list" id="srcList"></ul>
+    <p class="hint" id="srcHint">PDF, TXT, MD ya da yapıştırdığın metin. Dosyalar yalnızca bu tarayıcıda saklanır.</p>
+  </section>
+
+  <!-- SOHBET -->
+  <section class="panel chat" id="panelChat" aria-label="Sohbet">
+    <div class="ph"><h2>Sohbet</h2>
+      <div class="row tight"><button class="btn sm" id="expChat">.md indir</button><button class="btn sm" id="clearChat">Temizle</button></div>
+    </div>
+    <div class="msgs" id="msgs" aria-live="polite"></div>
+    <form class="composer" id="composer">
+      <button class="ib" id="tuneBtn" type="button" aria-label="Model ve ayarlar" title="Model ve ayarlar" data-ic="tune"></button>
+      <textarea id="q" rows="1" placeholder="Soru sorun veya içerik oluşturun" autocomplete="off"></textarea>
+      <span class="srcBadge" id="srcBadge" title="Kullanılan kaynak sayısı"><i data-ic="doc"></i><b id="srcBadgeN">0</b></span>
+      <button class="sendBtn" id="send" type="submit" aria-label="Gönder" data-ic="up"></button>
+      <button class="sendBtn stop" id="stop" type="button" aria-label="Durdur" hidden data-ic="stop"></button>
+    </form>
+    <div class="hint small" id="ctxInfo"></div>
+    <div class="disc">Defter hata yapabildiğinden verdiği yanıtları doğrulayın.</div>
+  </section>
+
+  <!-- STÜDYO + NOTLAR -->
+  <section class="panel" id="panelStudio" aria-label="Stüdyo">
+    <div class="ph"><h2>Stüdyo</h2></div>
+    <div class="genBar" id="genBar" hidden><span class="spin" aria-hidden="true"></span><span id="genText" role="status"></span><button class="btn sm" id="genStop" type="button">Durdur</button></div>
+    <div class="grid" id="studioBtns"></div>
+    <div class="ph mt"><h2>Çıktılar</h2></div>
+    <ul class="list outs" id="outList"></ul>
+    <p class="hint" id="outHint">Üretilen bilgi kartları, quiz, harita, görsel ve sesli özet burada saklanır.</p>
+    <div class="ph mt"><h2>Notlar</h2><div class="row tight"><button class="btn sm" id="expNotes">.md indir</button></div></div>
+    <ul class="list notes" id="noteList"></ul>
+    <p class="hint" id="noteHint">Cevapları ve stüdyo çıktılarını kaydet ya da “Not oluştur” ile kendin yaz.</p>
+  </section>
+</main>
+
+<!-- Kaynak ekle (yeni not defterinde açılır) -->
+<dialog id="srcDlg">
+  <form method="dialog" class="dlg">
+    <h3>Kaynak ekle</h3>
+    <p class="muted">Not defterin bu kaynaklara dayanarak cevap verir. PDF, TXT, MD, HTML ya da düz metin.</p>
+    <div class="drop" id="drop" tabindex="0" role="button" aria-label="Dosyaları bırak ya da seç">
+      <div class="dropIco" data-ic="up"></div><b>Dosyaları buraya bırak</b><span class="muted">ya da seçmek için dokun</span>
+    </div>
+    <div class="row"><button class="btn" type="button" id="dlgFile">Dosya yükle</button><button class="btn" type="button" id="dlgText">Metin yapıştır</button></div>
+    <div class="row end"><button class="btn primary" value="close">Tamam</button></div>
+  </form>
+</dialog>
+
+<!-- Model penceresi -->
+<dialog id="modelDlg">
+  <form method="dialog" class="dlg">
+    <h3>Model seç</h3>
+    <p class="muted">Model Hugging Face'ten indirilir ve tarayıcının depolamasında kalır; bir daha indirilmez. Büyük model daha akıllı ama daha yavaştır.</p>
+    <div class="presets" id="presets"></div>
+    <details><summary>Kendi GGUF dosyam / bağlantım</summary>
+      <label>Hugging Face deposu <input id="hfRepo" placeholder="kullanici/depo-GGUF"></label>
+      <label>Dosya adı <input id="hfFile" placeholder="model-Q4_K_M.gguf"></label>
+      <label>veya doğrudan bağlantı <input id="hfUrl" placeholder="https://…/model.gguf"></label>
+      <label>veya diskten seç <input type="file" id="ggufFile" accept=".gguf"></label>
+    </details>
+    <label>Bağlam uzunluğu
+      <select id="nctx"><option value="2048">2048 (hafif)</option><option value="4096" selected>4096</option><option value="8192">8192 (daha çok RAM)</option></select>
+    </label>
+    <label class="chk"><input type="checkbox" id="useGpu" checked> Ekran kartını (WebGPU) kullan</label>
+    <div class="bar" id="dlBar" hidden><div id="dlFill"></div></div>
+    <div class="muted" id="dlText"></div>
+    <div class="row end">
+      <button class="btn" value="cancel" id="dlgCancel">Kapat</button>
+      <button class="btn" type="button" id="demoBtn" title="Model indirmeden arayüzü dene">Demo (model yok)</button>
+      <button class="btn primary" type="button" id="loadBtn">Yükle</button>
+    </div>
+  </form>
+</dialog>
+
+<!-- Metin / not ekle -->
+<dialog id="textDlg">
+  <form method="dialog" class="dlg">
+    <h3 id="textHead">Metin yapıştır</h3>
+    <label>Başlık <input id="textTitle" placeholder="Başlık"></label>
+    <label>Metin <textarea id="textBody" rows="10"></textarea></label>
+    <div class="row end"><button class="btn" value="cancel">Vazgeç</button><button class="btn primary" type="button" id="textSave">Ekle</button></div>
+  </form>
+</dialog>
+
+<!-- Stüdyo çıktısı görüntüleyici -->
+<dialog id="vwDlg" class="vw">
+  <div class="vwHead"><h3 id="vwTitle"></h3><div class="row tight" id="vwActions"></div><button class="ib" id="vwClose" type="button" aria-label="Kapat" data-ic="close"></button></div>
+  <div class="vwBody" id="vwBody"></div>
+</dialog>
+
+<!-- Atıf penceresi -->
+<dialog id="citeDlg">
+  <form method="dialog" class="dlg">
+    <h3 id="citeTitle"></h3>
+    <pre class="cite" id="citeBody"></pre>
+    <div class="row end"><button class="btn primary" value="close">Kapat</button></div>
+  </form>
+</dialog>
+
+<script type="module" src="app.js"></script>
+</body>
+</html>
