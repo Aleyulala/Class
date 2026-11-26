@@ -96,6 +96,15 @@
   </section>
 </main>
 
+<!-- Çerez bildirimi: saved / Blogger ile aynı tam ekran görünüm -->
+<dialog id="cookieDlg" class="fs" data-title="#Çerez">
+  <div class="dlg">
+    <h2>Çerez Politikası</h2>
+    <p class="ckTx">Tercihlerinizi hatırlamak ve Defter'i kullanma deneyiminizi iyileştirmek için tarayıcınızda yerel depolama (IndexedDB, OPFS) ve çerezler kullanıyoruz. Not defterleriniz, kaynaklarınız ve indirdiğiniz modeller yalnızca bu cihazda saklanır, hiçbir sunucuya gönderilmez.
+      <button type="button" class="ckOk" id="ckOk">Tamam, anladım.</button></p>
+  </div>
+</dialog>
+
 <!-- Kaynak ekle (yeni not defterinde açılır) -->
 <dialog id="srcDlg">
   <form method="dialog" class="dlg">
@@ -110,7 +119,7 @@
 </dialog>
 
 <!-- Model penceresi -->
-<dialog id="modelDlg">
+<dialog id="modelDlg" class="fs" data-title="#Model">
   <form method="dialog" class="dlg">
     <h3>Model seç</h3>
     <p class="muted">Model Hugging Face'ten indirilir ve tarayıcının depolamasında kalır; bir daha indirilmez. Büyük model daha akıllı ama daha yavaştır.</p>
@@ -150,7 +159,7 @@
 </dialog>
 
 <!-- Stüdyo çıktısı görüntüleyici -->
-<dialog id="vwDlg" class="vw">
+<dialog id="vwDlg" class="vw fs" data-title="#Çıktı">
   <div class="vwHead"><h3 id="vwTitle"></h3><div class="row tight" id="vwActions"></div><button class="ib" id="vwClose" type="button" aria-label="Kapat" data-ic="close"></button></div>
   <div class="vwBody" id="vwBody"></div>
 </dialog>

@@ -276,3 +276,22 @@ a:focus-visible,button:focus-visible,input:focus-visible,select:focus-visible,te
 }
 @media (prefers-reduced-motion:reduce){.drawer,.sheet,.menu,.menuScrim,.sheetScrim,.drScrim{animation:none;transition:none}}
 body.wmDrag,body.wmDrag *{user-select:none!important;-webkit-user-select:none!important}
+
+/* ---- Pencereler: küçükler ortada + bulanık arka plan, büyükler saved gibi tam ekran + alt çubuk ---- */
+dialog::backdrop{background:rgba(0,0,0,.45);-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px)}
+dialog.fs{width:100vw;max-width:none;height:100dvh;max-height:none;margin:0;border:0;border-radius:0;background:var(--bg);overflow:hidden;padding:0}
+dialog.fs[open]{display:flex;flex-direction:column}
+dialog.fs>.dlg,dialog.fs>form.dlg{flex:1;min-height:0;overflow-y:auto;overscroll-behavior:contain;width:100%;max-width:560px;margin:0 auto;padding:48px 14px 24px;box-sizing:border-box}
+dialog.fs>.vwHead{flex:none}dialog.fs>.vwBody{flex:1;min-height:0}
+dialog.fs #vwClose{display:none}
+dialog.fs::backdrop{background:var(--bg)}
+.fsBar{flex:none;height:calc(55px + env(safe-area-inset-bottom,0px));padding:0 20px env(safe-area-inset-bottom,0px);display:flex;align-items:center;justify-content:space-between;background:var(--bg);border-top:1px solid var(--line);color:var(--tx);box-sizing:border-box}
+.fsBar b{font-size:15px;font-weight:700;letter-spacing:-.2px}
+.fsBar button{width:32px;height:32px;display:inline-grid;place-items:center;border:0;background:transparent;color:inherit;opacity:.85;cursor:pointer;border-radius:10px}
+.fsBar button:hover,.fsBar button:focus-visible{opacity:1;color:var(--ac);background:var(--btn)}
+.fsBar svg{width:18px;height:18px;stroke:currentColor;fill:none}
+#cookieDlg h2{font-size:18px;font-weight:700;margin:0 4px 12px}
+#cookieDlg .ckTx{margin:0 4px;font-size:15px;line-height:1.8;color:var(--tx);opacity:.88}
+#cookieDlg .ckOk{display:inline;margin-left:6px;padding:0;background:none;border:0;font:inherit;font-weight:700;color:var(--ac);cursor:pointer;border-radius:4px}
+#cookieDlg .ckOk:hover{text-decoration:underline}
+.dlg .chk input{width:auto;flex:none}.dlg .chk{flex-wrap:nowrap}

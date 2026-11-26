@@ -558,6 +558,24 @@ $('#diagBox').addEventListener('toggle', () => { if ($('#diagBox').open) $('#dia
 $('#diagCopy').onclick = async () => { const t = diagnose(); try { await navigator.clipboard.writeText(t); $('#diagCopy').textContent = 'Kopyalandı'; } catch { $('#diag').textContent = t; const r = document.createRange(); r.selectNodeContents($('#diag')); getSelection().removeAllRanges(); getSelection().addRange(r); $('#diagCopy').textContent = 'Seçildi, elle kopyala'; } setTimeout(() => ($('#diagCopy').textContent = 'Kopyala'), 1800); };
 $('#loadBtn').addEventListener('click', () => { if (typeof WebAssembly === 'undefined') { $('#diagBox').open = true; } });
 
+/* ---------------- Tam ekran pencereler + çerez bildirimi ---------------- */
+document.querySelectorAll('dialog.fs').forEach((d) => {
+  const bar = document.createElement('div'); bar.className = 'fsBar';
+  bar.innerHTML = '<b></b><button type="button" title="Kapat (Esc)" aria-label="Kapat (Esc)"><svg viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg></button>';
+  bar.firstChild.textContent = d.dataset.title || '';
+  bar.lastChild.onclick = () => d.close();
+  d.append(bar);
+  d.addEventListener('click', (e) => { if (e.target === d || e.target.classList.contains('dlg')) d.close(); });
+});
+const CK = 'defter_cookie_ok_v1';
+(() => {
+  let seen = false; try { seen = localStorage.getItem(CK) === '1'; } catch {}
+  const d = $('#cookieDlg'); if (seen) return;
+  const ok = () => { try { localStorage.setItem(CK, '1'); } catch {} };
+  d.addEventListener('close', ok); $('#ckOk').onclick = () => d.close();
+  d.showModal(); $('#ckOk').focus();
+})();
+
 /* ---------------- Başlangıç ---------------- */
 (async () => {
   notebooks = await DB.all('notebooks');
