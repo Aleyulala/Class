@@ -1,4 +1,4 @@
-// Defter — tarayıcıda çalışan, kaynaklarla sohbet eden yerel yapay zekâ arayüzü.
+// Class — tarayıcıda çalışan, kaynaklarla sohbet eden yerel yapay zekâ arayüzü.
 // Model: wllama (llama.cpp'nin WASM/WebGPU sürümü). Hiçbir veri sunucuya gönderilmez.
 
 import { TYPES, parseJson, normalize, demo } from './rich.js';
@@ -12,6 +12,7 @@ const params = new URLSearchParams(location.search);
 /* ---------------- Simgeler, açılır menü, tema ---------------- */
 const svg = (d, extra = '') => `<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" ${extra}>${d}</svg>`;
 const IC = {
+  menu: svg('<path d="M4 6h16M4 12h16M4 18h16"/>'), install: svg('<path d="M12 3v12M7 10l5 5 5-5M5 19h14"/>'), win: svg('<rect x="3" y="4" width="18" height="16" rx="3"/><path d="M3 9h18"/>'), min: svg('<path d="M6 12h12"/>'), max: svg('<rect x="5" y="5" width="14" height="14" rx="2"/>'),
   back: svg('<path d="M19 12H5M12 19l-7-7 7-7"/>'), search: svg('<circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/>'), plus: svg('<path d="M12 5v14M5 12h14"/>'),
   share: svg('<path d="M12 16V4M7 9l5-5 5 5M5 14v5a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-5"/>'), more: svg('<circle cx="12" cy="5" r="1.4" fill="currentColor"/><circle cx="12" cy="12" r="1.4" fill="currentColor"/><circle cx="12" cy="19" r="1.4" fill="currentColor"/>'),
   gear: svg('<circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/>'),
@@ -33,7 +34,7 @@ const setTheme = (t) => { try { localStorage.setItem('defter-theme', t); } catch
 applyTheme(getTheme());
 
 let openMenu = null;
-function closeMenu() { if (openMenu) { openMenu.el.remove(); openMenu.anchor.setAttribute('aria-expanded', 'false'); document.removeEventListener('pointerdown', openMenu.out, true); document.removeEventListener('keydown', openMenu.key, true); openMenu = null; } }
+function closeMenu() { document.querySelector('.menuScrim')?.remove(); if (openMenu) { openMenu.el.remove(); openMenu.anchor.setAttribute('aria-expanded', 'false'); document.removeEventListener('pointerdown', openMenu.out, true); document.removeEventListener('keydown', openMenu.key, true); openMenu = null; } }
 function showMenu(anchor, items, { align = 'right' } = {}) {
   const same = openMenu && openMenu.anchor === anchor; closeMenu(); if (same) return;
   const m = el('div', { className: 'menu', role: 'menu' });
@@ -42,7 +43,7 @@ function showMenu(anchor, items, { align = 'right' } = {}) {
     const b = el('button', { type: 'button', role: 'menuitem', className: it.danger ? 'danger' : '' }, el('span', { className: 'mi', innerHTML: it.icon ? IC[it.icon] : '' }), el('span', { className: 'ml' }, it.label, it.sub ? el('small', { textContent: it.sub }) : ''), it.check ? el('span', { className: 'mc', innerHTML: IC.check }) : '');
     b.onclick = () => { closeMenu(); it.run(); }; m.append(b);
   });
-  document.body.append(m);
+  document.body.append(el('div', { className: 'menuScrim' }), m);
   const r = anchor.getBoundingClientRect(); const w = m.offsetWidth;
   m.style.top = Math.min(r.bottom + 6, innerHeight - m.offsetHeight - 8) + 'px';
   m.style.left = Math.max(8, Math.min(align === 'right' ? r.right - w : r.left, innerWidth - w - 8)) + 'px';
@@ -358,8 +359,8 @@ $('#composer').onsubmit = (e) => { e.preventDefault(); const t = q.value.trim();
 $('#stop').onclick = () => abortCtl?.abort();
 $('#clearChat').onclick = async () => { if (busy) return; chat = []; await DB.set('chat:' + nb.id, []); renderChat(); };
 function download(name, text) { const a = el('a', { href: URL.createObjectURL(new Blob([text], { type: 'text/markdown' })), download: name }); document.body.append(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(a.href), 2000); }
-$('#expChat').onclick = () => download('defter-sohbet.md', '# Defter sohbeti\n\n' + chat.map((m) => (m.role === 'user' ? `**Sen:** ${m.text}` : `**Defter:**\n\n${m.text}`)).join('\n\n---\n\n') + '\n');
-$('#expNotes').onclick = () => download('defter-notlar.md', '# Defter notları\n\n' + notes.slice().sort((a, b) => a.addedAt - b.addedAt).map((n) => `## ${n.title}\n\n${n.text}`).join('\n\n---\n\n') + '\n');
+$('#expChat').onclick = () => download('defter-sohbet.md', '# Class sohbeti\n\n' + chat.map((m) => (m.role === 'user' ? `**Sen:** ${m.text}` : `**Class:**\n\n${m.text}`)).join('\n\n---\n\n') + '\n');
+$('#expNotes').onclick = () => download('defter-notlar.md', '# Class notları\n\n' + notes.slice().sort((a, b) => a.addedAt - b.addedAt).map((n) => `## ${n.title}\n\n${n.text}`).join('\n\n---\n\n') + '\n');
 function setTab(t) { $('#cols').dataset.tab = t; document.querySelectorAll('#tabs button').forEach((b) => b.classList.toggle('on', b.dataset.tab === t)); }
 document.querySelectorAll('#tabs button').forEach((b) => (b.onclick = () => setTab(b.dataset.tab)));
 Object.entries(TYPES).forEach(([k, T]) => { const b = el('button', { className: 'btn tile' }, el('span', { className: 'tIc', textContent: T.emoji }), el('b', { textContent: T.label }), el('small', { textContent: T.sub })); b.onclick = () => makeRich(k); $('#studioBtns').append(b); });
@@ -410,7 +411,7 @@ async function createNb() {
 }
 async function renameNb(n) {
   const t = prompt('Not defteri başlığı', n.title); if (t === null) return;
-  n.title = t.trim() || 'Adsız not defteri'; await DB.put('notebooks', n); if (nb && nb.id === n.id) { $('#nbTitle').value = n.title; document.title = `${n.title} — Defter`; } if (!nb) renderHome();
+  n.title = t.trim() || 'Adsız not defteri'; await DB.put('notebooks', n); if (nb && nb.id === n.id) { $('#nbTitle').value = n.title; document.title = `${n.title} — Class`; } if (!nb) renderHome();
 }
 async function deleteNb(n) {
   if (!confirm(`"${n.title}" not defteri, kaynakları ve notlarıyla birlikte silinsin mi?`)) return;
@@ -430,20 +431,20 @@ async function openNb(id) {
   const n = notebooks.find((x) => x.id === id); if (!n) return goHome();
   if (busy) return; nb = n; closeMenu();
   [sources, notes, outputs, chat] = await Promise.all([DB.all('sources').then((a) => a.filter((x) => x.nbId === id).sort((a, b) => a.addedAt - b.addedAt)), DB.all('notes').then((a) => a.filter((x) => x.nbId === id)), DB.all('outputs').then((a) => a.filter((x) => x.nbId === id)), DB.get('chat:' + id).then((c) => c || [])]);
-  setView('nb'); $('#nbTitle').value = n.title; document.title = `${n.title} — Defter`;
+  setView('nb'); $('#nbTitle').value = n.title; document.title = `${n.title} — Class`;
   if (location.hash !== '#nb-' + id) history.pushState(null, '', '#nb-' + id);
   setTab('chat'); renderSources(); renderNotes(); renderOutputs(); renderChat();
 }
 function goHome() {
   if (busy) return; nb = null; sources = []; notes = []; outputs = []; chat = []; closeMenu();
-  setView('home'); document.title = 'Defter — Tarayıcıda Yerel Yapay Zekâ';
+  setView('home'); document.title = 'Class';
   if (location.hash) history.pushState(null, '', location.pathname + location.search);
   renderHome();
 }
 $('#backBtn').onclick = goHome;
 $('#homeLink').onclick = (e) => { e.preventDefault(); goHome(); };
 $('#newPill').onclick = createNb; $('#newNbBtn').onclick = createNb;
-$('#nbTitle').onchange = async (e) => { if (!nb) return; nb.title = e.target.value.trim() || 'Adsız not defteri'; e.target.value = nb.title; document.title = `${nb.title} — Defter`; await touchNb(); };
+$('#nbTitle').onchange = async (e) => { if (!nb) return; nb.title = e.target.value.trim() || 'Adsız not defteri'; e.target.value = nb.title; document.title = `${nb.title} — Class`; await touchNb(); };
 $('#nbTitle').onkeydown = (e) => { if (e.key === 'Enter') e.target.blur(); };
 window.addEventListener('popstate', () => { const m = location.hash.match(/^#nb-(.+)$/); if (m) openNb(m[1]); else { busy = false; goHome(); } });
 
@@ -464,6 +465,7 @@ $('#gearBtn').onclick = () => {
     { icon: 'auto', label: 'Cihaz', check: th === 'system', run: () => setTheme('system') },
     '-',
     { icon: 'tune', label: 'Klavye ve oyun kolu', sub: 'Kısayollar ve düğme eşleşmeleri', run: () => window.defterHelp?.() },
+    ...(window.defterShell?.menuItems() || []),
   ]);
 };
 $('#moreBtn').onclick = () => showMenu($('#moreBtn'), [
@@ -586,3 +588,7 @@ const CK = 'defter_cookie_ok_v1';
   if (cap.blocked) { $('#dlText').textContent = cap.text; $('#loadBtn').disabled = true; $('#loadBtn').title = 'Bu tarayıcıda WebAssembly kapalı'; }
   else navigator.storage?.estimate?.().then((e) => { if (e?.quota) $('#dlText').textContent = [cap.text, `Tarayıcı depolama kotası: ≈${(e.quota / 1e9).toFixed(1)} GB`].filter(Boolean).join(' '); });
 })();
+
+/* kabuk (shell.js) için köprü */
+window.defterApp = { notebooks: () => notebooks, current: () => nb, openNb, createNb, goHome, showMenu, closeMenu, setTheme, getTheme, IC, openModel: () => $('#modelDlg').showModal() };
+document.dispatchEvent(new Event('defter-ready'));

@@ -1,4 +1,4 @@
-# Defter — tarayıcıda çalışan yerel yapay zekâ (NotebookLM benzeri)
+# Class — tarayıcıda çalışan yerel yapay zekâ (NotebookLM benzeri)
 
 Kaynaklarını (PDF, TXT, MD, yapıştırılmış metin) yükle, onlarla sohbet et, özet / SSS / çalışma rehberi / quiz / zihin haritası çıkar, cevapları nota kaydet.
 Hepsi **tarayıcında** çalışır: model [wllama](https://github.com/ngxson/wllama) (llama.cpp'nin WASM + WebGPU sürümü) ile ekran kartında/işlemcide çalışır, dosyalar yalnızca bu tarayıcının depolamasında (IndexedDB) kalır. Sunucuya hiçbir şey gönderilmez.

@@ -1,4 +1,4 @@
-// Klavye (Tab, ok tuşları, Enter, Esc) ve oyun kolu ile gezinme — Blogger şablonundaki TV/oyun kolu gezinmesinin Defter karşılığı.
+// Klavye (Tab, ok tuşları, Enter, Esc) ve oyun kolu ile gezinme — Blogger şablonundaki TV/oyun kolu gezinmesinin Class karşılığı.
 // Oyun kolu: D-pad / sol çubuk = odağı taşı, A = seç, B = geri, X = yeni, Y = ara, LB/RB = sekme, Start = ayarlar,
 // Select = tema, sağ çubuk = kaydır, L3 = yardım. Klavye: oklar = taşı, Enter/Boşluk = seç, Esc/Backspace = geri.
 const CFG = { deadzone: 0.45, padDelay: 340, padRepeat: 140, keyRepeat: 90 };
