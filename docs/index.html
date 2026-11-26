@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Class</title>
 <meta name="description" content="Kaynaklarını yükle, onlarla sohbet et, özet ve çalışma rehberi çıkar. Her şey tarayıcında çalışır, hiçbir veri dışarı gitmez.">
-<link rel="stylesheet" href="style.css?v=29">
+<link rel="stylesheet" href="style.css?v=30">
 <link rel="manifest" href="manifest.webmanifest">
 <meta name="theme-color" content="#1e1e1e">
 <link rel="icon" href="icon.svg" type="image/svg+xml">
@@ -82,6 +82,11 @@
       </div>
       <div class="msgs" id="msgs" aria-live="polite"></div>
     </div>
+    <div class="cmdBar" id="cmdBar">
+      <button type="button" class="cmdToggle" id="cmdToggle" aria-expanded="true" aria-controls="cmdTrack" title="Komutları göster / gizle"><span class="cmdS">/</span><span>Komutlar</span></button>
+      <div class="cmdTrack" id="cmdTrack" role="group" aria-label="Komutlar"></div>
+    </div>
+    <div class="hint small" id="ctxInfo" role="status"></div>
     <div class="replyBar" id="replyBar" hidden></div>
     <div class="attList" id="attList" hidden></div>
     <form class="composer" id="composer">
@@ -99,12 +104,6 @@
         <button class="sendBtn stop" id="stop" type="button" aria-label="Durdur" hidden><span>Durdur</span></button>
       </div>
     </form>
-    <div class="cmdBar" id="cmdBar">
-      <button type="button" class="cmdToggle" id="cmdToggle" aria-expanded="true" aria-controls="cmdTrack" title="Komutları göster / gizle"><span class="cmdS">/</span><span>Komutlar</span></button>
-      <div class="cmdTrack" id="cmdTrack" role="group" aria-label="Komutlar"></div>
-    </div>
-    <div class="hint small" id="ctxInfo"></div>
-    <div class="disc">Class hata yapabildiğinden verdiği yanıtları doğrulayın.</div>
   </section>
 
   <!-- STÜDYO + NOTLAR -->
@@ -226,16 +225,16 @@
   </form>
 </dialog>
 
-<script type="module" src="app.js?v=29"></script>
-<script type="module" src="nav.js?v=29"></script>
-<script type="module" src="shell.js?v=29"></script>
-<script type="module" src="search.js?v=29"></script>
-<script type="module" src="plus.js?v=29"></script>
-<script type="module" src="contact.js?v=29"></script>
-<script type="module" src="hub.js?v=29"></script>
-<script type="module" src="dock.js?v=29"></script>
-<script type="module" src="slide.js?v=29"></script>
-<script type="module" src="settings.js?v=29"></script>
-<script type="module" src="reveal.js?v=29"></script>
+<script type="module" src="app.js?v=30"></script>
+<script type="module" src="nav.js?v=30"></script>
+<script type="module" src="shell.js?v=30"></script>
+<script type="module" src="search.js?v=30"></script>
+<script type="module" src="plus.js?v=30"></script>
+<script type="module" src="contact.js?v=30"></script>
+<script type="module" src="hub.js?v=30"></script>
+<script type="module" src="dock.js?v=30"></script>
+<script type="module" src="slide.js?v=30"></script>
+<script type="module" src="settings.js?v=30"></script>
+<script type="module" src="reveal.js?v=30"></script>
 </body>
 </html>

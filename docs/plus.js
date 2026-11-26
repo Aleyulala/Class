@@ -99,17 +99,6 @@ function buildFab() {
   input.addEventListener('change', () => { if (input.checked) fill(); });
   document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && input.checked) { input.checked = false; e.stopPropagation(); toggle.focus(); } }, true);
   fill(); document.body.append(fab);
-  /* dişli yalnızca kaydırılan alanın en üstünde ve en altında görünür, arada kayarak gizlenir */
-  const show = (on) => fab.classList.toggle('qeHide', !on && !input.checked);
-  document.addEventListener('scroll', (e) => {
-    const t = e.target === document ? document.scrollingElement : e.target;
-    if (!(t instanceof Element) || t.closest('dialog,.drawer,.sldTrack,.cmdTrack,.spPills,.hsTabs,.qeF')) return;
-    const max = t.scrollHeight - t.clientHeight; if (max < 40) return;
-    show(t.scrollTop <= 20 || t.scrollTop >= max - 24);
-  }, { capture: true, passive: true });
-  input.addEventListener('change', () => show(true));
-  addEventListener('resize', () => show(true));
-  for (const v of [$('#cols'), $('#home')]) if (v) new MutationObserver(() => show(true)).observe(v, { attributes: true, attributeFilter: ['hidden'] });
 }
 
 /* ---------- Bildirim şeridi (Blogger .ntf: ALİ & NSONE + kapat + çizgi göstergeleri) ---------- */
@@ -172,14 +161,37 @@ function buildFooter() {
 }
 
 
-/* ---------- Yukarı çık düğmesi (Saved/Blogger .tTb): hangi alan kaydırıldıysa onu başa alır ---------- */
+/* ---------- Yukarı / aşağı düğmesi (Blogger .tTb ile birebir: ilerleme halkası, en üstte aşağı iner) ----------
+   Dişli menüyle birlikte yalnızca kaydırılan alanın en üstünde ve en altında görünür. */
+const TTB = "<svg viewBox='0 0 34 34' aria-hidden='true'><g transform='translate(0, 34) rotate(-90)' stroke-width='2.2' stroke='currentColor' stroke-linecap='round'><circle cx='17' cy='17' r='15.92'></circle><circle cx='17' cy='17' r='15.92' fill='none' stroke-dasharray='100, 100'></circle><path transform='translate(34, 34) rotate(180)' d='M15.07,21.06,19.16,17l-4.09-4.06' fill='none' stroke-width='1.25'></path></g></svg>";
+const FL_SKIP = 'dialog,.drawer,.sldTrack,.cmdTrack,.spPills,.hsTabs,.hbStrip,.qeF,#panelChat,.dkPane .msgs';
 function buildToTop() {
   if ($('.tTb')) return;
-  const b = el('button', { type: 'button', className: 'tTb', title: 'Yukarı çık', 'aria-label': 'Yukarı çık', innerHTML: svg('<path d="m6 15 6-6 6 6"/>') });
+  const b = el('button', { type: 'button', className: 'tTb', innerHTML: TTB });
+  const qe = () => $('#offQEdit');
   let tgt = null;
-  document.addEventListener('scroll', (e) => { const t = e.target === document ? document.scrollingElement : e.target; if (!(t instanceof Element) || t.closest('dialog,.drawer,.sldTrack,.cmdTrack,.spPills,#panelChat')) return; if (t.scrollTop > 320) { tgt = t; b.classList.add('on'); } else if (t === tgt) b.classList.remove('on'); }, { capture: true, passive: true });
-  b.onclick = () => { tgt?.scrollTo({ top: 0, behavior: matchMedia('(prefers-reduced-motion:reduce)').matches ? 'auto' : 'smooth' }); b.classList.remove('on'); };
-  document.body.append(b);
+  const area = () => {
+    if (tgt?.isConnected && tgt.getClientRects().length) return tgt;
+    const h = $('#home'); return h && !h.hidden ? h : document.scrollingElement;
+  };
+  const upd = () => {
+    const t = area(); const max = t.scrollHeight - t.clientHeight, y = t.scrollTop;
+    const top = y <= 20, lbl = top ? 'Aşağı in' : 'Yukarı çık';
+    b.style.setProperty('--progress', max > 0 ? Math.min(100, Math.max(0, (y / max) * 100)) : 0);
+    b.classList.toggle('b', top); b.classList.toggle('off', max < 40);
+    b.title = lbl; b.setAttribute('aria-label', lbl);
+    document.body.classList.toggle('flMid', max >= 40 && !top && y < max - 24 && !qe()?.checked);
+  };
+  document.addEventListener('scroll', (e) => {
+    const t = e.target === document ? document.scrollingElement : e.target;
+    if (!(t instanceof Element) || t.closest(FL_SKIP)) return;
+    tgt = t; upd();
+  }, { capture: true, passive: true });
+  b.onclick = () => { const t = area(); t.scrollTo({ top: t.scrollTop <= 20 ? t.scrollHeight : 0, behavior: matchMedia('(prefers-reduced-motion:reduce)').matches ? 'auto' : 'smooth' }); };
+  document.addEventListener('change', (e) => { if (e.target === qe()) upd(); });
+  addEventListener('resize', upd);
+  for (const v of [$('#cols'), $('#home')]) if (v) new MutationObserver(() => { tgt = null; upd(); }).observe(v, { attributes: true, attributeFilter: ['hidden'] });
+  document.body.append(b); upd();
 }
 
 function boot() { applyAccent(); buildThemeBtn(); buildChips(); moveFilter(); buildNtf(); buildFooter(); buildFab(); buildToTop(); }
