@@ -354,7 +354,7 @@ if [[ "$PLATFORM" == "Linux" ]]; then
   fi
 fi
 
-TOTAL_STEPS=7
+TOTAL_STEPS=5
 
 # -- Adim 1: Tasinabilir Node.js -----------------------------------------------
 print_step 1 $TOTAL_STEPS "Tasinabilir Node.js ayarlaniyor ($NODE_DIR/)"
@@ -671,128 +671,8 @@ bash "$SCRIPT_DIR/setup-whisper.sh"
 print_step 5 $TOTAL_STEPS "Kokoro ONNX metinden sese calistirma ortami ayarlaniyor"
 bash "$SCRIPT_DIR/setup-tts.sh"
 
-print_step 6 $TOTAL_STEPS "On yuze bagimliliklari kuruluyor (app/frontend/)"
-
-if [[ ! -x "$NPM_BIN" ]]; then
-  print_fail "Tasinabilir npm surada bulunamadi: $NPM_BIN"
-  exit 1
-fi
-
-# Dogru isletim sistemine ozgu node_modules klasorunun sembolik bagli veya
-# takas edilmis oldugundan emin ol (cakis malarini onlemek icin)
-FRONTEND_NODE_MODULES="$FRONTEND_DIR/node_modules"
-ACTIVE_OS_FILE="$FRONTEND_DIR/.active_modules_os"
-
-if [[ "$PLATFORM" == "Darwin" ]]; then
-  OS_NODE_MODULES="$FRONTEND_DIR/node_modules_mac"
-  OS_LABEL="node_modules_mac"
-  CURRENT_OS="mac"
-else
-  OS_NODE_MODULES="$FRONTEND_DIR/node_modules_linux"
-  OS_LABEL="node_modules_linux"
-  CURRENT_OS="linux"
-fi
-
-# Dosya sisteminin sembolik baglari destekleyip desteklemedigini kontrol et
-USE_SYMLINKS=true
-TEST_LINK="$FRONTEND_DIR/.test_symlink"
-rm -f "$TEST_LINK"
-if ln -s "$OS_LABEL" "$TEST_LINK" 2>/dev/null; then
-  rm -f "$TEST_LINK"
-else
-  USE_SYMLINKS=false
-fi
-
-if [ "$USE_SYMLINKS" = true ]; then
-  if [[ -d "$FRONTEND_NODE_MODULES" && ! -L "$FRONTEND_NODE_MODULES" ]]; then
-    print_info "Mevcut node_modules $OS_LABEL konumuna tasiniliyor..."
-    if [[ -d "$OS_NODE_MODULES" ]]; then
-      rm -rf "$FRONTEND_NODE_MODULES"
-    else
-      mv "$FRONTEND_NODE_MODULES" "$OS_NODE_MODULES"
-    fi
-  fi
-  rm -rf "$FRONTEND_NODE_MODULES"
-  mkdir -p "$OS_NODE_MODULES"
-  ln -sf "$OS_LABEL" "$FRONTEND_NODE_MODULES"
-else
-  # Yedek: Dosya sistemi sembolik baglari desteklemiyor (orn. FAT32/exFAT)
-  print_info "Dosya sistemi sembolik baglari desteklemiyor. Dizin takas yedegi kullaniliyor..."
-
-  if [[ -L "$FRONTEND_NODE_MODULES" || -f "$FRONTEND_NODE_MODULES" ]]; then
-    rm -rf "$FRONTEND_NODE_MODULES"
-  fi
-
-  PREV_OS=""
-  if [[ -f "$ACTIVE_OS_FILE" ]]; then
-    PREV_OS=$(cat "$ACTIVE_OS_FILE")
-  fi
-
-  if [[ -d "$FRONTEND_NODE_MODULES" && "$PREV_OS" != "$CURRENT_OS" ]]; then
-    if [[ -n "$PREV_OS" ]]; then
-      print_info "node_modules node_modules_$PREV_OS konumuna takas ediliyor..."
-      rm -rf "$FRONTEND_DIR/node_modules_$PREV_OS"
-      mv "$FRONTEND_NODE_MODULES" "$FRONTEND_DIR/node_modules_$PREV_OS"
-    else
-      print_info "node_modules node_modules_windows olarak kaydediliyor..."
-      rm -rf "$FRONTEND_DIR/node_modules_windows"
-      mv "$FRONTEND_NODE_MODULES" "$FRONTEND_DIR/node_modules_windows"
-    fi
-  fi
-
-  if [[ -d "$OS_NODE_MODULES" && ! -d "$FRONTEND_NODE_MODULES" ]]; then
-    print_info "$OS_LABEL takas ediliyor..."
-    mv "$OS_NODE_MODULES" "$FRONTEND_NODE_MODULES"
-  elif [[ ! -d "$FRONTEND_NODE_MODULES" ]]; then
-    mkdir -p "$FRONTEND_NODE_MODULES"
-  fi
-
-  echo "$CURRENT_OS" > "$ACTIVE_OS_FILE"
-fi
-
-cd "$FRONTEND_DIR"
-export PATH="$NODE_DIR/bin:$PATH"
-
-if [ -f "$DIST_DIR/index.html" ] && [ "${REBUILD_FRONTEND:-0}" != "1" ]; then
-  print_step 7 $TOTAL_STEPS "Hazir arayuz kontrol ediliyor (app/dist/)"
-  print_ok "Onceden derlenmis hazir arayuz mevcut ($DIST_DIR/index.html). Kurulum aninda tamamlandi!"
-else
-  if [ "$USE_SYMLINKS" = false ]; then
-    if "$NPM_BIN" install --prefer-offline --no-bin-links; then
-      print_ok "Bagimliliklar kuruldu!"
-    else
-      print_fail "npm install basarisiz oldu."
-      exit 1
-    fi
-  else
-    if "$NPM_BIN" install --prefer-offline; then
-      print_ok "Bagimliliklar kuruldu!"
-    else
-      print_fail "npm install basarisiz oldu."
-      exit 1
-    fi
-  fi
-
-  # -- Adim 4: On yuzu derle ---------------------------------------------------
-  print_step 7 $TOTAL_STEPS "On yuz derleniyor -> app/dist/"
-
-  if [ "$USE_SYMLINKS" = false ]; then
-    # Sembolik baglar devre disiysa, vite'i yerel node ikilisiyle dogrudan calistir.
-    if "$NODE_BIN" node_modules/vite/bin/vite.js build; then
-      print_ok "On yuz derlendi!"
-    else
-      print_fail "On yuz derlemesi basarisiz oldu."
-      exit 1
-    fi
-  else
-    if "$NPM_BIN" run build; then
-      print_ok "On yuz derlendi!"
-    else
-      print_fail "On yuz derlemesi basarisiz oldu."
-      exit 1
-    fi
-  fi
-fi
+# Arayuz: Class (docs/). Derleme ve npm install gerekmez.
+print_ok "Arayuz hazir: Class (docs/). Derleme gerekmiyor."
 
 # -- Bitti -------------------------------------------------------------------
 echo ""
