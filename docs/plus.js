@@ -1,0 +1,104 @@
+/* Class: Blogger/Plus UI bileşenleri — hızlı menü (qeF), bildirim şeridi (ntf), karşılama çipleri, tema düğmesi */
+const $ = (s, r = document) => r.querySelector(s);
+const el = (t, p = {}, ...k) => { const e = document.createElement(t); for (const [n, v] of Object.entries(p)) { if (v == null) continue; if (n.includes('-')) e.setAttribute(n, v); else e[n] = v; } e.append(...k); return e; };
+const lsGet = (k, d) => { try { return JSON.parse(localStorage.getItem(k)) ?? d; } catch { return d; } };
+const lsSet = (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); } catch {} };
+const A = () => window.defterApp, S = () => window.defterShell;
+const svg = (p) => `<svg class="line" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">${p}</svg>`;
+const P = {
+  gear: '<path d="M12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6z"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/>',
+  x: '<path d="M18 6 6 18M6 6l12 12"/>',
+  plus: '<path d="M12 5v14M5 12h14"/>',
+  search: '<circle cx="11" cy="11" r="8"/><path d="m22 22-2-2"/>',
+  upload: '<path d="M12 16V4M7 9l5-5 5 5M5 14v5a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-5"/>',
+  edit: '<path d="M4 20h4l10-10-4-4L4 16z"/><path d="m13.5 6.5 4 4"/>',
+  doc: '<path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5M9 13h6M9 17h4"/>',
+  home: '<path d="M9 2.8 3.6 7C2.7 7.7 2 9.2 2 10.4v7.4C2 20.1 3.9 22 6.2 22h11.6c2.3 0 4.2-1.9 4.2-4.2v-7.3c0-1.2-.8-2.8-1.8-3.5l-6.2-4.3c-1.4-1-3.7-1-5 .1z"/><path d="M12 17.5v-3"/>',
+  cpu: '<rect x="6" y="6" width="12" height="12" rx="2"/><path d="M9 2v4M15 2v4M9 18v4M15 18v4M2 9h4M2 15h4M18 9h4M18 15h4"/>',
+  sun: '<circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/>',
+  moon: '<path d="M21 13a8 8 0 1 1-10-10 7 7 0 0 0 10 10z"/>',
+  layout: '<rect x="3" y="3" width="8" height="18" rx="2"/><rect x="14" y="3" width="7" height="8" rx="2"/><rect x="14" y="14" width="7" height="7" rx="2"/>',
+  pad: '<rect x="2" y="7" width="20" height="11" rx="5"/><path d="M7 10v5M4.5 12.5h5M16 11.5h.01M18.5 14h.01"/>',
+  install: '<path d="M12 3v12M7 10l5 5 5-5M5 19h14"/>',
+  verify: '<path d="M12 3 4 6v6c0 4.5 3.2 7.8 8 9 4.8-1.2 8-4.5 8-9V6z"/><path d="m9 12 2 2 4-4"/>',
+  eye: '<path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/>',
+  smile: '<rect x="3" y="3" width="18" height="18" rx="5"/><path d="M8.5 14.5c1 1.2 2.1 1.8 3.5 1.8s2.5-.6 3.5-1.8M9 9.5h.01M15 9.5h.01"/>',
+};
+const isDark = () => { const t = A().getTheme(); return t === 'dark' || (t === 'system' && matchMedia('(prefers-color-scheme:dark)').matches); };
+const nbView = () => $('#cols') && !$('#cols').hidden;
+
+/* ---------- Hızlı menü (Blogger .qeF: dişli + köşegen karo ızgarası) ---------- */
+function items() {
+  const a = A(), s = S() || {}, L = [];
+  L.push({ t: 'Yeni not defteri', i: 'plus', run: () => a.createNb() });
+  L.push({ t: 'Ara  (Ctrl+K)', i: 'search', run: () => window.defterSearch?.open() });
+  if (nbView()) {
+    L.push({ t: 'Kaynak ekle', i: 'upload', run: () => $('#addFile')?.click() });
+    L.push({ t: 'Not oluştur', i: 'edit', run: () => $('#addNote')?.click() });
+    L.push({ t: 'Sohbeti indir (.md)', i: 'doc', run: () => $('#expChat')?.click() });
+    L.push({ t: 'Tüm not defterleri', i: 'home', run: () => a.goHome() });
+  }
+  L.push({ t: 'Model seç', i: 'cpu', run: () => a.openModel() });
+  L.push({ t: isDark() ? 'Açık mod' : 'Koyu mod', i: isDark() ? 'sun' : 'moon', run: () => a.setTheme(isDark() ? 'light' : 'dark') });
+  if (s.wide?.()) L.push({ t: 'Pencere düzeni', i: 'layout', run: () => s.toggleWm?.() });
+  L.push({ t: 'Klavye ve oyun kolu', i: 'pad', run: () => window.defterHelp?.() });
+  if (!s.standalone?.()) L.push({ t: 'Uygulama olarak kur', i: 'install', run: () => s.install?.() });
+  L.push({ t: 'Çerez politikası', i: 'verify', run: () => document.getElementById('cookieDlg')?.showModal() });
+  return L.slice(0, 15);
+}
+function buildFab() {
+  if ($('.qeF')) return;
+  const input = el('input', { className: 'qeI', id: 'offQEdit', type: 'checkbox', hidden: true });
+  const toggle = el('label', { className: 'qeT', htmlFor: 'offQEdit', role: 'button', tabIndex: 0, 'aria-label': 'Hızlı menü', title: 'Hızlı menü' });
+  toggle.innerHTML = `<span class="g1">${svg(P.gear)}</span><span class="g2">${svg(P.x)}</span>`;
+  toggle.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); input.checked = !input.checked; } });
+  const list = el('div', { className: 'qeL' });
+  const fab = el('div', { className: 'qeF' }, input, el('label', { className: 'fCls', htmlFor: 'offQEdit' }), toggle, list);
+  function fill() {
+    list.replaceChildren(...items().map((it) => {
+      const b = el('button', { type: 'button', title: it.t, 'aria-label': it.t, innerHTML: svg(P[it.i]) });
+      b.onclick = () => { input.checked = false; it.run(); }; return b;
+    }));
+  }
+  input.addEventListener('change', () => { if (input.checked) fill(); });
+  document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && input.checked) { input.checked = false; e.stopPropagation(); toggle.focus(); } }, true);
+  fill(); document.body.append(fab);
+}
+
+/* ---------- Bildirim şeridi (Blogger .ntf: ALİ & NSONE + kapat + çizgi göstergeleri) ---------- */
+function buildNtf() {
+  const home = $('#home'); if (!home || $('#ntf') || lsGet('class-ntf-x', 0) > Date.now() - 864e5) return;
+  const slides = [['CLASS', 'https://github.com/Aleyulala/Class', 'SAVED', 'https://aleyulala.github.io/saved/'], ['ALİ', 'https://aleyulala.blogspot.com/', 'NSONE', 'https://negronshow.blogspot.com/']];
+  const wrap = el('div', { className: 'ntfS' });
+  slides.forEach((s, i) => wrap.append(el('div', { className: 'ntfSl' + (i ? '' : ' on') },
+    el('a', { href: s[1], target: '_blank', rel: 'noopener noreferrer', textContent: s[0] }), el('span', { className: 'ntfAmp', textContent: '&' }), el('a', { href: s[3], target: '_blank', rel: 'noopener noreferrer', textContent: s[2] }))));
+  const dots = el('div', { className: 'ntfDots' }, ...slides.map((_, i) => el('button', { type: 'button', className: i ? '' : 'on', 'aria-label': `Şerit ${i + 1}` })));
+  const bar = el('div', { className: 'ntfBar', id: 'ntf' }, el('button', { type: 'button', className: 'ntfX', 'aria-label': 'Kapat', innerHTML: svg(P.x), onclick: () => { lsSet('class-ntf-x', Date.now()); bar.remove(); } }), wrap, dots);
+  let cur = 0; const go = (n) => { cur = n; [...wrap.children].forEach((c, i) => c.classList.toggle('on', i === cur)); [...dots.children].forEach((c, i) => c.classList.toggle('on', i === cur)); };
+  [...dots.children].forEach((d, i) => (d.onclick = () => go(i)));
+  const t = setInterval(() => { if (!bar.isConnected) clearInterval(t); else if (!matchMedia('(prefers-reduced-motion:reduce)').matches) go((cur + 1) % slides.length); }, 5000);
+  ($('.homeIn') || home).prepend(bar);
+}
+
+/* ---------- Karşılama çipleri ("N defter", "İyi akşamlar!") ---------- */
+function greet() { const h = new Date().getHours(); return h < 5 ? 'İyi geceler!' : h < 12 ? 'Günaydın!' : h < 18 ? 'İyi öğleden sonralar!' : 'İyi akşamlar!'; }
+function buildChips() {
+  const h = $('.hRow'); if (!h || $('#chips')) return;
+  const n = el('span', { innerHTML: P.eye && svg(P.eye) }, el('b', { id: 'chipN', textContent: '0 defter' }));
+  const g = el('span', { innerHTML: svg(P.smile) }, el('b', { textContent: greet() }));
+  h.before(el('div', { className: 'chipsRow', id: 'chips' }, n, g));
+  const upd = () => { const c = A().notebooks().length; $('#chipN').textContent = `${c} defter`; };
+  upd(); new MutationObserver(upd).observe($('#nbGrid'), { childList: true });
+}
+
+/* ---------- Üst çubuk: tema düğmesi ---------- */
+function buildThemeBtn() {
+  const g = $('#gearBtn'); if (!g || $('#themeBtn')) return;
+  const b = el('button', { className: 'ib', id: 'themeBtn', type: 'button', 'aria-label': 'Tema', title: 'Açık / koyu mod' });
+  const upd = () => { b.innerHTML = svg(isDark() ? P.moon : P.sun); };
+  b.onclick = () => { A().setTheme(isDark() ? 'light' : 'dark'); upd(); };
+  g.before(b); upd(); new MutationObserver(upd).observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
+}
+
+function boot() { buildThemeBtn(); buildChips(); buildNtf(); buildFab(); }
+if (window.defterApp) boot(); else document.addEventListener('defter-ready', boot, { once: true });
