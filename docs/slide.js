@@ -13,7 +13,7 @@ const cols = () => document.getElementById('cols');
 const narrow = () => innerWidth <= 900;
 const enabled = () => lsGet(KEY, 'on') !== 'off';
 const active = () => enabled() && narrow() && !!cols() && !cols().hidden;
-const SIDES = { sources: 'panelSources', studio: 'panelStudio' };
+const SIDES = { sources: 'panelSources' }; /* Stüdyo telefonda yan panel değil, alttan açılan sayfanın ilk sekmesi */
 const reduce = () => matchMedia('(prefers-reduced-motion:reduce)').matches;
 
 let scrim = null;
@@ -22,6 +22,8 @@ function sync() {
   const on = enabled() && narrow();
   if (on) c.dataset.slide = 'on'; else { delete c.dataset.slide; if (c.dataset.sheet) close(); }
   if (on && c.dataset.tab !== 'chat' && SIDES[c.dataset.tab]) { const t = c.dataset.tab; c.dataset.tab = 'chat'; open(t); }
+  if (on && c.dataset.tab === 'studio') { c.dataset.tab = 'chat'; showStudio(); }
+  if (!on && H?.cur === 'studio') H.hide();
   const top = $('#top'), mob = $('#mobM');
   c.style.setProperty('--slTop', Math.round(top?.getBoundingClientRect().bottom || 56) + 'px');
   c.style.setProperty('--slBot', Math.round(mob && getComputedStyle(mob).display !== 'none' ? innerHeight - mob.getBoundingClientRect().top : 0) + 'px');
@@ -44,9 +46,11 @@ export function close() {
 /* app.js setTab buraya sorar: kayan modda Kaynaklar/Stüdyo sekme değil panel olur */
 function take(t) {
   if (!active()) return false;
-  if (SIDES[t]) { if (cols().dataset.sheet === t) close(); else open(t); return true; }
-  close(); return false;
+  if (t === 'studio') { if (H?.sheet.classList.contains('on') && H.cur === 'studio') H.hide(); else showStudio(); return true; }
+  if (SIDES[t]) { H?.hide(); if (cols().dataset.sheet === t) close(); else open(t); return true; }
+  close(); H?.hide(); return false;
 }
+function showStudio() { if (!window.defterHub) return; close(); hubSheet().show('studio'); }
 
 /* ---------- kaydırma: kenardan aç, kenara doğru kapat ---------- */
 const EDGE = 26;
@@ -60,7 +64,6 @@ function onStart(e) {
   const cur = c.dataset.sheet;
   if (cur) { const p = document.getElementById(SIDES[cur]); if (!p.contains(e.target) || hScroller(e.target)) return; g = { side: cur, mode: 'close', x, y, t: Date.now(), p, w: p.offsetWidth, go: false }; return; }
   if (x <= EDGE) g = { side: 'sources', mode: 'open', x, y, t: Date.now() };
-  else if (x >= innerWidth - EDGE) g = { side: 'studio', mode: 'open', x, y, t: Date.now() };
   if (g) { g.p = document.getElementById(SIDES[g.side]); g.w = Math.min(innerWidth * 0.88, 380); g.go = false; }
 }
 function onMove(e) {
@@ -98,7 +101,13 @@ function hubSheet() {
   const sheet = el('section', { className: 'hubSheet', id: 'hubSheet', role: 'dialog', 'aria-modal': 'true', 'aria-label': 'Stüdyolar' }, grip, tabs, body, bar);
   const back = el('div', { className: 'slScrim hsScrim', 'aria-hidden': 'true' }); back.onclick = () => hide();
   document.body.append(back, sheet);
-  const P = () => window.defterHub?.PANELS || [];
+  const STUDIO = { id: 'studio', title: 'Stüdyo', icon: sv('<path d="M12 3l1.8 4.7L18.5 9.5l-4.7 1.8L12 16l-1.8-4.7L5.5 9.5l4.7-1.8z"/><path d="M19 15l.8 2.2L22 18l-2.2.8L19 21l-.8-2.2L16 18l2.2-.8z"/>') };
+  const P = () => [STUDIO, ...(window.defterHub?.PANELS || [])];
+  /* Stüdyo sekmesi: #panelStudio sayfanın içine taşınır, kapanınca yerine döner */
+  const studioEl = () => document.getElementById('panelStudio');
+  let mark = null;
+  const lend = () => { const st = studioEl(); if (!st) return null; if (!mark) { mark = document.createComment('panelStudio'); st.before(mark); } st.classList.add('inSheet'); return st; };
+  const giveBack = () => { const st = studioEl(); if (mark && st && st.classList.contains('inSheet')) { mark.after(st); st.classList.remove('inSheet'); } };
   let snap = lsGet('class-hs-snap', 1);
   const setH = (f) => sheet.style.setProperty('--hsH', Math.round(f * 100) + 'dvh');
   setH(SNAP[snap] || SNAP[1]);
@@ -120,13 +129,16 @@ function hubSheet() {
     if (!tabs.childElementCount) P().forEach((p) => { const b = el('button', { type: 'button', className: 'hbTab', role: 'tab', 'data-id': p.id, innerHTML: p.icon }, el('span', { textContent: p.title })); b.onclick = () => show(p.id); tabs.append(b); });
     try { localStorage.setItem('class-hub-tab', id); } catch {}
     tabs.querySelectorAll('.hbTab').forEach((b) => { const on = b.dataset.id === id; b.classList.toggle('on', on); b.setAttribute('aria-selected', on); if (on) b.scrollIntoView({ block: 'nearest', inline: 'center' }); });
-    const pe = window.defterHub.panelEl(id); const d = document.getElementById('hubDlg'); if (d?.open && d.contains(pe)) d.close();
-    body.replaceChildren(el('div', { className: 'dlg hsIn' }, pe)); body.scrollTop = 0;
+    giveBack(); H.cur = id; document.body.dataset.hs = id;
+    let pe;
+    if (id === 'studio') pe = lend();
+    else { pe = window.defterHub.panelEl(id); const d = document.getElementById('hubDlg'); if (d?.open && d.contains(pe)) d.close(); }
+    body.replaceChildren(el('div', { className: 'dlg hsIn' + (id === 'studio' ? ' hsStudio' : '') }, pe)); body.scrollTop = 0;
     if (!sheet.classList.contains('on')) { close(); sheet.classList.add('on'); back.classList.add('on'); document.addEventListener('keydown', key, true); setTimeout(() => tabs.querySelector('.on')?.focus({ preventScroll: true }), 60); }
   }
-  function hide() { sheet.classList.remove('on'); back.classList.remove('on'); document.removeEventListener('keydown', key, true); }
+  function hide() { sheet.classList.remove('on'); back.classList.remove('on'); document.removeEventListener('keydown', key, true); giveBack(); H.cur = ''; delete document.body.dataset.hs; }
   const key = (e) => { if (e.key === 'Escape' && !document.querySelector('dialog[open]')) { e.stopPropagation(); hide(); } };
-  H = { show, hide, sheet }; return H;
+  H = { show, hide, sheet, cur: '' }; return H;
 }
 
 window.defterSlide = {
@@ -135,7 +147,7 @@ window.defterSlide = {
   /* hub.js sorar: telefonda kayan mod açıksa stüdyo alttan açılır */
   openHub: (id) => { if (!enabled() || !narrow() || !window.defterHub) return false; hubSheet().show(id); return true; },
   hideHub: () => H?.hide(),
-  back: () => { if (H?.sheet.classList.contains('on')) { H.hide(); return true; } if (cols()?.dataset.sheet) { const s = cols().dataset.sheet; close(); $(`#mobM .mobB[aria-label="${s === 'sources' ? 'Kaynaklar' : 'Stüdyo'}"]`)?.focus(); return true; } return false; },
+  back: () => { if (H?.sheet.classList.contains('on')) { H.hide(); $('#mobM .mobB[aria-label="Stüdyo"]')?.focus(); return true; } if (cols()?.dataset.sheet) { const s = cols().dataset.sheet; close(); $(`#mobM .mobB[aria-label="${s === 'sources' ? 'Kaynaklar' : 'Stüdyo'}"]`)?.focus(); return true; } return false; },
 };
 document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && cols()?.dataset.sheet && !document.querySelector('dialog[open]') && !$('#hubSheet.on')) { e.stopPropagation(); const s = cols().dataset.sheet; close(); $(`#mobM .mobB[aria-label="${s === 'sources' ? 'Kaynaklar' : 'Stüdyo'}"]`)?.focus(); } }, true);
 document.addEventListener('touchstart', onStart, { passive: true });
@@ -146,6 +158,6 @@ function boot() {
   const c = cols(); if (!c) return;
   new MutationObserver(() => { if (c.hidden) { close(); H?.hide(); } sync(); }).observe(c, { attributes: true, attributeFilter: ['hidden'] });
   /* sekme başka yoldan Kaynaklar / Stüdyo yapılırsa (eski kod, eklenti, test) kayan panele çevir */
-  new MutationObserver(() => { const t = c.dataset.tab; if (active() && SIDES[t]) { c.dataset.tab = 'chat'; open(t); } }).observe(c, { attributes: true, attributeFilter: ['data-tab'] });
+  new MutationObserver(() => { const t = c.dataset.tab; if (active() && SIDES[t]) { c.dataset.tab = 'chat'; open(t); } else if (active() && t === 'studio') { c.dataset.tab = 'chat'; showStudio(); } }).observe(c, { attributes: true, attributeFilter: ['data-tab'] });
 }
 if (window.defterApp) boot(); else document.addEventListener('defter-ready', boot, { once: true });

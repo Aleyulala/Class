@@ -41,8 +41,7 @@ function status() { const s = el('div', { className: 'hbStat', role: 'status' })
 function bar() { const b = el('div', { className: 'hbBar', hidden: true }, el('i')); b.set = (pct) => { b.hidden = pct == null; b.firstChild.style.width = Math.max(0, Math.min(100, pct || 0)) + '%'; }; return b; }
 /* Sunucu yokken: panelin ayar menüsü yine görünür; üstte ince bir durum şeridi, üretim düğmeleri pasif */
 const offBar = () => el('div', { className: 'hbOff', role: 'note' }, el('i', { 'aria-hidden': 'true' }),
-  el('span', {}, el('b', { textContent: OFF }), el('small', { textContent: isLocal() ? 'Başlatıcı penceresi açık mı? Ayarlar hazır, sunucu gelince üretim çalışır.' : 'Ayarlarını şimdiden yap; üretim için Class’ı bilgisayarında başlatıcıyla aç.' })),
-  el('a', { href: 'https://github.com/Aleyulala/Class#readme', target: '_blank', rel: 'noopener noreferrer', textContent: 'Nasıl?' }));
+  el('span', {}, el('b', { textContent: OFF }), el('small', { textContent: 'Ayarlar hazır; üretim sunucu açılınca çalışır.' })));
 const needSrv = (what) => el('div', { className: 'hbList' }, offBar(), el('p', { className: 'muted', textContent: `${what} sunucu bağlanınca çalışır.` }));
 async function gate(root, what, build) {
   const s = await server(); const ui = build();
@@ -113,8 +112,7 @@ function pTts() {
       try { const o = await speak(text.value.trim(), { voice: voice.value || undefined, model: model.value || undefined, speed }); out.replaceChildren(el('audio', { controls: true, src: o.url }), el('div', { className: 'stBtns' }, saveBlobLink(o.url, (o.audioFile || 'class-ses.wav')), btn('Sohbete ekle', () => toChat({ audio: o.url, text: text.value.trim().slice(0, 120) }, st)))); st.set('Hazır.', 'ok'); }
       catch (e) { st.set('Seslendirilemedi: ' + e.message, 'err'); } finally { go.disabled = false; }
     }, 'primary');
-    return el('div', {}, sec('Ses', field('Ses', voice), field('Model', model), field('Hız', rangeF(0.5, 1.6, 0.05, 1, (v) => v.toFixed(2) + '×', (v) => (speed = v)))), sec('Metin', text, el('div', { className: 'stBtns' }, go)), st, out,
-      el('p', { className: 'hbTip', textContent: 'İpucu: Stüdyo > Sesli özet çıktısında “Gerçek sesle oluştur” iki sesli podcast dosyası üretir.' }));
+    return el('div', {}, sec('Ses', field('Ses', voice), field('Model', model), field('Hız', rangeF(0.5, 1.6, 0.05, 1, (v) => v.toFixed(2) + '×', (v) => (speed = v)))), sec('Metin', text, el('div', { className: 'stBtns' }, go)), st, out);
   });
   return root;
 }
@@ -212,8 +210,7 @@ function pWeb() {
     } catch (e) { st.set(srvState?.ok ? 'Eklenemedi: ' + e.message : 'Tarayıcı bu siteyi doğrudan okuyamadı (CORS). Yerel sunucuyla açınca her site eklenebilir.', 'err'); }
     finally { addUrl.disabled = false; }
   }, 'primary');
-  root.append(sec('Kaynak keşfet (web araması)', el('div', { className: 'hbRow' }, q, search)), list, sec('Adresten kaynak ekle', el('div', { className: 'hbRow' }, url, addUrl)), st,
-    el('p', { className: 'hbTip', textContent: 'Kaynaklar açık olan not defterine eklenir. Arama ve sayfa okuma yerel sunucu üzerinden yapılır; sunucu yerel/özel ağ adreslerini engeller.' }));
+  root.append(sec('Kaynak keşfet (web araması)', el('div', { className: 'hbRow' }, q, search)), list, sec('Adresten kaynak ekle', el('div', { className: 'hbRow' }, url, addUrl)), st);
   return root;
 }
 
