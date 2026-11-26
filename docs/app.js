@@ -578,7 +578,7 @@ STUDIO.forEach((t) => { const b = el('button', { className: 'btn tile' }, el('sp
 
 /* ---------------- Not defterleri (ana ekran) ---------------- */
 const ICONS = ['📘', '🔬', '📚', '🧪', '🌍', '💡', '📊', '🎓'];
-const home = { filter: 'all', sort: 'recent', query: '', more: false };
+const home = { filter: 'all', sort: 'recent', query: '', more: false, shown: 0 };
 async function touchNb() { if (!nb) return; nb.updatedAt = Date.now(); await DB.put('notebooks', nb); }
 function fmtDate(t) { return new Date(t).toLocaleDateString('tr-TR', { day: 'numeric', month: 'short', year: 'numeric' }); }
 const SORTS = { recent: 'Son kullanılan', name: 'Ada göre (A–Z)', created: 'Oluşturulma tarihi' };
@@ -596,8 +596,8 @@ async function renderHome() {
   const add = el('button', { className: 'nbNew', type: 'button', ariaLabel: 'Yeni not defteri oluştur' }, el('span', { className: 'nbPlus', innerHTML: IC.plus }), el('b', { textContent: 'Yeni not defteri' }));
   add.onclick = createNb; grid.append(add);
   const counts = {}; (await DB.all('sources')).forEach((x) => (counts[x.nbId] = (counts[x.nbId] || 0) + 1));
-  const list = visibleNotebooks(); const LIMIT = 10; const shown = home.more ? list : list.slice(0, LIMIT);
-  shown.forEach((n) => {
+  const list = visibleNotebooks(); const BATCH = 8; if (!home.shown) home.shown = BATCH;
+  const mkCard = (n) => {
     const more = el('button', { className: 'nbMore', type: 'button', title: 'Seçenekler', ariaLabel: `${n.title} seçenekleri`, ariaHaspopup: 'menu', innerHTML: IC.more });
     more.onclick = (e) => { e.stopPropagation(); showMenu(more, [
       { icon: 'edit', label: 'Başlığı düzenle', run: () => renameNb(n) },
@@ -608,9 +608,22 @@ async function renderHome() {
       el('div', { className: 'nbT' }, el('b', { textContent: n.title }), el('small', { textContent: `${n.pinned ? '📌 ' : ''}${counts[n.id] || 0} kaynak · ${fmtDate(n.updatedAt)}` })), more);
     card.onclick = () => openNb(n.id);
     card.onkeydown = (e) => { if (e.target === card && (e.key === 'Enter' || e.key === ' ')) { e.preventDefault(); openNb(n.id); } };
-    grid.append(card);
-  });
-  if (!home.more && list.length > LIMIT) { const mb = el('button', { className: 'moreRow', type: 'button' }, 'Daha fazla göster ', el('span', { innerHTML: IC.caret.replace('<svg', '<svg style="transform:rotate(-90deg)"') })); mb.onclick = () => { home.more = true; renderHome(); }; grid.append(mb); }
+    return card;
+  };
+  let at = 0;
+  const loadMore = () => { const next = list.slice(at, Math.min(list.length, at + (at ? BATCH : home.shown))); next.forEach((n) => grid.insertBefore(mkCard(n), sent || null)); at += next.length; home.shown = Math.max(home.shown, at); if (at >= list.length && sent) { sent.remove(); sent = null; } };
+  let sent = null;
+  if (list.length > home.shown) { sent = el('div', { className: 'nbSent', 'aria-hidden': 'true' }, el('span', { className: 'nbCard sk' }), el('span', { className: 'nbCard sk' })); grid.append(sent); }
+  loadMore();
+  home.off?.(); home.off = null;
+  if (sent) {
+    const hm = $('#home'); let raf = 0;
+    const check = () => { raf = 0; if (!sent) return; const r = sent.firstChild.getBoundingClientRect(), b = hm.getBoundingClientRect(); if (r.top < b.bottom + 240) { loadMore(); if (sent) raf = requestAnimationFrame(check); } };
+    const on = () => { if (!raf) raf = requestAnimationFrame(check); };
+    hm.addEventListener('scroll', on, { passive: true }); window.addEventListener('resize', on);
+    home.off = () => { hm.removeEventListener('scroll', on); window.removeEventListener('resize', on); cancelAnimationFrame(raf); };
+    on();
+  }
   $('#nbEmpty').hidden = list.length > 0 || notebooks.length === 0 ? true : false;
   if (!list.length && notebooks.length) { $('#nbEmpty').textContent = home.query ? 'Eşleşen not defteri bulunamadı.' : 'Sabitlenmiş not defteri yok.'; $('#nbEmpty').hidden = false; }
   else if (!notebooks.length) { $('#nbEmpty').textContent = 'Henüz not defterin yok. “Yeni not defteri” ile başla.'; $('#nbEmpty').hidden = false; }
@@ -660,11 +673,11 @@ $('#nbTitle').onkeydown = (e) => { if (e.key === 'Enter') e.target.blur(); };
 window.addEventListener('popstate', () => { const m = location.hash.match(/^#nb-(.+)$/); if (m) openNb(m[1]); else { busy = false; goHome(); } });
 
 // üst çubuk menüleri
-$('#filterBtn').onclick = () => showMenu($('#filterBtn'), Object.entries(FILTERS).map(([k, v]) => ({ label: v, check: home.filter === k, run: () => { home.filter = k; home.more = false; renderHome(); } })), { align: 'left' });
+$('#filterBtn').onclick = () => showMenu($('#filterBtn'), Object.entries(FILTERS).map(([k, v]) => ({ label: v, check: home.filter === k, run: () => { home.filter = k; home.more = false; home.shown = 0; renderHome(); } })), { align: 'left' });
 $('#sortBtn').onclick = () => showMenu($('#sortBtn'), Object.entries(SORTS).map(([k, v]) => ({ label: v, check: home.sort === k, run: () => { home.sort = k; renderHome(); } })));
 $('#searchBtn').onclick = () => { if (window.defterSearch) window.defterSearch.open(); else { $('#searchBar').hidden = false; $('#nbSearch').focus(); } };
 $('#searchClose').onclick = () => { $('#searchBar').hidden = true; $('#nbSearch').value = ''; home.query = ''; renderHome(); };
-$('#nbSearch').oninput = (e) => { home.query = e.target.value.trim(); home.more = false; renderHome(); };
+$('#nbSearch').oninput = (e) => { home.query = e.target.value.trim(); home.more = false; home.shown = 0; renderHome(); };
 $('#nbSearch').onkeydown = (e) => { if (e.key === 'Escape') $('#searchClose').click(); };
 $('#gearBtn').onclick = () => {
   const th = getTheme();
