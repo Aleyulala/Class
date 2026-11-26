@@ -111,41 +111,100 @@ let drawer = null;
 function closeDrawer() { if (!drawer) return; const d = drawer; drawer = null; d.classList.remove('in'); setTimeout(() => d.remove(), 200); document.removeEventListener('keydown', drawerKey, true); $('#menuBtn')?.setAttribute('aria-expanded', 'false'); }
 function drawerKey(e) {
   if (e.key === 'Escape') { e.stopPropagation(); closeDrawer(); $('#menuBtn')?.focus(); return; }
-  if ((e.key === 'ArrowDown' || e.key === 'ArrowUp') && drawer) { const f = [...drawer.querySelectorAll('.dwItem')]; const i = f.indexOf(document.activeElement); if (f.length) { e.preventDefault(); f[(i + (e.key === 'ArrowDown' ? 1 : -1) + f.length) % f.length].focus(); } return; }
+  if ((e.key === 'ArrowDown' || e.key === 'ArrowUp') && drawer) { const f = [...drawer.querySelectorAll('.dwItem:not([disabled])')]; const i = f.indexOf(document.activeElement); if (f.length) { e.preventDefault(); f[(i + (e.key === 'ArrowDown' ? 1 : -1) + f.length) % f.length].focus(); } return; }
   if (e.key !== 'Tab' || !drawer) return;
   const f = [...drawer.querySelectorAll('button:not([disabled])')]; if (!f.length) return;
   const i = f.indexOf(document.activeElement);
   if (e.shiftKey && i <= 0) { e.preventDefault(); f[f.length - 1].focus(); } else if (!e.shiftKey && (i < 0 || i === f.length - 1)) { e.preventDefault(); f[0].focus(); }
 }
+const SVG = (p) => `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">${p}</svg>`;
+const DI = {
+  tree: SVG('<rect x="3" y="3" width="7" height="5" rx="1.5"/><rect x="14" y="16" width="7" height="5" rx="1.5"/><rect x="14" y="3" width="7" height="5" rx="1.5"/><path d="M6.5 8v8.5a1.5 1.5 0 0 0 1.5 1.5H14M6.5 12H14"/>'),
+  flash: SVG('<path d="M13 2 4 14h7l-1 8 9-12h-7z"/>'),
+  tools: SVG('<path d="M14.7 6.3a4 4 0 0 0-5.4 5.4L3 18l3 3 6.3-6.3a4 4 0 0 0 5.4-5.4l-2.4 2.4-2.6-.6-.6-2.6z"/>'),
+  folder: SVG('<path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>'),
+  note: SVG('<path d="M5 4h11l3 3v13H5z"/><path d="M8 11h8M8 15h5"/>'),
+  verify: SVG('<path d="M12 3 4 6v6c0 4.5 3.2 7.8 8 9 4.8-1.2 8-4.5 8-9V6z"/><path d="m9 12 2 2 4-4"/>'),
+  gamepad: SVG('<rect x="2" y="7" width="20" height="11" rx="5"/><path d="M7 10v5M4.5 12.5h5M16 11.5h.01M18.5 14h.01"/>'),
+  github: SVG('<path d="M9 19c-4 1.2-4-2-6-2.5M15 21v-3.2a2.8 2.8 0 0 0-.8-2.2c2.6-.3 5.3-1.3 5.3-5.8a4.5 4.5 0 0 0-1.2-3.1 4.2 4.2 0 0 0-.1-3.1s-1-.3-3.2 1.2a11 11 0 0 0-5.8 0C7 3.4 6 3.7 6 3.7a4.2 4.2 0 0 0-.1 3.1A4.5 4.5 0 0 0 4.7 10c0 4.5 2.7 5.5 5.3 5.8a2.8 2.8 0 0 0-.8 2.2V21"/>'),
+  eye: SVG('<path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/>'),
+  insta: SVG('<rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4"/><path d="M17.5 6.5h.01"/>'),
+  tg: SVG('<path d="m21 4-9.5 17-2.5-7.5L3 11z"/><path d="m9 13.5 12-9.5"/>'),
+  tt: SVG('<path d="M14 3v11.5a3.5 3.5 0 1 1-3.5-3.5M14 3c.3 2.5 2 4.2 5 4.5"/>'),
+  mx: SVG('<path d="M5 3H3v18h2M19 3h2v18h-2M8 8v8M8 10l4 3 4-3M16 8v8"/>'),
+  vk: SVG('<rect x="3" y="3" width="18" height="18" rx="5"/><path d="M7 9c.5 3.5 2.3 6 5 6v-3.5c1.5.3 2.4 1.4 3 3.5h2.5c-.5-2-1.6-3.3-2.8-4 1.2-.7 2.2-2 2.5-3.5h-2.4c-.4 1.4-1.4 2.4-2.8 2.7V8H9.5"/>'),
+  plus: SVG('<path d="M12 5v14M5 12h14"/>'),
+};
+const ico = (k) => DI[k] || ic(k);
+const FKEY = 'defter-folders';
+function folder(id, icon, title, badge, items) {
+  const open = (lsGet(FKEY, { nb: true }))[id] === true;
+  const input = el('input', { type: 'checkbox', id: 'dwf-' + id, checked: open, hidden: true });
+  input.addEventListener('change', () => { const o = lsGet(FKEY, { nb: true }); o[id] = input.checked; lsSet(FKEY, o); });
+  const label = el('label', { htmlFor: 'dwf-' + id, role: 'button', tabIndex: 0, className: 'dwItem dwFolder', 'aria-label': title },
+    el('span', { className: 'mi', innerHTML: ico(icon) }), el('span', { className: 'ml', textContent: title }), badge ? el('span', { className: 'dwBadge', textContent: badge }) : '');
+  label.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); input.checked = !input.checked; input.dispatchEvent(new Event('change')); } });
+  return el('div', { className: 'dwGroup' }, input, label, el('div', { className: 'dwSub' }, ...items));
+}
 function item(icon, label, run, extra = {}) {
-  return el('button', { type: 'button', className: 'dwItem' + (extra.on ? ' on' : ''), onclick: () => { closeDrawer(); run(); } }, el('span', { className: 'mi', innerHTML: ic(icon) }), el('span', { className: 'ml', textContent: label }), extra.on ? el('span', { className: 'mc', textContent: '✓' }) : '');
+  return el('button', { type: 'button', className: 'dwItem' + (extra.on ? ' on' : ''), disabled: !!extra.disabled, onclick: () => { closeDrawer(); run(); } }, el('span', { className: 'mi', innerHTML: ico(icon) }), el('span', { className: 'ml', textContent: label }), extra.on ? el('span', { className: 'mc', textContent: '✓' }) : '');
+}
+/* XML'deki .pl2-slider-wrap: tek satırlık, 4,5 sn'de bir dönen, sağında "+" olan mini slider */
+function miniSlider(slides) {
+  const wrap = el('div', { className: 'plSl' }); let cur = 0, paused = false;
+  const els = slides.map((s, i) => {
+    const a = el('a', { className: 'plLink', href: s.href || '#', title: s.label, ...(s.href ? { target: '_blank', rel: 'noopener noreferrer' } : {}) }, el('span', { className: 'plIc', innerHTML: ico(s.icon) }), el('span', { textContent: s.label }));
+    if (s.run) a.onclick = (e) => { e.preventDefault(); s.run(); };
+    const nx = el('button', { type: 'button', className: 'plNext', 'aria-label': 'Sonraki', innerHTML: ico('plus') });
+    const d = el('div', { className: 'plSlide' + (i === 0 ? ' active' : '') }, a, nx); wrap.append(d); return { d, nx };
+  });
+  const go = () => { cur = (cur + 1) % els.length; els.forEach((x, i) => x.d.classList.toggle('active', i === cur)); };
+  els.forEach((x) => x.nx.addEventListener('click', go));
+  wrap.addEventListener('mouseenter', () => (paused = true)); wrap.addEventListener('mouseleave', () => (paused = false));
+  wrap.addEventListener('focusin', () => (paused = true)); wrap.addEventListener('focusout', () => (paused = false));
+  wrap.addEventListener('touchstart', () => { paused = true; setTimeout(() => (paused = false), 8000); }, { passive: true });
+  const t = setInterval(() => { if (!wrap.isConnected) clearInterval(t); else if (!paused && !matchMedia('(prefers-reduced-motion:reduce)').matches) go(); }, 4500);
+  return wrap;
 }
 function openDrawer() {
   if (drawer) { closeDrawer(); return; }
   const app = A(); if (!app) return; app.closeMenu();
   const cur = app.current();
-  const list = [...app.notebooks()].sort((a, b) => (b.updatedAt || 0) - (a.updatedAt || 0)).slice(0, 30);
+  const recent = [...app.notebooks()].sort((a, b) => (b.updatedAt || 0) - (a.updatedAt || 0)).filter((n) => !cur || n.id !== cur.id)[0];
   const th = app.getTheme();
-  const nbs = list.length ? list.map((n) => el('button', { type: 'button', className: 'dwItem' + (cur && cur.id === n.id ? ' on' : ''), onclick: () => { closeDrawer(); app.openNb(n.id); } }, el('span', { className: 'mi', textContent: n.icon || '📘' }), el('span', { className: 'ml', textContent: n.title }))) : [el('p', { className: 'muted dwEmpty', textContent: 'Henüz not defterin yok.' })];
   drawer = el('div', { className: 'drWrap' },
     el('div', { className: 'drScrim', onclick: closeDrawer }),
     el('aside', { className: 'drawer', role: 'dialog', 'aria-modal': 'true', 'aria-label': 'Menü' },
       el('div', { className: 'drHead' }, el('span', { className: 'wm', textContent: 'Class' }), el('button', { className: 'ib', type: 'button', 'aria-label': 'Kapat', innerHTML: ic('close'), onclick: closeDrawer })),
       el('div', { className: 'drBody' },
-        item('plus', 'Yeni not defteri', () => app.createNb()),
-        item('back', 'Tüm not defterleri', () => app.goHome()),
-        el('div', { className: 'dwBr' }), el('div', { className: 'dwSec', textContent: 'Not defterleri' }), ...nbs,
-        el('div', { className: 'dwBr' }), el('div', { className: 'dwSec', textContent: 'Görünüm' }),
-        item('sun', 'Açık mod', () => app.setTheme('light'), { on: th === 'light' }),
-        item('moon', 'Koyu mod', () => app.setTheme('dark'), { on: th === 'dark' }),
-        item('auto', 'Cihaz teması', () => app.setTheme('system'), { on: th === 'system' }),
-        el('div', { className: 'dwBr' }), el('div', { className: 'dwSec', textContent: 'Uygulama' }),
-        item('cpu', 'Model seç', () => app.openModel()),
-        ...(wide() ? [item('win', 'Pencere düzeni', () => { setWm(!wm.on); }, { on: wm.on })] : []),
-        ...(standalone() ? [] : [item('install', 'Uygulama olarak kur', () => installSheet(true))])),
+        el('ul', { className: 'dwList' },
+          folder('nb', 'tree', 'Not defterleri', 'Yeni!', [
+            item('plus', 'Yeni not defteri', () => app.createNb()),
+            item('back', 'Tüm not defterleri', () => app.goHome()),
+            recent ? item('note', recent.title, () => app.openNb(recent.id)) : item('note', 'Henüz başka defter yok', () => {}, { disabled: true })]),
+          el('div', { className: 'dwBr' }),
+          folder('tools', 'flash', 'Araçlar', 'Canlı', [
+            item('cpu', 'Model seç', () => app.openModel()),
+            wide() ? item('win', 'Pencere düzeni', () => setWm(!wm.on), { on: wm.on }) : item('gamepad', 'Klavye ve oyun kolu', () => window.defterHelp?.()),
+            standalone() ? item('gamepad', 'Klavye ve oyun kolu', () => window.defterHelp?.()) : item('install', 'Uygulama olarak kur', () => installSheet(true))]),
+          el('div', { className: 'dwBr' }),
+          folder('look', 'tools', 'Görünüm', '', [
+            item('sun', 'Açık mod', () => app.setTheme('light'), { on: th === 'light' }),
+            item('moon', 'Koyu mod', () => app.setTheme('dark'), { on: th === 'dark' }),
+            item('auto', 'Cihaz teması', () => app.setTheme('system'), { on: th === 'system' })]))),
       el('div', { className: 'drFoot' },
-        el('p', { className: 'muted', textContent: 'Her şey bu cihazda çalışır; verilerin dışarı gitmez.' }),
-        el('div', { className: 'drLinks' }, el('button', { type: 'button', textContent: 'Çerez Politikası', onclick: () => { closeDrawer(); document.getElementById('cookieDlg')?.showModal(); } }), el('button', { type: 'button', textContent: 'Klavye ve oyun kolu', onclick: () => { closeDrawer(); window.defterHelp?.(); } })))));
+        miniSlider([
+          { icon: 'verify', label: 'Çerez Politikası', run: () => { closeDrawer(); document.getElementById('cookieDlg')?.showModal(); } },
+          { icon: 'gamepad', label: 'Klavye ve oyun kolu', run: () => { closeDrawer(); window.defterHelp?.(); } },
+          { icon: 'note', label: 'Gizlilik: veri cihazdan çıkmaz', run: () => { closeDrawer(); document.getElementById('cookieDlg')?.showModal(); } }]),
+        miniSlider([
+          { icon: 'github', label: 'GitHub', href: 'https://github.com/Aleyulala/Class' },
+          { icon: 'eye', label: 'Saved', href: 'https://aleyulala.github.io/saved/' },
+          { icon: 'insta', label: 'Instagram', href: 'https://www.instagram.com/aleyul.ala/' },
+          { icon: 'tg', label: 'Telegram', href: 'https://t.me/aleyyulala' },
+          { icon: 'tt', label: 'TikTok', href: 'https://www.tiktok.com/@Aleyyu.Ala' },
+          { icon: 'mx', label: 'Matrix', href: 'https://matrix.to/#/#negronn-show:matrix.org' },
+          { icon: 'vk', label: 'VKontakte', href: 'https://vk.com/negronn' }]))));
   document.body.append(drawer); $('#menuBtn')?.setAttribute('aria-expanded', 'true');
   requestAnimationFrame(() => drawer?.classList.add('in'));
   document.addEventListener('keydown', drawerKey, true); setTimeout(() => drawer?.querySelector('.dwItem')?.focus(), 60);
