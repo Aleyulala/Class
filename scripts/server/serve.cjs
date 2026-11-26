@@ -10991,6 +10991,8 @@ async function doLlmChat(req, res, body, retryCount = 0) {
       presence_penalty: Number.isFinite(Number(body.presence_penalty)) ? Number(body.presence_penalty) : 0.0,
       seed: Number.isInteger(Number(body.seed)) ? Number(body.seed) : undefined,
       stop: Array.isArray(body.stop) ? body.stop : (body.stop ? [body.stop] : undefined),
+      // Class: yapılandırılmış çıktı (bilgi kartı, quiz…) için JSON şeması llama-server'a iletilir
+      response_format: body.response_format && typeof body.response_format === "object" ? body.response_format : undefined,
     });
 
     if (isStream) {

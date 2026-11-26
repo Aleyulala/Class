@@ -83,3 +83,15 @@ Listedeki dosya adları Hugging Face'teki depolara işaret eder; bir ad değişm
 ## Üçüncü taraf bileşenler
 
 `docs/vendor/wllama` (MIT) ve `docs/vendor/pdfjs` (Apache-2.0) — lisans dosyaları kendi klasörlerindedir.
+
+## Ayarlar ve yapay zekâ motorları (v24)
+
+Sağ üstteki dişli **Ayarlar** panelini açar. İlk açılışta kısa bir **Kurulum** sihirbazı (görünüm → cihaz kontrolü → motor seçimi) çıkar; Ayarlar > Hakkında'dan yeniden başlatılabilir.
+
+| Motor | Nasıl | Not |
+|---|---|---|
+| Tarayıcıda model | Ayarlar > Motor > *Model seç ve yükle* | İnternetsiz; model bir kez indirilir (WebAssembly / WebGPU). |
+| Yerel sunucu | Class'ı `windows.bat` / `linux.sh` / `mac.sh` ile aç → *Sunucuya bağlan* | Sunucunun llama.cpp motorunu (GPU) kullanır; `app/llm-models` içindeki `.gguf` modelleri listeler. Yalnızca aynı kaynaktan (localhost) çalışır. |
+| OpenAI uyumlu API | Adres + (isteğe bağlı) anahtar + model | LM Studio `http://localhost:1234/v1`, Ollama `http://localhost:11434/v1` (`OLLAMA_ORIGINS` ile), OpenRouter vb. Anahtar yalnızca bu tarayıcıda saklanır. |
+
+Diğer ayarlar: tema ve tema rengi, yazı/arayüz boyutu, animasyonlar, ayna (RTL), sıcaklık, en uzun cevap, bağlam, ek sistem talimatı, Enter ile gönder, depolama kullanımı, kalıcı depolama, **yedeği indir / yükle (.json)**, tüm verileri sil, cihaz tanılama.

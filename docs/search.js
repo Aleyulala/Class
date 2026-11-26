@@ -29,6 +29,8 @@ function commands() {
   return [
     { t: 'Yeni not defteri', s: 'Boş bir defter başlat', run: () => a.createNb() },
     { t: 'Tüm not defterleri', s: 'Ana ekrana dön', run: () => a.goHome() },
+    { t: 'Ayarlar', s: 'Görünüm, motor, sohbet, veri', run: () => window.defterSettings?.open() },
+    { t: 'Kurulum sihirbazı', s: 'İlk kurulum adımları', run: () => window.defterSettings?.setup() },
     { t: 'Model seç', s: 'Yerel yapay zekâ modeli', run: () => a.openModel() },
     { t: dark ? 'Açık moda geç' : 'Koyu moda geç', s: 'Görünüm', run: () => a.setTheme(dark ? 'light' : 'dark') },
     { t: 'İletişim', s: 'Mesaj yaz', run: () => window.defterContact?.open() },

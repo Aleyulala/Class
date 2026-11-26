@@ -1,6 +1,6 @@
 /* Aşağı kaydırdıkça belirme (Blogger yorumlarındaki gibi): öğeler görünüm alanına girince yumuşakça yukarı kayarak belirir.
    Ekranın ilk görünen kısmı hemen açılır (kademeli); altı kaydırınca gelir. Hareket azaltma tercihi varsa hepsi hemen görünür. */
-const reduce = matchMedia('(prefers-reduced-motion:reduce)').matches;
+const reduce = matchMedia('(prefers-reduced-motion:reduce)').matches || document.documentElement.classList.contains('noMotion');
 const SEL = ['#home .chipsRow', '#home .hRow', '#home .newPill', '#home .nbCard:not(.sk)', '#home .nbNew', '#home .ftrBrand', '#home .ftrLinks', '#home .ftrSec', '#home .ftrFeed', '#home .ntfBar',
   '#msgs .msg.c', '#msgs .welcome', '#ctMsgs .ctM', '#ctForm', '#studioBtns .btn', '#outList li', '#noteList li', '#srcList li'];
 let io = null; const seen = new Set();
