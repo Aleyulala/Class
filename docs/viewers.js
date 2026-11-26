@@ -144,7 +144,7 @@ function viewPodcast(d, out) {
 /* Gerçek sesli özet: yerel sunucunun TTS motoruyla iki sesli podcast dosyası (WAV). Dosya çıktıyla birlikte saklanır. */
 function realAudio(d, out) {
   const box = el('div', { className: 'pcReal' }); const H = window.defterHub, X = window.ClassExtract;
-  const player = (blob) => { const u = URL.createObjectURL(blob); return el('div', { className: 'pcPlay' }, el('audio', { controls: true, src: u }), el('div', { className: 'row' }, el('a', { className: 'btn', href: u, download: `${(out?.title || 'sesli-ozet').replace(/[^\w\u00C0-\u024F -]+/g, '').trim() || 'sesli-ozet'}.wav`, textContent: 'İndir (.wav)' }))); };
+  const player = (blob) => { const u = URL.createObjectURL(blob); return el('div', { className: 'pcPlay' }, window.classPlayer ? window.classPlayer.card({ audio: u, text: out?.title || 'Sesli özet' }) : el('audio', { controls: true, src: u }), el('div', { className: 'row' }, el('a', { className: 'btn', href: u, download: `${(out?.title || 'sesli-ozet').replace(/[^\w\u00C0-\u024F -]+/g, '').trim() || 'sesli-ozet'}.wav`, textContent: 'İndir (.wav)' }))); };
   if (out?.audioBlob) box.append(el('b', { textContent: 'Sesli özet dosyası' }), player(out.audioBlob));
   if (!H || !X) return box;
   H.server().then(async (s) => {

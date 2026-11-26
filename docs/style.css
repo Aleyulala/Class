@@ -1040,3 +1040,70 @@ dialog.hub>.hbWrap{max-width:860px;padding:14px 14px 28px;gap:12px}
 #panelChat #ctxInfo{margin:0 6px 6px;font-size:12.5px}#panelChat #ctxInfo:empty{display:none}
 #panelStudio{overflow-y:auto;overscroll-behavior:contain}
 @media (min-width:901px){body:has(#cols:not([hidden])) #panelStudio{padding-bottom:112px}}
+/* --- Stüdyo: emoji yerine Görsel/Ses şeridiyle aynı çizgi simgeler --- */
+#studioBtns{gap:8px}
+#studioBtns .btn.tile{justify-content:flex-start;gap:10px;min-height:44px;padding:0 12px;border:1px solid var(--line);border-radius:12px;background:transparent}
+#studioBtns .btn.tile:hover,#studioBtns .btn.tile:focus-visible{border-color:var(--ac);background:transparent}
+#studioBtns .btn.tile .tIc{display:inline-flex;color:var(--ac);margin:0}#studioBtns .btn.tile .tIc svg{width:18px;height:18px}
+#panelStudio .outItem .tIc,.sldHd .tIc{flex:none;width:34px;height:34px;border-radius:10px;display:grid;place-items:center;margin:0;color:var(--ac);background:color-mix(in srgb,var(--ac) 14%,transparent)}
+.sldHd .tIc{width:30px;height:30px}
+/* --- Stüdyo panelleri: sunucu yokken ince durum şeridi, menüler görünür --- */
+.hbOff{display:flex;align-items:center;gap:10px;padding:10px 12px;margin-bottom:12px;border-radius:12px;border:1px solid var(--line);background:var(--btn)}
+.hbOff>i{flex:none;width:8px;height:8px;border-radius:50%;background:#e8a33d;box-shadow:0 0 0 3px color-mix(in srgb,#e8a33d 25%,transparent)}
+.hbOff>span{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px}.hbOff b{font-size:13px}.hbOff small{color:var(--mu);font-size:12px;line-height:1.35}
+.hbOff a{flex:none;font-size:12.5px;font-weight:600;color:var(--ac);text-decoration:none;padding:6px 10px;border-radius:9px;border:1px solid var(--line)}
+.hbP.isOff .btn.primary:disabled{opacity:.45;cursor:not-allowed}
+/* --- Medya oynatıcı: sohbette kapak kartı, dokun → tam ekran, köşe → kayan pencere --- */
+.cpCardW{position:relative;max-width:440px;margin:4px 0 0}
+.cpCard{position:relative;display:block;width:100%;padding:0;border:1px solid var(--line);border-radius:14px;overflow:hidden;cursor:pointer;color:#fff;font:inherit;background:radial-gradient(120% 90% at 20% 10%,color-mix(in srgb,var(--ac) 38%,#10131a),#0b0d12 70%)}
+.cpCard.is-v,.cpCard.is-a{aspect-ratio:16/9}
+.cpCard img,.cpCard .cpImg{display:block;width:100%;height:100%;object-fit:cover;transition:transform .4s ease,filter .3s ease}
+.cpCard.is-i img{height:auto;max-height:460px}
+.cpCard.is-v .cpImg,.cpCard.is-v img{position:absolute;inset:0}
+.cpCard:hover img,.cpCard:hover .cpImg{transform:scale(1.03)}
+.cpArt{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;opacity:.3}.cpArt svg{width:64px;height:64px}
+.cpCard.hasImg .cpArt{display:none}
+.cpTag{position:absolute;left:10px;bottom:10px;max-width:calc(100% - 20px);display:inline-flex;align-items:center;gap:7px;padding:6px 11px 6px 9px;border-radius:10px;background:rgba(10,12,18,.72);-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px);border:1px solid rgba(255,255,255,.14);font-size:13px;pointer-events:none}
+.cpTag svg{flex:none;width:16px;height:16px;color:var(--ac)}.cpTag b{font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.cpCorner{position:absolute;top:8px;right:8px;width:34px;height:34px;display:grid;place-items:center;border-radius:10px;border:1px solid rgba(255,255,255,.18);background:rgba(10,12,18,.7);color:#fff;cursor:pointer;-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px)}
+.cpCorner:hover,.cpCorner:focus-visible{color:var(--ac);border-color:var(--ac)}
+.cpCap{display:block;margin-top:6px;font-size:12.5px;color:var(--mu)}
+.cpNow{position:absolute;inset:0;display:none;align-items:center;justify-content:center;gap:4px;background:rgba(8,10,14,.62);pointer-events:none}
+.cpNow b{margin-left:8px;font-weight:700}
+.cpNow i{width:4px;height:18px;border-radius:2px;background:var(--ac);transform-origin:bottom;animation:cpEq .9s ease-in-out infinite}
+.cpNow i:nth-child(2){animation-delay:.15s}.cpNow i:nth-child(3){animation-delay:.3s}
+@keyframes cpEq{0%,100%{transform:scaleY(.35)}50%{transform:scaleY(1)}}
+.cpCard.is-now .cpNow{display:flex}.cpCard.is-now img,.cpCard.is-now .cpImg{filter:blur(2px) brightness(.6)}
+.cpFs,.cpFl{color:#fff;font:inherit}
+.cpFs[popover],.cpFl[popover]{margin:0;padding:0;border:0;overflow:visible;background:transparent;color:#fff}
+.cpFs{position:fixed;inset:0;width:100%;height:100%;z-index:2147483000;display:flex;flex-direction:column;background:rgba(0,0,0,.92);-webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px)}
+.cpFs[popover]{inset:0;width:100%;height:100%;background:rgba(0,0,0,.92)}
+.cpFs[hidden],.cpFl[hidden]{display:none!important}
+.cpBar{flex:none;display:flex;align-items:center;gap:8px;padding:calc(10px + env(safe-area-inset-top,0px)) 12px 10px}
+.cpTitle{flex:1;min-width:0;font-size:14px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.cpBtn{flex:none;width:38px;height:38px;display:grid;place-items:center;border-radius:11px;border:1px solid rgba(255,255,255,.18);background:rgba(20,22,28,.85);color:#fff;cursor:pointer;text-decoration:none}
+.cpBtn:hover,.cpBtn:focus-visible{color:var(--ac);border-color:var(--ac)}
+.cpFs .cpStage{flex:1;min-height:0;display:flex;align-items:center;justify-content:center;padding:8px 12px calc(16px + env(safe-area-inset-bottom,0px))}
+.cpFs .cpMedia{max-width:100%;max-height:100%;border-radius:12px;background:#000}
+.cpFs video.cpMedia{width:min(100%,1100px)}
+.cpAudio{display:flex;flex-direction:column;align-items:center;gap:14px;width:min(100%,520px);text-align:center}
+.cpAudio b{font-size:16px}.cpAudio audio{width:100%}
+.cpDisc{width:132px;height:132px;border-radius:50%;display:grid;place-items:center;color:var(--ac);background:radial-gradient(circle,#1b1f29 30%,#0b0d12 31%,#151922 60%,#0b0d12 61%);box-shadow:0 0 0 1px rgba(255,255,255,.08),0 14px 40px rgba(0,0,0,.6);animation:cpSpin 8s linear infinite}
+.cpDisc svg{width:40px;height:40px}
+@keyframes cpSpin{to{transform:rotate(360deg)}}
+@media (prefers-reduced-motion:reduce){.cpDisc,.cpNow i{animation:none}}
+.cpFl{position:fixed;inset:auto;right:16px;bottom:calc(96px + env(safe-area-inset-bottom,0px));z-index:2147483000;width:min(320px,calc(100vw - 32px));border-radius:16px;overflow:hidden;background:#12141a;box-shadow:0 16px 45px rgba(0,0,0,.7),0 0 0 1px rgba(255,255,255,.12);touch-action:none;cursor:grab}
+.cpFl[popover]{inset:auto;right:16px;bottom:calc(96px + env(safe-area-inset-bottom,0px))}
+@media (min-width:901px){.cpFl,.cpFl[popover]{bottom:24px}}
+.cpFl.drag{cursor:grabbing;box-shadow:0 22px 60px rgba(0,0,0,.85),0 0 0 2px var(--ac)}
+.cpFl .cpStage{aspect-ratio:16/9;background:#000;display:flex;align-items:center;justify-content:center}
+.cpFl .cpMedia{width:100%;height:100%;object-fit:contain}
+.cpFl.isAudio .cpStage{aspect-ratio:auto;padding:12px 12px 4px;background:transparent}
+.cpFl.isAudio .cpDisc{display:none}.cpFl.isAudio .cpAudio{gap:6px}.cpFl.isAudio .cpAudio b{display:none}
+.cpFlBar{display:flex;align-items:center;gap:6px;padding:6px 8px 8px 12px}
+.cpFlBar .cpBtn{width:32px;height:32px;border-radius:9px}
+.cpGrip{height:18px;display:flex;justify-content:center;align-items:center;background:#12141a}.cpGrip::after{content:'';width:36px;height:4px;border-radius:4px;background:#fff6}
+html.cpDrag iframe{pointer-events:none!important}html.cpDrag,html.cpDrag *{user-select:none!important}
+html.cpOpen{overflow:hidden}
+.hbP>.hbOff{flex-direction:row;text-align:left}
+#panelStudio .stEmpty span{display:grid;place-items:center;width:44px;height:44px;border-radius:14px;color:var(--ac);background:color-mix(in srgb,var(--ac) 14%,transparent);opacity:1}

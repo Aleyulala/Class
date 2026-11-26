@@ -17,12 +17,14 @@ const IC = {
 };
 const isLocal = () => /^(localhost|127\.\d+\.\d+\.\d+|\[::1\]|10\.\d+\.\d+\.\d+|192\.168\.\d+\.\d+|172\.(1[6-9]|2\d|3[01])\.\d+\.\d+)$/.test(location.hostname);
 async function J(url, opt = {}) {
+  if (srvState && !srvState.ok && url.startsWith('/')) throw Object.assign(new Error(OFF), { off: true });
   const o = { ...opt }; if (o.body && typeof o.body !== 'string' && !(o.body instanceof Blob)) { o.body = JSON.stringify(o.body); o.headers = { 'Content-Type': 'application/json', ...(o.headers || {}) }; }
   const r = await fetch(url, o); const t = await r.text(); let j = {};
   try { j = JSON.parse(t || '{}'); } catch { throw new Error('Yerel sunucu yanıt vermedi ya da bu uç yok.'); }
   if (!r.ok || j.ok === false) throw new Error(j.error || j.detail || `HTTP ${r.status}`); return j;
 }
 let srvState = null;
+const OFF = 'Yerel sunucu bağlı değil';
 async function server() { if (srvState) return srvState; if (!isLocal()) return (srvState = { ok: false, why: 'pages' }); try { const h = await J('/api/health'); return (srvState = { ok: true, h }); } catch { return (srvState = { ok: false, why: 'down' }); } }
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
@@ -35,12 +37,21 @@ const area = (p) => el('textarea', { className: 'stIn', rows: 3, ...p });
 const select = (opts, p = {}) => el('select', { className: 'stIn', ...p }, ...opts.map(([v, l, dis]) => el('option', { value: v, textContent: l, disabled: !!dis })));
 function chips(opts, cur, on) { const w = el('div', { className: 'stSeg' }); opts.forEach(([v, l]) => { const b = el('button', { type: 'button', className: 'stSegB' + (v === cur ? ' on' : ''), textContent: l }); b.onclick = () => { [...w.children].forEach((x) => x.classList.toggle('on', x === b)); on(v); }; w.append(b); }); return w; }
 function rangeF(min, max, step, val, fmt, on) { const o = el('output', { textContent: fmt(val) }); const r = el('input', { type: 'range', className: 'stRange', min, max, step, value: val }); r.oninput = () => { o.textContent = fmt(+r.value); on(+r.value); }; return el('span', { className: 'stRg' }, r, o); }
-function status() { const s = el('div', { className: 'hbStat', role: 'status' }); s.set = (t, kind = '') => { s.textContent = t || ''; s.dataset.k = kind; }; return s; }
+function status() { const s = el('div', { className: 'hbStat', role: 'status' }); s.set = (t, kind = '') => { if (t === OFF) return; s.textContent = t || ''; s.dataset.k = kind; }; return s; }
 function bar() { const b = el('div', { className: 'hbBar', hidden: true }, el('i')); b.set = (pct) => { b.hidden = pct == null; b.firstChild.style.width = Math.max(0, Math.min(100, pct || 0)) + '%'; }; return b; }
-const needSrv = (what) => el('div', { className: 'hbNeed' }, el('b', { textContent: `${what} için yerel sunucu gerekir` }),
-  el('p', { textContent: isLocal() ? 'Sunucuya ulaşılamadı. Başlatıcı (windows.bat / linux.sh / mac.sh) açık mı? Terminal penceresini kontrol edin.' : 'Bu sayfa GitHub Pages’ten açıldı. Görsel, ses, müzik, video ve model indirme bilgisayarındaki sunucuda çalışır: depoyu indirip windows.bat / linux.sh / mac.sh ile başlat; Class localhost’ta açılır.' }),
-  el('a', { className: 'btn', href: 'https://github.com/Aleyulala/Class#readme', target: '_blank', rel: 'noopener noreferrer', textContent: 'Kurulum rehberi' }));
-async function gate(root, what, build) { const s = await server(); root.replaceChildren(s.ok ? build() : needSrv(what)); }
+/* Sunucu yokken: panelin ayar menüsü yine görünür; üstte ince bir durum şeridi, üretim düğmeleri pasif */
+const offBar = () => el('div', { className: 'hbOff', role: 'note' }, el('i', { 'aria-hidden': 'true' }),
+  el('span', {}, el('b', { textContent: OFF }), el('small', { textContent: isLocal() ? 'Başlatıcı penceresi açık mı? Ayarlar hazır, sunucu gelince üretim çalışır.' : 'Ayarlarını şimdiden yap; üretim için Class’ı bilgisayarında başlatıcıyla aç.' })),
+  el('a', { href: 'https://github.com/Aleyulala/Class#readme', target: '_blank', rel: 'noopener noreferrer', textContent: 'Nasıl?' }));
+const needSrv = (what) => el('div', { className: 'hbList' }, offBar(), el('p', { className: 'muted', textContent: `${what} sunucu bağlanınca çalışır.` }));
+async function gate(root, what, build) {
+  const s = await server(); const ui = build();
+  if (s.ok) { root.replaceChildren(ui); return; }
+  ui.querySelectorAll('.btn.primary').forEach((b) => { b.disabled = true; b.title = OFF; });
+  ui.querySelectorAll('select').forEach((x) => { if (x.options.length === 1 && /yükleniyor/i.test(x.options[0].textContent)) x.options[0].textContent = 'Sunucu bağlanınca listelenir'; });
+  ui.querySelectorAll('.hbList:empty, .hbKV:empty').forEach((x) => x.append(el('p', { className: 'muted', textContent: 'Sunucu bağlanınca görünür.' })));
+  root.classList.add('isOff'); root.replaceChildren(offBar(), ui);
+}
 function saveBlobLink(url, name) { const a = el('a', { className: 'btn', href: url, download: name, textContent: 'İndir' }); return a; }
 const toChat = async (m, st) => { try { await A().addChatMedia(m); st?.set('Sohbete eklendi.', 'ok'); } catch (e) { st?.set(e.message, 'err'); } };
 
@@ -93,7 +104,7 @@ function pTts() {
     const st = status(), out = el('div', { className: 'hbOut' }); let speed = 1;
     const voice = select([['', 'Sesler yükleniyor…']]); const model = select([['', 'Sunucunun varsayılanı']]);
     ttsVoices().then(({ voices, models }) => {
-      voice.replaceChildren(...voices.map((v) => el('option', { value: v.id, textContent: `${v.name || v.id}${v.language ? ' · ' + v.language : ''}${v.gender ? ' · ' + (v.gender === 'Female' ? 'Kadın' : v.gender === 'Male' ? 'Erkek' : v.gender) : ''}` })));
+      voice.replaceChildren(...(voices.length ? voices.map((v) => el('option', { value: v.id, textContent: `${v.name || v.id}${v.language ? ' · ' + v.language : ''}${v.gender ? ' · ' + (v.gender === 'Female' ? 'Kadın' : v.gender === 'Male' ? 'Erkek' : v.gender) : ''}` })) : [el('option', { value: '', textContent: srvState?.ok ? 'Ses bulunamadı' : 'Sunucu bağlanınca listelenir' })]));
       model.append(...models.map((m) => el('option', { value: m.filename || m.id, textContent: (m.name || m.id) + (m.installed === false ? ' (indirilmemiş)' : ''), disabled: m.installed === false })));
     }).catch((e) => st.set(e.message, 'err'));
     const text = area({ rows: 6, placeholder: 'Seslendirilecek metin' });
