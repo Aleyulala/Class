@@ -178,7 +178,7 @@ function buildMobileMenu() {
   const sheet = () => cols().dataset.sheet || '';
   const press = (t) => $(`#tabs [data-tab="${t}"]`)?.click();
   const defs = () => view() === 'nb'
-    ? [{ k: 'back', i: 'back', t: 'Defterler', run: () => A().goHome() },
+    ? [{ k: 'home', i: 'home', t: 'Ana sayfa', run: () => A().goHome() },
        { k: 'sources', i: 'src', t: 'Kaynaklar', on: tab() === 'sources' || sheet() === 'sources', run: () => press('sources') },
        { k: 'menu', i: 'menu', t: 'Menü', run: openDrawer },
        { k: 'studio', i: 'studio', t: 'Stüdyo', on: tab() === 'studio' || sheet() === 'studio', run: () => press('studio') },

@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Class</title>
 <meta name="description" content="Kaynaklarını yükle, onlarla sohbet et, özet ve çalışma rehberi çıkar. Her şey tarayıcında çalışır, hiçbir veri dışarı gitmez.">
-<link rel="stylesheet" href="style.css?v=27">
+<link rel="stylesheet" href="style.css?v=30">
 <link rel="manifest" href="manifest.webmanifest">
 <meta name="theme-color" content="#1e1e1e">
 <link rel="icon" href="icon.svg" type="image/svg+xml">
@@ -56,7 +56,7 @@
     <div class="ph"><h2>Kaynaklar</h2><span class="muted" id="srcCount">0</span></div>
     <div class="row two">
       <button class="pillAct" id="addFile"><i data-ic="plus"></i><span>Kaynak ekle</span></button>
-      <button class="pillAct" id="addNote"><i data-ic="plus"></i><span>Not oluştur</span></button>
+      <button class="pillAct" id="addNote" hidden><i data-ic="plus"></i><span>Not oluştur</span></button>
       <input type="file" id="fileInput" accept=".pdf,.txt,.md,.markdown,.csv,.html,.htm,.json,.docx,.pptx,.xlsx,.odt,.odp,.ods,.epub,text/*,audio/*,video/*" multiple hidden>
     </div>
     <button class="linkBtn" id="addText"><i data-ic="plus"></i><span>Metin yapıştır</span></button>
@@ -82,6 +82,11 @@
       </div>
       <div class="msgs" id="msgs" aria-live="polite"></div>
     </div>
+    <div class="cmdBar" id="cmdBar">
+      <button type="button" class="cmdToggle" id="cmdToggle" aria-expanded="true" aria-controls="cmdTrack" title="Komutları göster / gizle"><span class="cmdS">/</span><span>Komutlar</span></button>
+      <div class="cmdTrack" id="cmdTrack" role="group" aria-label="Komutlar"></div>
+    </div>
+    <div class="hint small" id="ctxInfo" role="status"></div>
     <div class="replyBar" id="replyBar" hidden></div>
     <div class="attList" id="attList" hidden></div>
     <form class="composer" id="composer">
@@ -99,12 +104,6 @@
         <button class="sendBtn stop" id="stop" type="button" aria-label="Durdur" hidden><span>Durdur</span></button>
       </div>
     </form>
-    <div class="cmdBar" id="cmdBar">
-      <button type="button" class="cmdToggle" id="cmdToggle" aria-expanded="true" aria-controls="cmdTrack" title="Komutları göster / gizle"><span class="cmdS">/</span><span>Komutlar</span></button>
-      <div class="cmdTrack" id="cmdTrack" role="group" aria-label="Komutlar"></div>
-    </div>
-    <div class="hint small" id="ctxInfo"></div>
-    <div class="disc">Class hata yapabildiğinden verdiği yanıtları doğrulayın.</div>
   </section>
 
   <!-- STÜDYO + NOTLAR -->
@@ -113,12 +112,11 @@
     <div class="hbStrip" id="hbStrip" aria-label="Stüdyolar"></div>
     <div class="genBar" id="genBar" hidden><span class="spin" aria-hidden="true"></span><span id="genText" role="status"></span><button class="btn sm" id="genStop" type="button">Durdur</button></div>
     <div class="grid" id="studioBtns"></div>
-    <div class="ph mt"><h2>Çıktılar</h2></div>
-    <ul class="list outs" id="outList"></ul>
-    <p class="hint" id="outHint">Üretilen bilgi kartları, quiz, harita, görsel ve sesli özet burada saklanır.</p>
-    <div class="ph mt"><h2>Notlar</h2><div class="row tight"><button class="btn sm" id="expNotes">.md indir</button></div></div>
-    <ul class="list notes" id="noteList"></ul>
-    <p class="hint" id="noteHint">Cevapları ve stüdyo çıktılarını kaydet ya da “Not oluştur” ile kendin yaz.</p>
+    <div class="stDiv" role="separator"></div>
+    <ul class="list outs" id="outList" aria-label="Stüdyo çıktıları ve notlar"></ul>
+    <div class="stEmpty" id="outHint"><span aria-hidden="true">✨</span>Stüdyo çıktıları burada görünür</div>
+    <ul hidden id="noteList"></ul><span hidden id="noteHint"></span><button hidden id="expNotes" type="button"></button>
+    <button class="btn stAdd" id="addNote2" type="button"><i data-ic="plus"></i><span>Not ekle</span></button>
   </section>
 </main>
 
@@ -227,16 +225,16 @@
   </form>
 </dialog>
 
-<script type="module" src="app.js?v=27"></script>
-<script type="module" src="nav.js?v=27"></script>
-<script type="module" src="shell.js?v=27"></script>
-<script type="module" src="search.js?v=27"></script>
-<script type="module" src="plus.js?v=27"></script>
-<script type="module" src="contact.js?v=27"></script>
-<script type="module" src="hub.js?v=27"></script>
-<script type="module" src="dock.js?v=27"></script>
-<script type="module" src="slide.js?v=27"></script>
-<script type="module" src="settings.js?v=27"></script>
-<script type="module" src="reveal.js?v=27"></script>
+<script type="module" src="app.js?v=30"></script>
+<script type="module" src="nav.js?v=30"></script>
+<script type="module" src="shell.js?v=30"></script>
+<script type="module" src="search.js?v=30"></script>
+<script type="module" src="plus.js?v=30"></script>
+<script type="module" src="contact.js?v=30"></script>
+<script type="module" src="hub.js?v=30"></script>
+<script type="module" src="dock.js?v=30"></script>
+<script type="module" src="slide.js?v=30"></script>
+<script type="module" src="settings.js?v=30"></script>
+<script type="module" src="reveal.js?v=30"></script>
 </body>
 </html>
