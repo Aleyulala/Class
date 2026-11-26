@@ -5,8 +5,25 @@
 import { readDoc, toWav16k, DOC_RX, MEDIA_RX } from './extract.js';
 import { TYPES, parseJson, normalize, demo } from './rich.js';
 import { renderOutput } from './viewers.js';
+import { card as mediaCard } from './player.js';
 
 const $ = (s, r = document) => r.querySelector(s);
+/* Stüdyo simgeleri: Görsel / Ses şeridiyle aynı çizgi stili */
+const sic = (d) => `<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${d}</svg>`;
+const SIC = {
+  podcast: sic('<path d="M3 14v-2a9 9 0 0 1 18 0v2"/><rect x="2.5" y="14" width="5" height="7" rx="2"/><rect x="16.5" y="14" width="5" height="7" rx="2"/>'),
+  map: sic('<circle cx="12" cy="12" r="2.6"/><circle cx="4.5" cy="5" r="2"/><circle cx="19.5" cy="5" r="2"/><circle cx="4.5" cy="19" r="2"/><circle cx="19.5" cy="19" r="2"/><path d="m6.2 6.4 3.9 3.8m7.7-3.8-3.9 3.8m-7.7 7.2 3.9-3.8m7.7 3.8-3.9-3.8"/>'),
+  infographic: sic('<rect x="3" y="3" width="18" height="18" rx="4"/><path d="M7.5 16.5v-3M12 16.5v-9M16.5 16.5v-5.5"/>'),
+  cards: sic('<rect x="3" y="7" width="13" height="14" rx="3"/><path d="M7 3.5h10.5A3.5 3.5 0 0 1 21 7v10.5"/>'),
+  quiz: sic('<rect x="3" y="3" width="18" height="18" rx="4"/><path d="m8 12.5 2.8 2.8L16.5 9"/>'),
+  ozet: sic('<path d="M14 3H7a3 3 0 0 0-3 3v12a3 3 0 0 0 3 3h10a3 3 0 0 0 3-3V9z"/><path d="M14 3v6h6M8 13h8M8 17h5"/>'),
+  fikir: sic('<path d="M9.5 18h5M10.5 21h3"/><path d="M12 3a6 6 0 0 0-3.6 10.8c.7.5 1.1 1.3 1.1 2.2h5c0-.9.4-1.7 1.1-2.2A6 6 0 0 0 12 3z"/>'),
+  sss: sic('<circle cx="12" cy="12" r="9"/><path d="M9.6 9.4a2.5 2.5 0 1 1 3.4 2.4c-.6.3-1 .9-1 1.6v.4M12 17h.01"/>'),
+  rehber: sic('<path d="M4 19V6a3 3 0 0 1 3-3h13v14H7a3 3 0 0 0-3 3 2 2 0 0 0 2 2h14"/><path d="M9 7.5h7M9 11h4.5"/>'),
+  note: sic('<path d="M4 20h4L19 9a2.1 2.1 0 0 0-3-3L5 17v3z"/><path d="m14.5 7.5 3 3"/>'),
+};
+const NOTE_IC = { '📄': 'ozet', '💡': 'fikir', '❓': 'sss', '📚': 'rehber' };
+const noteIc = (n) => SIC[NOTE_IC[n.icon]] || SIC.note;
 const el = (t, props = {}, ...kids) => { const e = Object.assign(document.createElement(t), props); kids.flat().forEach((k) => e.append(k)); return e; };
 const uid = () => (crypto.randomUUID ? crypto.randomUUID() : String(Date.now()) + Math.random().toString(16).slice(2));
 const params = new URLSearchParams(location.search);
@@ -259,7 +276,7 @@ function renderNotes() { renderOutputs(); }
 async function delNote(n) { await DB.del('notes', n.id); notes = notes.filter((x) => x.id !== n.id); renderOutputs(); }
 function openNote(n) {
   const dlg = $('#vwDlg'); const actions = $('#vwActions'); vwCleanup?.(); vwCleanup = null;
-  $('#vwTitle').textContent = `${n.icon || '📝'} ${n.title}`;
+  $('#vwTitle').textContent = n.title;
   actions.replaceChildren(
     el('button', { className: 'btn sm', type: 'button', textContent: 'Sohbette göster', onclick: () => { dlg.close(); noteToChat(n); } }),
     el('button', { className: 'btn sm', type: 'button', textContent: 'Kopyala', onclick: (e) => { navigator.clipboard?.writeText(n.text); e.currentTarget.textContent = 'Kopyalandı'; } }),
@@ -349,7 +366,7 @@ function slidesNode(m) {
   const o = outputs.find((x) => x.id === m.outId); const wrap = el('div', { className: 'sld' });
   if (!o) { wrap.append(el('div', { className: 'sldGone', textContent: 'Bu çıktı silinmiş.' })); return wrap; }
   const T = TYPES[o.type]; const sl = slidesFor(o);
-  wrap.append(el('div', { className: 'sldHd' }, el('span', { className: 'tIc', textContent: T.emoji }), el('b', { textContent: o.title }), el('small', { textContent: `${T.label} · ${sl.length} slayt` })));
+  wrap.append(el('div', { className: 'sldHd' }, el('span', { className: 'tIc', innerHTML: SIC[o.type] || '' }), el('b', { textContent: o.title }), el('small', { textContent: `${T.label} · ${sl.length} slayt` })));
   const track = el('div', { className: 'sldTrack', tabIndex: 0, role: 'group', ariaLabel: 'Slaytlar: sağa sola kaydırın' });
   sl.forEach((s) => {
     const c = el('div', { className: 'sldCard' }, el('span', { className: 'sldK', textContent: s.k }), el('b', { className: 'sldT', textContent: s.t }));
@@ -369,9 +386,7 @@ function msgNode(m, i) {
   const d = el('div', { className: `msg c ${me ? 'me' : ''} ${m.err ? 'err' : ''}` }); d.dataset.mid = m.id;
   d.append(msgHead(m, me, i));
   const bd = el('div', { className: 'mBd' }); d.append(bd);
-  if (m.audio) bd.append(el('figure', { className: 'mImg' }, el('audio', { controls: true, src: m.audio, preload: 'none' }), m.text ? el('figcaption', { textContent: m.text }) : ''));
-  if (m.video) bd.append(el('figure', { className: 'mImg' }, el('video', { controls: true, src: m.video, preload: 'metadata', playsInline: true }), m.text ? el('figcaption', { textContent: m.text }) : ''));
-  if (m.img) bd.append(el('figure', { className: 'mImg' }, el('img', { src: m.img, alt: m.text || 'Görsel', loading: 'lazy' }), m.text ? el('figcaption', { textContent: m.text }) : ''));
+  if (m.audio || m.video || m.img) bd.append(mediaCard(m));
   if (m.kind === 'slides') bd.append(slidesNode(m));
   else if (m.img || m.audio || m.video) {}
   else if (me) { if (m.reply) bd.append(quoteRef(m.reply)); if (m.text) bd.append(el('span', { className: 'mTx', textContent: m.text })); if (m.atts?.length) bd.append(el('div', { className: 'atts' }, ...m.atts.map((a) => attCard(a)))); }
@@ -636,8 +651,8 @@ $('#expChat').onclick = () => download('defter-sohbet.md', '# Class sohbeti\n\n'
 $('#expNotes').onclick = () => download('defter-notlar.md', '# Class notları\n\n' + notes.slice().sort((a, b) => a.addedAt - b.addedAt).map((n) => `## ${n.title}\n\n${n.text}`).join('\n\n---\n\n') + '\n');
 function setTab(t) { if (window.defterSlide?.take(t)) return; $('#cols').dataset.tab = t; document.querySelectorAll('#tabs button').forEach((b) => b.classList.toggle('on', b.dataset.tab === t)); }
 document.querySelectorAll('#tabs button').forEach((b) => (b.onclick = () => setTab(b.dataset.tab)));
-Object.entries(TYPES).forEach(([k, T]) => { const b = el('button', { className: 'btn tile' }, el('span', { className: 'tIc', textContent: T.emoji }), el('b', { textContent: T.label })); b.title = T.sub; b.onclick = () => makeRich(k); $('#studioBtns').append(b); });
-STUDIO.forEach((t) => { const b = el('button', { className: 'btn tile' }, el('span', { className: 'tIc', textContent: t.ic }), el('b', { textContent: t.label })); b.title = t.sub; b.onclick = () => studio(t); $('#studioBtns').append(b); });
+Object.entries(TYPES).forEach(([k, T]) => { const b = el('button', { className: 'btn tile' }, el('span', { className: 'tIc', innerHTML: SIC[k] || '' }), el('b', { textContent: T.label })); b.title = T.sub; b.onclick = () => makeRich(k); $('#studioBtns').append(b); });
+STUDIO.forEach((t) => { const b = el('button', { className: 'btn tile' }, el('span', { className: 'tIc', innerHTML: SIC[t.id] || '' }), el('b', { textContent: t.label })); b.title = t.sub; b.onclick = () => studio(t); $('#studioBtns').append(b); });
 
 /* ---------------- Not defterleri (ana ekran) ---------------- */
 const ICONS = ['📘', '🔬', '📚', '🧪', '🌍', '💡', '📊', '🎓'];
@@ -818,7 +833,7 @@ function renderOutputs() {
       ...(n ? [{ icon: 'share', label: 'Kopyala', run: () => navigator.clipboard?.writeText(n.text) }] : []),
       '-', { icon: 'trash', label: 'Sil', danger: true, run: async () => { if (o) { await DB.del('outputs', o.id); outputs = outputs.filter((x) => x.id !== o.id); renderOutputs(); } else await delNote(n); } },
     ]); };
-    const li = el('li', { className: 'outItem', tabIndex: 0, role: 'button' }, el('span', { className: 'tIc', textContent: o ? T.emoji : n.icon || '📝' }), el('div', { className: 't' }, el('b', { textContent: title, title }), el('small', { textContent: `${o ? T.label : 'Not'} · ${fmtDate(o ? o.createdAt : n.addedAt)}` })), menu);
+    const li = el('li', { className: 'outItem', tabIndex: 0, role: 'button' }, el('span', { className: 'tIc', innerHTML: o ? SIC[o.type] || '' : noteIc(n) }), el('div', { className: 't' }, el('b', { textContent: title, title }), el('small', { textContent: `${o ? T.label : 'Not'} · ${fmtDate(o ? o.createdAt : n.addedAt)}` })), menu);
     li.onclick = open; li.onkeydown = (e) => { if (e.target === li && (e.key === 'Enter' || e.key === ' ')) { e.preventDefault(); open(); } };
     ul.append(li);
   });
@@ -827,7 +842,7 @@ function renderOutputs() {
 
 let vwCleanup = null;
 function openOutput(o) {
-  const dlg = $('#vwDlg'); const actions = $('#vwActions'); actions.replaceChildren(); $('#vwBody').replaceChildren(); $('#vwTitle').textContent = `${TYPES[o.type].emoji} ${o.title}`;
+  const dlg = $('#vwDlg'); const actions = $('#vwActions'); actions.replaceChildren(); $('#vwBody').replaceChildren(); $('#vwTitle').textContent = o.title;
   vwCleanup?.(); const r = renderOutput(o, actions); actions.prepend(el('button', { className: 'btn sm', type: 'button', textContent: 'Sohbette göster', onclick: () => { dlg.close(); outToChat(o); } })); $('#vwBody').append(r.node); vwCleanup = r.cleanup || null;
   if (!dlg.open) dlg.showModal();
 }

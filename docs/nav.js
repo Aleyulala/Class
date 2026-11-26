@@ -63,6 +63,7 @@ function scrollable(from) { let n = from; while (n && n !== document.body) { con
 /* ---- geri / kısayollar ---- */
 function click(sel) { const e = $(sel); if (e && !e.hidden && !e.disabled) { e.click(); return true; } return false; }
 function goBack() {
+  if (window.classPlayer?.back()) return true; /* tam ekran oynatıcı: ses/video kayan pencereye küçülür */
   if ($('.menu')) { document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true })); return true; }
   const dlg = [...document.querySelectorAll('dialog[open]')].pop(); if (dlg) { dlg.close(); return true; }
   if (window.defterSlide?.back()) return true; /* telefonda açık kayan panel / stüdyo sayfası */
