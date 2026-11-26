@@ -748,3 +748,8 @@ dialog.ct .ctSend svg{width:14px;height:14px}
 .nbCard.sk{pointer-events:none;border:1px solid var(--line);background:linear-gradient(100deg,var(--p) 30%,var(--p2) 50%,var(--p) 70%);background-size:300% 100%;animation:skel 1.4s ease-in-out infinite}
 @keyframes skel{from{background-position:100% 0}to{background-position:0 0}}
 @media (prefers-reduced-motion:reduce){.nbCard.sk{animation:none}}
+/* ---- Aşağı kaydırdıkça belirme (Blogger yorumları gibi) ---- */
+.rv{opacity:0;transform:translateY(22px);transition:opacity .5s cubic-bezier(.16,1,.3,1) var(--rvd,0ms),transform .5s cubic-bezier(.16,1,.3,1) var(--rvd,0ms);will-change:opacity,transform}
+.rv.in{opacity:1;transform:none}
+.nbCard.rv,.nbCard.rv.in{transition-property:opacity,transform,border-color,box-shadow}
+@media (prefers-reduced-motion:reduce){.rv{opacity:1;transform:none;transition:none}}
