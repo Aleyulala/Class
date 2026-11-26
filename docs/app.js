@@ -255,15 +255,20 @@ function renderSources() {
   $('#srcBadgeN').textContent = on; $('#srcBadge').classList.toggle('empty', !on);
   $('#q').placeholder = on ? 'Soru sorun ya da / yazın' : 'Bir şey sorun';
 }
-function renderNotes() {
-  const ul = $('#noteList'); ul.replaceChildren();
-  notes.slice().sort((a, b) => b.addedAt - a.addedAt).forEach((n) => {
-    const copy = el('button', { className: 'btn sm', textContent: 'Kopyala' }); copy.onclick = () => navigator.clipboard?.writeText(n.text);
-    const del = el('button', { className: 'btn sm', textContent: 'Sil' }); del.onclick = async () => { await DB.del('notes', n.id); notes = notes.filter((x) => x.id !== n.id); renderNotes(); };
-    ul.append(el('li', {}, el('b', { textContent: n.title }), el('div', { className: 'nt', textContent: n.text }), el('div', { className: 'na' }, copy, del)));
-  });
-  $('#noteHint').hidden = notes.length > 0;
+function renderNotes() { renderOutputs(); }
+async function delNote(n) { await DB.del('notes', n.id); notes = notes.filter((x) => x.id !== n.id); renderOutputs(); }
+function openNote(n) {
+  const dlg = $('#vwDlg'); const actions = $('#vwActions'); vwCleanup?.(); vwCleanup = null;
+  $('#vwTitle').textContent = `${n.icon || '📝'} ${n.title}`;
+  actions.replaceChildren(
+    el('button', { className: 'btn sm', type: 'button', textContent: 'Sohbette göster', onclick: () => { dlg.close(); noteToChat(n); } }),
+    el('button', { className: 'btn sm', type: 'button', textContent: 'Kopyala', onclick: (e) => { navigator.clipboard?.writeText(n.text); e.currentTarget.textContent = 'Kopyalandı'; } }),
+    el('button', { className: 'btn sm', type: 'button', textContent: 'Sil', onclick: async () => { dlg.close(); await delNote(n); } }));
+  const body = el('div', { className: 'vwNote mBd' }); body.innerHTML = md(n.text); $('#vwBody').replaceChildren(body);
+  if (!dlg.open) dlg.showModal();
 }
+function noteToChat(n) { chat.push({ id: uid(), role: 'assistant', text: `**${n.icon || '📝'} ${n.title}**\n\n${n.text}`, at: Date.now() }); renderChat(); persistChat(); setTab('chat'); }
+function outToChat(o) { chat.push({ id: uid(), role: 'assistant', kind: 'slides', outId: o.id, text: `${TYPES[o.type].emoji} ${o.title} (${TYPES[o.type].label})`, at: Date.now() }); renderChat(); persistChat(); setTab('chat'); }
 function renderChat() {
   const box = $('#msgs'); box.replaceChildren();
   if (!chat.length) box.append(el('div', { className: 'welcome', innerHTML: '<h3>Kaynaklarınla sohbet et</h3><p>Soldan PDF/metin ekle, bir model seç, sonra soru sor ya da sağdaki Stüdyo düğmeleriyle özet ve çalışma rehberi çıkar.</p>' }));
@@ -417,7 +422,7 @@ function addPending(files) {
   }
   renderPending(); setTab('chat'); $('#q').focus();
 }
-async function saveNote(title, text) { const n = { id: uid(), nbId: nb.id, title, text, addedAt: Date.now() }; notes.push(n); await DB.put('notes', n); renderNotes(); touchNb(); toast('Nota kaydedildi'); }
+async function saveNote(title, text, icon) { const n = { id: uid(), nbId: nb.id, title, text, addedAt: Date.now(), ...(icon ? { icon } : {}) }; notes.push(n); await DB.put('notes', n); renderNotes(); touchNb(); toast('Nota kaydedildi'); }
 function toast(t) { $('#ctxInfo').textContent = t; }
 function setModelUi(state, label) {
   $('#modelDot').className = `dot ${state}`; $('#modelLabel').textContent = label;
@@ -444,7 +449,7 @@ async function run({ userText, shownText, messages, cites, title, maxTokens, dem
   } catch (e) { reply.err = true; reply.text = `Hata: ${e.message || e}`; }
   reply.live = false; busy = false; abortCtl = null;
   $('#send').hidden = false; $('#stop').hidden = true;
-  renderChat(); persistChat();
+  renderChat(); persistChat(); return reply;
 }
 
 function buildChatMessages(question) {
@@ -472,10 +477,10 @@ async function ask(question, { reply: rq, atts } = {}) {
 }
 
 const STUDIO = [
-  { id: 'ozet', label: 'Özet', sub: 'Kısa genel bakış', p: 'Kaynakların kısa ve anlaşılır bir özetini yaz. Önce 2-3 cümlelik genel bakış, sonra en önemli noktalar madde madde.' },
-  { id: 'fikir', label: 'Ana fikirler', sub: 'Madde madde', p: 'Kaynaklardaki ana fikirleri ve önemli bulguları numaralı bir liste olarak çıkar. Her madde tek cümle olsun.' },
-  { id: 'sss', label: 'SSS', sub: 'Sık sorulan sorular', p: 'Bu kaynaklardan 6 adet sık sorulan soru ve kısa cevaplarını üret. Biçim: "S:" ve "C:".' },
-  { id: 'rehber', label: 'Çalışma rehberi', sub: 'Kavramlar + sorular', p: 'Bir çalışma rehberi hazırla: (1) Anahtar kavramlar ve kısa tanımları, (2) Tekrar için 5 kısa cevaplı soru, (3) Düşündürücü 2 soru.' },
+  { id: 'ozet', ic: '📄', label: 'Özet', sub: 'Kısa genel bakış', p: 'Kaynakların kısa ve anlaşılır bir özetini yaz. Önce 2-3 cümlelik genel bakış, sonra en önemli noktalar madde madde.' },
+  { id: 'fikir', ic: '💡', label: 'Ana fikirler', sub: 'Madde madde', p: 'Kaynaklardaki ana fikirleri ve önemli bulguları numaralı bir liste olarak çıkar. Her madde tek cümle olsun.' },
+  { id: 'sss', ic: '❓', label: 'SSS', sub: 'Sık sorulan sorular', p: 'Bu kaynaklardan 6 adet sık sorulan soru ve kısa cevaplarını üret. Biçim: "S:" ve "C:".' },
+  { id: 'rehber', ic: '📚', label: 'Çalışma rehberi', sub: 'Kavramlar + sorular', p: 'Bir çalışma rehberi hazırla: (1) Anahtar kavramlar ve kısa tanımları, (2) Tekrar için 5 kısa cevaplı soru, (3) Düşündürücü 2 soru.' },
 ];
 async function studio(t) {
   if (busy || needModel()) return;
@@ -487,7 +492,9 @@ async function studio(t) {
   const sys = `Sen kullanıcının kaynaklarıyla çalışan bir araştırma yardımcısısın. Yalnızca verilen kaynaklara dayan, Türkçe yaz, uydurma.\n\nKAYNAKLAR:\n${body}`;
   setTab('chat');
   $('#ctxInfo').textContent = cut ? 'Kaynaklar uzun olduğu için her biri baştan kısaltıldı.' : '';
-  await run({ userText: t.label, shownText: `${t.label} (Stüdyo)`, messages: [{ role: 'system', content: sys }, { role: 'user', content: t.p }], cites: [], title: `${t.label} — ${on.map((s) => s.title).join(', ').slice(0, 50)}`, maxTokens: 900, demo: `Demo kipi — "${t.label}" çıktısı gerçek model ile üretilir.\n\n` + on.map((s) => `- ${s.title}: ${s.text.replace(/\s+/g, ' ').slice(0, 140)}…`).join('\n') });
+  const title = `${t.label} — ${on.map((s) => s.title).join(', ').slice(0, 50)}`;
+  const r = await run({ userText: t.label, shownText: `${t.label} (Stüdyo)`, messages: [{ role: 'system', content: sys }, { role: 'user', content: t.p }], cites: [], title, maxTokens: 900, demo: `Demo kipi — "${t.label}" çıktısı gerçek model ile üretilir.\n\n` + on.map((s) => `- ${s.title}: ${s.text.replace(/\s+/g, ' ').slice(0, 140)}…`).join('\n') });
+  if (r && !r.err && r.text.trim() && engine.kind !== 'demo') await saveNote(title, r.text, t.ic);
 }
 
 /* ---------------- Atıf ---------------- */
@@ -512,6 +519,7 @@ let noteMode = false;
 const openText = (note) => { noteMode = note; $('#textHead').textContent = note ? 'Not oluştur' : 'Metin yapıştır'; $('#textSave').textContent = note ? 'Kaydet' : 'Ekle'; $('#textTitle').value = ''; $('#textBody').value = ''; $('#textDlg').showModal(); };
 $('#addText').onclick = () => openText(false);
 $('#addNote').onclick = () => openText(true);
+$('#addNote2').onclick = () => openText(true);
 $('#textSave').onclick = async () => { const t = $('#textTitle').value.trim(), b = $('#textBody').value.trim(); if (noteMode) { if (b) await saveNote(t || b.slice(0, 40), b); } else await addSource(t || 'Yapıştırılan metin', $('#textBody').value, 'Metin'); $('#textDlg').close(); };
 $('#selAll').onchange = async (e) => { for (const s of sources) { s.enabled = e.target.checked; await DB.put('sources', s); } renderSources(); };
 
@@ -628,8 +636,8 @@ $('#expChat').onclick = () => download('defter-sohbet.md', '# Class sohbeti\n\n'
 $('#expNotes').onclick = () => download('defter-notlar.md', '# Class notları\n\n' + notes.slice().sort((a, b) => a.addedAt - b.addedAt).map((n) => `## ${n.title}\n\n${n.text}`).join('\n\n---\n\n') + '\n');
 function setTab(t) { if (window.defterSlide?.take(t)) return; $('#cols').dataset.tab = t; document.querySelectorAll('#tabs button').forEach((b) => b.classList.toggle('on', b.dataset.tab === t)); }
 document.querySelectorAll('#tabs button').forEach((b) => (b.onclick = () => setTab(b.dataset.tab)));
-Object.entries(TYPES).forEach(([k, T]) => { const b = el('button', { className: 'btn tile' }, el('span', { className: 'tIc', textContent: T.emoji }), el('b', { textContent: T.label }), el('small', { textContent: T.sub })); b.onclick = () => makeRich(k); $('#studioBtns').append(b); });
-STUDIO.forEach((t) => { const b = el('button', { className: 'btn tile' }, el('span', { className: 'tIc', textContent: '📝' }), el('b', { textContent: t.label }), el('small', { textContent: t.sub })); b.onclick = () => studio(t); $('#studioBtns').append(b); });
+Object.entries(TYPES).forEach(([k, T]) => { const b = el('button', { className: 'btn tile' }, el('span', { className: 'tIc', textContent: T.emoji }), el('b', { textContent: T.label })); b.title = T.sub; b.onclick = () => makeRich(k); $('#studioBtns').append(b); });
+STUDIO.forEach((t) => { const b = el('button', { className: 'btn tile' }, el('span', { className: 'tIc', textContent: t.ic }), el('b', { textContent: t.label })); b.title = t.sub; b.onclick = () => studio(t); $('#studioBtns').append(b); });
 
 /* ---------------- Not defterleri (ana ekran) ---------------- */
 const ICONS = ['📘', '🔬', '📚', '🧪', '🌍', '💡', '📊', '🎓'];
@@ -792,27 +800,35 @@ async function makeRich(type) {
       if (!data) throw last || new Error('Çıktı alınamadı');
     }
     const out = { id: uid(), nbId: nb.id, type, title: '', data: normalize(type, data), createdAt: Date.now() }; out.title = out.data.title;
-    outputs.push(out); await DB.put('outputs', out); touchNb(); renderOutputs(); chat.push({ id: uid(), role: 'assistant', kind: 'slides', outId: out.id, text: `${T.emoji} ${out.title} (${T.label})`, at: Date.now() }); renderChat(); persistChat(); setTab('chat'); toast('Slaytlar sohbette. Tam ekran için ⋯ menüsünü kullan.');
+    outputs.push(out); await DB.put('outputs', out); touchNb(); renderOutputs(); chat.push({ id: uid(), role: 'assistant', kind: 'slides', outId: out.id, text: `${T.emoji} ${out.title} (${T.label})`, at: Date.now() }); renderChat(); persistChat(); setTab('chat'); toast(`${T.label} hazır.`);
   } catch (e) { toast(abortCtl?.signal.aborted ? 'Üretim durduruldu.' : `${T.label} üretilemedi: ${e.message || e}. Tekrar dene ya da daha büyük bir model seç.`); }
   finally { busy = false; abortCtl = null; showGen(false); }
 }
 
 function renderOutputs() {
   const ul = $('#outList'); ul.replaceChildren();
-  outputs.slice().sort((a, b) => b.createdAt - a.createdAt).forEach((o) => {
-    const T = TYPES[o.type]; const del = el('button', { className: 'x', title: 'Sil', ariaLabel: `${o.title} çıktısını sil`, innerHTML: IC.close.replace('width="22" height="22"', 'width="16" height="16"') });
-    del.onclick = async (e) => { e.stopPropagation(); await DB.del('outputs', o.id); outputs = outputs.filter((x) => x.id !== o.id); renderOutputs(); };
-    const li = el('li', { className: 'outItem', tabIndex: 0, role: 'button' }, el('span', { className: 'tIc', textContent: T.emoji }), el('div', { className: 't' }, el('b', { textContent: o.title, title: o.title }), el('small', { textContent: `${T.label} · ${fmtDate(o.createdAt)}` })), del);
-    li.onclick = () => openOutput(o); li.onkeydown = (e) => { if (e.target === li && (e.key === 'Enter' || e.key === ' ')) { e.preventDefault(); openOutput(o); } };
+  const all = [...outputs.filter((o) => TYPES[o.type]).map((o) => ({ o, at: o.createdAt })), ...notes.map((n) => ({ n, at: n.addedAt }))].sort((a, b) => b.at - a.at);
+  all.forEach(({ o, n }) => {
+    const T = o && TYPES[o.type]; const title = o ? o.title : n.title;
+    const open = () => (o ? openOutput(o) : openNote(n));
+    const menu = el('button', { type: 'button', className: 'x', title: 'Diğer', ariaLabel: `${title}: seçenekler`, innerHTML: IC.more || '⋯' });
+    menu.onclick = (e) => { e.stopPropagation(); showMenu(menu, [
+      { icon: 'expand', label: 'Aç', run: open },
+      { icon: 'reply', label: 'Sohbette göster', run: () => (o ? outToChat(o) : noteToChat(n)) },
+      ...(n ? [{ icon: 'share', label: 'Kopyala', run: () => navigator.clipboard?.writeText(n.text) }] : []),
+      '-', { icon: 'trash', label: 'Sil', danger: true, run: async () => { if (o) { await DB.del('outputs', o.id); outputs = outputs.filter((x) => x.id !== o.id); renderOutputs(); } else await delNote(n); } },
+    ]); };
+    const li = el('li', { className: 'outItem', tabIndex: 0, role: 'button' }, el('span', { className: 'tIc', textContent: o ? T.emoji : n.icon || '📝' }), el('div', { className: 't' }, el('b', { textContent: title, title }), el('small', { textContent: `${o ? T.label : 'Not'} · ${fmtDate(o ? o.createdAt : n.addedAt)}` })), menu);
+    li.onclick = open; li.onkeydown = (e) => { if (e.target === li && (e.key === 'Enter' || e.key === ' ')) { e.preventDefault(); open(); } };
     ul.append(li);
   });
-  $('#outHint').hidden = outputs.length > 0;
+  $('#outHint').hidden = all.length > 0;
 }
 
 let vwCleanup = null;
 function openOutput(o) {
   const dlg = $('#vwDlg'); const actions = $('#vwActions'); actions.replaceChildren(); $('#vwBody').replaceChildren(); $('#vwTitle').textContent = `${TYPES[o.type].emoji} ${o.title}`;
-  vwCleanup?.(); const r = renderOutput(o, actions); $('#vwBody').append(r.node); vwCleanup = r.cleanup || null;
+  vwCleanup?.(); const r = renderOutput(o, actions); actions.prepend(el('button', { className: 'btn sm', type: 'button', textContent: 'Sohbette göster', onclick: () => { dlg.close(); outToChat(o); } })); $('#vwBody').append(r.node); vwCleanup = r.cleanup || null;
   if (!dlg.open) dlg.showModal();
 }
 $('#vwClose').onclick = () => $('#vwDlg').close();
