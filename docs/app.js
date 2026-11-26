@@ -6,6 +6,50 @@ const el = (t, props = {}, ...kids) => { const e = Object.assign(document.create
 const uid = () => (crypto.randomUUID ? crypto.randomUUID() : String(Date.now()) + Math.random().toString(16).slice(2));
 const params = new URLSearchParams(location.search);
 
+/* ---------------- Simgeler, açılır menü, tema ---------------- */
+const svg = (d, extra = '') => `<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" ${extra}>${d}</svg>`;
+const IC = {
+  back: svg('<path d="M19 12H5M12 19l-7-7 7-7"/>'), search: svg('<circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/>'), plus: svg('<path d="M12 5v14M5 12h14"/>'),
+  share: svg('<path d="M12 16V4M7 9l5-5 5 5M5 14v5a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-5"/>'), more: svg('<circle cx="12" cy="5" r="1.4" fill="currentColor"/><circle cx="12" cy="12" r="1.4" fill="currentColor"/><circle cx="12" cy="19" r="1.4" fill="currentColor"/>'),
+  gear: svg('<circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/>'),
+  caret: svg('<path d="M6 9l6 6 6-6"/>', 'width="16" height="16"'), sort: svg('<path d="M4 7h16M7 12h10M10 17h4"/>'), close: svg('<path d="M18 6L6 18M6 6l12 12"/>'),
+  layers: svg('<path d="M12 3l9 5-9 5-9-5 9-5z"/><path d="M3 13l9 5 9-5"/>'), tune: svg('<path d="M4 7h10M18 7h2M4 17h2M10 17h10"/><circle cx="16" cy="7" r="2"/><circle cx="8" cy="17" r="2"/>'),
+  doc: svg('<path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5M9 13h6M9 17h6"/>', 'width="18" height="18"'), up: svg('<path d="M12 19V5M5 12l7-7 7 7"/>'),
+  stop: svg('<rect x="7" y="7" width="10" height="10" rx="2" fill="currentColor"/>'), pin: svg('<path d="M9 4h6l-1 6 3 3H7l3-3-1-6zM12 13v7"/>', 'width="18" height="18"'),
+  copy: svg('<rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h8"/>', 'width="18" height="18"'), check: svg('<path d="M5 12l5 5 9-10"/>', 'width="18" height="18"'),
+  edit: svg('<path d="M4 20h4L19 9l-4-4L4 16v4zM13.5 6.5l4 4"/>', 'width="18" height="18"'), trash: svg('<path d="M4 7h16M10 11v6M14 11v6M6 7l1 13h10l1-13M9 7V4h6v3"/>', 'width="18" height="18"'),
+  sun: svg('<circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/>', 'width="18" height="18"'),
+  moon: svg('<path d="M21 13a8 8 0 1 1-10-10 7 7 0 0 0 10 10z"/>', 'width="18" height="18"'), auto: svg('<rect x="3" y="4" width="18" height="12" rx="2"/><path d="M8 20h8M12 16v4"/>', 'width="18" height="18"'),
+  cpu: svg('<rect x="6" y="6" width="12" height="12" rx="2"/><path d="M9 2v4M15 2v4M9 18v4M15 18v4M2 9h4M2 15h4M18 9h4M18 15h4"/>', 'width="18" height="18"'),
+  pdf: svg('<path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5"/>', 'width="22" height="22" style="color:#ef4444"'), txt: svg('<path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5M9 13h6M9 17h6"/>'),
+};
+document.querySelectorAll('[data-ic]').forEach((n) => (n.innerHTML = IC[n.dataset.ic] || ''));
+function applyTheme(t) { const r = document.documentElement; if (t === 'light' || t === 'dark') r.setAttribute('data-theme', t); else r.removeAttribute('data-theme'); }
+const getTheme = () => { try { return localStorage.getItem('defter-theme') || 'system'; } catch { return 'system'; } };
+const setTheme = (t) => { try { localStorage.setItem('defter-theme', t); } catch {} applyTheme(t); };
+applyTheme(getTheme());
+
+let openMenu = null;
+function closeMenu() { if (openMenu) { openMenu.el.remove(); openMenu.anchor.setAttribute('aria-expanded', 'false'); document.removeEventListener('pointerdown', openMenu.out, true); document.removeEventListener('keydown', openMenu.key, true); openMenu = null; } }
+function showMenu(anchor, items, { align = 'right' } = {}) {
+  const same = openMenu && openMenu.anchor === anchor; closeMenu(); if (same) return;
+  const m = el('div', { className: 'menu', role: 'menu' });
+  items.forEach((it) => {
+    if (it === '-') { m.append(el('hr')); return; }
+    const b = el('button', { type: 'button', role: 'menuitem', className: it.danger ? 'danger' : '' }, el('span', { className: 'mi', innerHTML: it.icon ? IC[it.icon] : '' }), el('span', { className: 'ml' }, it.label, it.sub ? el('small', { textContent: it.sub }) : ''), it.check ? el('span', { className: 'mc', innerHTML: IC.check }) : '');
+    b.onclick = () => { closeMenu(); it.run(); }; m.append(b);
+  });
+  document.body.append(m);
+  const r = anchor.getBoundingClientRect(); const w = m.offsetWidth;
+  m.style.top = Math.min(r.bottom + 6, innerHeight - m.offsetHeight - 8) + 'px';
+  m.style.left = Math.max(8, Math.min(align === 'right' ? r.right - w : r.left, innerWidth - w - 8)) + 'px';
+  anchor.setAttribute('aria-expanded', 'true');
+  const out = (e) => { if (!m.contains(e.target) && !anchor.contains(e.target)) closeMenu(); };
+  const key = (e) => { if (e.key === 'Escape') { e.stopPropagation(); closeMenu(); anchor.focus(); } };
+  document.addEventListener('pointerdown', out, true); document.addEventListener('keydown', key, true);
+  openMenu = { el: m, anchor, out, key }; m.querySelector('button')?.focus();
+}
+
 /* ---------------- Depolama (IndexedDB) ---------------- */
 const DB = (() => {
   let p;
@@ -128,17 +172,18 @@ const budgetChars = (reserve = 0) => Math.max(1500, Math.round((engine.nctx - 90
 function renderSources() {
   const ul = $('#srcList'); ul.replaceChildren();
   sources.forEach((s) => {
-    const cb = el('input', { type: 'checkbox', checked: s.enabled !== false, ariaLabel: `${s.title} kaynağını kullan` });
+    const cb = el('input', { type: 'checkbox', className: 'chk', checked: s.enabled !== false, ariaLabel: `${s.title} kaynağını kullan` });
     cb.onchange = async () => { s.enabled = cb.checked; await DB.put('sources', s); renderSources(); };
-    const del = el('button', { className: 'x', title: 'Kaldır', ariaLabel: `${s.title} kaynağını kaldır`, textContent: '✕' });
-    del.onclick = async () => { await DB.del('sources', s.id); sources = sources.filter((x) => x.id !== s.id); renderSources(); };
-    ul.append(el('li', {}, cb, el('div', { className: 't' }, el('b', { textContent: s.title, title: s.title }), el('small', { textContent: `${s.kind} · ${(s.text.length / 1000).toFixed(1)}k karakter` })), del));
+    const del = el('button', { className: 'x', title: 'Kaldır', ariaLabel: `${s.title} kaynağını kaldır`, innerHTML: IC.close.replace('width="22" height="22"', 'width="16" height="16"') });
+    del.onclick = async () => { await DB.del('sources', s.id); sources = sources.filter((x) => x.id !== s.id); renderSources(); touchNb(); };
+    ul.append(el('li', {}, el('span', { className: 'ki', innerHTML: s.kind === 'PDF' ? IC.pdf : IC.txt }), el('div', { className: 't' }, el('b', { textContent: s.title, title: s.title }), el('small', { textContent: `${s.kind} · ${(s.text.length / 1000).toFixed(1)}k karakter` })), del, cb));
   });
   const on = enabledSources().length;
   $('#srcCount').textContent = `${sources.length} kaynak · ${on} seçili`;
   $('#srcHint').hidden = sources.length > 0;
   $('#selAll').checked = sources.length > 0 && on === sources.length;
-  $('#q').placeholder = on ? 'Seçili kaynaklara bir soru sor…' : 'Bir şey sor (kaynak seçili değil, normal sohbet)…';
+  $('#srcBadgeN').textContent = on; $('#srcBadge').classList.toggle('empty', !on);
+  $('#q').placeholder = on ? 'Soru sorun veya içerik oluşturun' : 'Bir şey sor (kaynak seçili değil, normal sohbet)…';
 }
 function renderNotes() {
   const ul = $('#noteList'); ul.replaceChildren();
@@ -159,16 +204,19 @@ function msgNode(m, i) {
   const d = el('div', { className: `msg ${m.role === 'user' ? 'me' : ''} ${m.err ? 'err' : ''}` });
   if (m.role === 'user') d.textContent = m.text; else d.innerHTML = md(m.text);
   if (m.role !== 'user' && !m.err && m.text && !m.live) {
-    const save = el('button', { className: 'btn sm', textContent: 'Nota kaydet' });
+    const save = el('button', { className: 'ib sm', title: 'Nota kaydet', ariaLabel: 'Nota kaydet', innerHTML: IC.pin });
     save.onclick = () => saveNote(m.title || (chat[i - 1]?.text || 'Not').slice(0, 60), m.text);
-    d.append(el('div', { className: 'acts' }, save));
+    const copy = el('button', { className: 'ib sm', title: 'Kopyala', ariaLabel: 'Kopyala', innerHTML: IC.copy });
+    copy.onclick = () => { navigator.clipboard?.writeText(m.text).then(() => { copy.innerHTML = IC.check; setTimeout(() => (copy.innerHTML = IC.copy), 1200); }).catch(() => {}); };
+    d.append(el('div', { className: 'acts' }, save, copy));
   }
+  if (m.role !== 'user' && m.at && !m.live) d.append(el('div', { className: 'stamp', textContent: `${new Date(m.at).toDateString() === new Date().toDateString() ? 'Bugün' : fmtDate(m.at)} • ${new Date(m.at).toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' })}` }));
   return d;
 }
 async function saveNote(title, text) { const n = { id: uid(), nbId: nb.id, title, text, addedAt: Date.now() }; notes.push(n); await DB.put('notes', n); renderNotes(); touchNb(); toast('Nota kaydedildi'); }
 function toast(t) { $('#ctxInfo').textContent = t; }
 function setModelUi(state, label) {
-  $('#modelDot').className = `dot ${state}`; $('#modelLabel').textContent = label; $('#modelBtn').textContent = state === 'ok' ? 'Modeli değiştir' : 'Model seç';
+  $('#modelDot').className = `dot ${state}`; $('#modelLabel').textContent = label;
 }
 
 /* ---------------- Üretim akışı ---------------- */
@@ -183,7 +231,7 @@ async function run({ userText, shownText, messages, cites, title, maxTokens, dem
   busy = true; abortCtl = new AbortController();
   $('#send').hidden = true; $('#stop').hidden = false;
   chat.push({ role: 'user', text: shownText ?? userText });
-  const reply = { role: 'assistant', text: '', live: true, cites, title };
+  const reply = { role: 'assistant', text: '', live: true, cites, title, at: Date.now() };
   chat.push(reply); renderChat();
   const node = () => $('#msgs').lastElementChild;
   try {
@@ -251,19 +299,22 @@ async function addSource(title, text, kind) {
   text = text.replace(/\u0000/g, '').trim(); if (!text) { toast(`"${title}" içinde okunabilir metin bulunamadı.`); return; }
   if (!nb) return; const s = { id: uid(), nbId: nb.id, title, text, kind, enabled: true, addedAt: Date.now() }; sources.push(s); await DB.put('sources', s); renderSources(); touchNb();
 }
-$('#addFile').onclick = () => $('#fileInput').click();
+$('#addFile').onclick = () => $('#srcDlg').showModal();
 async function ingestFiles(files) {
   for (const f of files) { try { toast(`${f.name} okunuyor…`); await addSource(f.name, await readFile(f), /\.pdf$/i.test(f.name) ? 'PDF' : 'Dosya'); toast(''); } catch (err) { toast(`${f.name} okunamadı: ${err.message || err}`); } }
 }
 $('#fileInput').onchange = async (e) => { const files = [...e.target.files]; e.target.value = ''; await ingestFiles(files); };
-$('#addText').onclick = () => { $('#textTitle').value = ''; $('#textBody').value = ''; $('#textDlg').showModal(); };
-$('#textSave').onclick = async () => { await addSource($('#textTitle').value.trim() || 'Yapıştırılan metin', $('#textBody').value, 'Metin'); $('#textDlg').close(); };
+let noteMode = false;
+const openText = (note) => { noteMode = note; $('#textHead').textContent = note ? 'Not oluştur' : 'Metin yapıştır'; $('#textSave').textContent = note ? 'Kaydet' : 'Ekle'; $('#textTitle').value = ''; $('#textBody').value = ''; $('#textDlg').showModal(); };
+$('#addText').onclick = () => openText(false);
+$('#addNote').onclick = () => openText(true);
+$('#textSave').onclick = async () => { const t = $('#textTitle').value.trim(), b = $('#textBody').value.trim(); if (noteMode) { if (b) await saveNote(t || b.slice(0, 40), b); } else await addSource(t || 'Yapıştırılan metin', $('#textBody').value, 'Metin'); $('#textDlg').close(); };
 $('#selAll').onchange = async (e) => { for (const s of sources) { s.enabled = e.target.checked; await DB.put('sources', s); } renderSources(); };
 
 /* ---------------- Model penceresi ---------------- */
 const presetBox = $('#presets');
 PRESETS.forEach((p, i) => presetBox.append(el('label', { className: 'preset' }, el('input', { type: 'radio', name: 'preset', value: p.id, checked: i === 1 }), el('div', {}, el('b', { textContent: p.name }), el('small', { textContent: p.note })))));
-$('#modelBtn').onclick = () => $('#modelDlg').showModal();
+$('#tuneBtn').onclick = () => $('#modelDlg').showModal();
 $('#dlgCancel').onclick = (e) => { e.preventDefault(); $('#modelDlg').close(); };
 $('#demoBtn').onclick = () => { engine.kind = 'demo'; engine.label = 'Demo'; setModelUi('ok', 'Demo kipi (model yok)'); $('#modelDlg').close(); };
 $('#loadBtn').onclick = async () => {
@@ -303,54 +354,110 @@ STUDIO.forEach((t) => { const b = el('button', { className: 'btn' }, el('b', { t
 
 /* ---------------- Not defterleri (ana ekran) ---------------- */
 const ICONS = ['📘', '🔬', '📚', '🧪', '🌍', '💡', '📊', '🎓'];
+const home = { filter: 'all', sort: 'recent', query: '', more: false };
 async function touchNb() { if (!nb) return; nb.updatedAt = Date.now(); await DB.put('notebooks', nb); }
 function fmtDate(t) { return new Date(t).toLocaleDateString('tr-TR', { day: 'numeric', month: 'short', year: 'numeric' }); }
+const SORTS = { recent: 'Son kullanılan', name: 'Ada göre (A–Z)', created: 'Oluşturulma tarihi' };
+const FILTERS = { all: 'Tümü', pinned: 'Sabitlenenler' };
 
+function visibleNotebooks() {
+  let list = notebooks.filter((n) => (home.filter === 'pinned' ? n.pinned : true) && (!home.query || n.title.toLocaleLowerCase('tr').includes(home.query.toLocaleLowerCase('tr'))));
+  const by = { recent: (a, b) => b.updatedAt - a.updatedAt, name: (a, b) => a.title.localeCompare(b.title, 'tr'), created: (a, b) => b.createdAt - a.createdAt }[home.sort];
+  return list.sort((a, b) => (b.pinned ? 1 : 0) - (a.pinned ? 1 : 0) || by(a, b));
+}
 async function renderHome() {
   const grid = $('#nbGrid'); grid.replaceChildren();
-  const add = el('button', { className: 'nbNew', type: 'button', ariaLabel: 'Yeni not defteri oluştur' }, el('span', { className: 'nbPlus', textContent: '+' }), el('b', { textContent: 'Yeni not defteri' }));
+  $('#homeTitle').textContent = home.filter === 'pinned' ? 'Sabitlenen not defterleri' : home.query ? `“${home.query}” için sonuçlar` : 'Son kullanılan not defterleri';
+  $('#filterLabel').textContent = FILTERS[home.filter];
+  const add = el('button', { className: 'nbNew', type: 'button', ariaLabel: 'Yeni not defteri oluştur' }, el('span', { className: 'nbPlus', innerHTML: IC.plus }), el('b', { textContent: 'Yeni not defteri' }));
   add.onclick = createNb; grid.append(add);
   const counts = {}; (await DB.all('sources')).forEach((x) => (counts[x.nbId] = (counts[x.nbId] || 0) + 1));
-  notebooks.slice().sort((a, b) => b.updatedAt - a.updatedAt).forEach((n) => {
+  const list = visibleNotebooks(); const LIMIT = 10; const shown = home.more ? list : list.slice(0, LIMIT);
+  shown.forEach((n) => {
+    const more = el('button', { className: 'nbMore', type: 'button', title: 'Seçenekler', ariaLabel: `${n.title} seçenekleri`, ariaHaspopup: 'menu', innerHTML: IC.more });
+    more.onclick = (e) => { e.stopPropagation(); showMenu(more, [
+      { icon: 'edit', label: 'Başlığı düzenle', run: () => renameNb(n) },
+      { icon: 'pin', label: n.pinned ? 'Sabitlemeyi kaldır' : 'En üste sabitle', run: async () => { n.pinned = !n.pinned; await DB.put('notebooks', n); renderHome(); } },
+      '-', { icon: 'trash', label: 'Sil', danger: true, run: () => deleteNb(n) }]); };
     const card = el('div', { className: 'nbCard', role: 'button', tabIndex: 0, ariaLabel: `${n.title} not defterini aç` },
-      el('span', { className: 'nbIco', textContent: n.icon || '📘' }), el('b', { textContent: n.title }), el('small', { textContent: `${counts[n.id] || 0} kaynak · ${fmtDate(n.updatedAt)}` }));
-    const del = el('button', { className: 'nbDel', type: 'button', title: 'Sil', ariaLabel: `${n.title} not defterini sil`, textContent: '✕' });
-    del.onclick = (e) => { e.stopPropagation(); deleteNb(n); };
-    card.append(del); card.onclick = () => openNb(n.id);
+      el('span', { className: 'nbIco', textContent: n.icon || '📘' }),
+      el('div', { className: 'nbT' }, el('b', { textContent: n.title }), el('small', { textContent: `${n.pinned ? '📌 ' : ''}${counts[n.id] || 0} kaynak · ${fmtDate(n.updatedAt)}` })), more);
+    card.onclick = () => openNb(n.id);
     card.onkeydown = (e) => { if (e.target === card && (e.key === 'Enter' || e.key === ' ')) { e.preventDefault(); openNb(n.id); } };
     grid.append(card);
   });
+  if (!home.more && list.length > LIMIT) { const mb = el('button', { className: 'moreRow', type: 'button' }, 'Daha fazla göster ', el('span', { innerHTML: IC.caret.replace('<svg', '<svg style="transform:rotate(-90deg)"') })); mb.onclick = () => { home.more = true; renderHome(); }; grid.append(mb); }
+  $('#nbEmpty').hidden = list.length > 0 || notebooks.length === 0 ? true : false;
+  if (!list.length && notebooks.length) { $('#nbEmpty').textContent = home.query ? 'Eşleşen not defteri bulunamadı.' : 'Sabitlenmiş not defteri yok.'; $('#nbEmpty').hidden = false; }
+  else if (!notebooks.length) { $('#nbEmpty').textContent = 'Henüz not defterin yok. “Yeni not defteri” ile başla.'; $('#nbEmpty').hidden = false; }
 }
 async function createNb() {
-  const n = { id: uid(), title: 'Başlıksız not defteri', icon: ICONS[notebooks.length % ICONS.length], createdAt: Date.now(), updatedAt: Date.now() };
+  const n = { id: uid(), title: 'Adsız not defteri', icon: ICONS[notebooks.length % ICONS.length], createdAt: Date.now(), updatedAt: Date.now() };
   notebooks.push(n); await DB.put('notebooks', n); await openNb(n.id); $('#srcDlg').showModal();
+}
+async function renameNb(n) {
+  const t = prompt('Not defteri başlığı', n.title); if (t === null) return;
+  n.title = t.trim() || 'Adsız not defteri'; await DB.put('notebooks', n); if (nb && nb.id === n.id) { $('#nbTitle').value = n.title; document.title = `${n.title} — Defter`; } if (!nb) renderHome();
 }
 async function deleteNb(n) {
   if (!confirm(`"${n.title}" not defteri, kaynakları ve notlarıyla birlikte silinsin mi?`)) return;
   for (const x of (await DB.all('sources')).filter((x) => x.nbId === n.id)) await DB.del('sources', x.id);
   for (const x of (await DB.all('notes')).filter((x) => x.nbId === n.id)) await DB.del('notes', x.id);
-  await DB.del('notebooks', n.id); await DB.set('chat:' + n.id, []); notebooks = notebooks.filter((x) => x.id !== n.id); renderHome();
+  await DB.del('notebooks', n.id); await DB.set('chat:' + n.id, []); notebooks = notebooks.filter((x) => x.id !== n.id);
+  if (nb && nb.id === n.id) { busy = false; goHome(); } else renderHome();
+}
+function setView(v) {
+  const inNb = v === 'nb'; document.body.classList.toggle('in-nb', inNb);
+  $('#home').hidden = inNb; $('#cols').hidden = !inNb; $('#tabs').hidden = !inNb;
+  $('#backBtn').hidden = !inNb; $('#nbTitle').hidden = !inNb; $('#newNbBtn').hidden = !inNb; $('#shareBtn').hidden = !inNb; $('#moreBtn').hidden = !inNb;
+  $('#filterBtn').hidden = inNb; $('#searchBtn').hidden = inNb; if (inNb) $('#searchBar').hidden = true;
 }
 async function openNb(id) {
   const n = notebooks.find((x) => x.id === id); if (!n) return goHome();
-  if (busy) return; nb = n;
+  if (busy) return; nb = n; closeMenu();
   [sources, notes, chat] = await Promise.all([DB.all('sources').then((a) => a.filter((x) => x.nbId === id).sort((a, b) => a.addedAt - b.addedAt)), DB.all('notes').then((a) => a.filter((x) => x.nbId === id)), DB.get('chat:' + id).then((c) => c || [])]);
-  $('#home').hidden = true; $('#cols').hidden = false; $('#backBtn').hidden = false; $('#appName').hidden = true; $('#appSub').hidden = true;
-  $('#nbTitle').hidden = false; $('#nbTitle').value = n.title; document.title = `${n.title} — Defter`;
+  setView('nb'); $('#nbTitle').value = n.title; document.title = `${n.title} — Defter`;
   if (location.hash !== '#nb-' + id) history.pushState(null, '', '#nb-' + id);
   setTab('chat'); renderSources(); renderNotes(); renderChat();
 }
 function goHome() {
-  if (busy) return; nb = null; sources = []; notes = []; chat = [];
-  $('#cols').hidden = true; $('#home').hidden = false; $('#backBtn').hidden = true; $('#appName').hidden = false; $('#appSub').hidden = false; $('#nbTitle').hidden = true; document.title = 'Defter — Tarayıcıda Yerel Yapay Zekâ';
+  if (busy) return; nb = null; sources = []; notes = []; chat = []; closeMenu();
+  setView('home'); document.title = 'Defter — Tarayıcıda Yerel Yapay Zekâ';
   if (location.hash) history.pushState(null, '', location.pathname + location.search);
   renderHome();
 }
 $('#backBtn').onclick = goHome;
 $('#homeLink').onclick = (e) => { e.preventDefault(); goHome(); };
-$('#nbTitle').onchange = async (e) => { if (!nb) return; nb.title = e.target.value.trim() || 'Başlıksız not defteri'; e.target.value = nb.title; document.title = `${nb.title} — Defter`; await touchNb(); };
+$('#newPill').onclick = createNb; $('#newNbBtn').onclick = createNb;
+$('#nbTitle').onchange = async (e) => { if (!nb) return; nb.title = e.target.value.trim() || 'Adsız not defteri'; e.target.value = nb.title; document.title = `${nb.title} — Defter`; await touchNb(); };
 $('#nbTitle').onkeydown = (e) => { if (e.key === 'Enter') e.target.blur(); };
 window.addEventListener('popstate', () => { const m = location.hash.match(/^#nb-(.+)$/); if (m) openNb(m[1]); else { busy = false; goHome(); } });
+
+// üst çubuk menüleri
+$('#filterBtn').onclick = () => showMenu($('#filterBtn'), Object.entries(FILTERS).map(([k, v]) => ({ label: v, check: home.filter === k, run: () => { home.filter = k; home.more = false; renderHome(); } })), { align: 'left' });
+$('#sortBtn').onclick = () => showMenu($('#sortBtn'), Object.entries(SORTS).map(([k, v]) => ({ label: v, check: home.sort === k, run: () => { home.sort = k; renderHome(); } })));
+$('#searchBtn').onclick = () => { $('#searchBar').hidden = false; $('#nbSearch').focus(); };
+$('#searchClose').onclick = () => { $('#searchBar').hidden = true; $('#nbSearch').value = ''; home.query = ''; renderHome(); };
+$('#nbSearch').oninput = (e) => { home.query = e.target.value.trim(); home.more = false; renderHome(); };
+$('#nbSearch').onkeydown = (e) => { if (e.key === 'Escape') $('#searchClose').click(); };
+$('#gearBtn').onclick = () => {
+  const th = getTheme();
+  showMenu($('#gearBtn'), [
+    { icon: 'cpu', label: engine.kind === 'none' ? 'Model seç' : 'Modeli değiştir', sub: engine.kind === 'none' ? 'Henüz model yüklenmedi' : engine.label, run: () => $('#modelDlg').showModal() },
+    '-',
+    { icon: 'sun', label: 'Açık mod', check: th === 'light', run: () => setTheme('light') },
+    { icon: 'moon', label: 'Koyu mod', check: th === 'dark', run: () => setTheme('dark') },
+    { icon: 'auto', label: 'Cihaz', check: th === 'system', run: () => setTheme('system') },
+  ]);
+};
+$('#moreBtn').onclick = () => showMenu($('#moreBtn'), [
+  { icon: 'edit', label: 'Başlığı düzenle', run: () => { $('#nbTitle').focus(); $('#nbTitle').select(); } },
+  { icon: 'share', label: 'Notları indir (.md)', run: () => $('#expNotes').click() },
+  { icon: 'share', label: 'Sohbeti indir (.md)', run: () => $('#expChat').click() },
+  { icon: 'trash', label: 'Sohbeti temizle', run: () => $('#clearChat').click() },
+  '-', { icon: 'trash', label: 'Not defterini sil', danger: true, run: () => nb && deleteNb(nb) },
+]);
+$('#shareBtn').onclick = () => $('#expChat').click();
 
 // kaynak ekle penceresi
 const drop = $('#drop');
@@ -365,10 +472,10 @@ $('#dlgText').onclick = () => { $('#srcDlg').close(); $('#addText').click(); };
 /* ---------------- Başlangıç ---------------- */
 (async () => {
   notebooks = await DB.all('notebooks');
-  const last = await DB.get('lastModel'); if (last) $('#modelLabel').textContent = `Son model: ${last.label} (yüklemek için "Model seç")`;
+  
   if (params.has('demo')) { engine.kind = 'demo'; setModelUi('ok', 'Demo kipi (model yok)'); }
   const m = location.hash.match(/^#nb-(.+)$/);
-  if (m && notebooks.some((x) => x.id === m[1])) await openNb(m[1]); else { await renderHome(); }
+  if (m && notebooks.some((x) => x.id === m[1])) await openNb(m[1]); else { setView('home'); await renderHome(); }
   if (!crossOriginIsolated && !params.has('nocoi')) toast('Not: çok çekirdekli mod için sayfa bir kez yenilenebilir (service worker).');
   navigator.storage?.estimate?.().then((e) => { if (e?.quota) $('#dlText').textContent = `Tarayıcı depolama kotası: ≈${(e.quota / 1e9).toFixed(1)} GB`; });
 })();

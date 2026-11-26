@@ -13,7 +13,7 @@ Hiçbir derleme adımı yok; `docs/` klasörü olduğu gibi yayınlanır. wllama
 
 ## Nasıl kullanılır
 
-Açılışta **Not defterlerin** ekranı gelir: **Yeni not defteri** karosuna bas, kaynak ekleme penceresi açılır (dosyaları sürükle-bırak ya da seç), sonra not defteri sayfası açılır. Her not defterinin kaynakları, sohbeti ve notları ayrı tutulur; başlığa basıp adını değiştirebilir, ana ekranda karttaki ✕ ile silebilirsin. Not defteri adresi `#nb-…` ile kaydedilir, sayfayı yenileyince kaldığın yerden açılır.
+Telefonda düzen NotebookLM'in mobil web arayüzü gibidir: üstte **Tümü** filtresi, arama ve ayarlar; **Son kullanılan not defterleri** listesi (⋮ menüsünde başlığı düzenle, en üste sabitle, sil); not defterinde **Kaynaklar | Sohbet | Stüdyo** sekmeleri, onay kutulu kaynak listesi, hap biçimli yazma alanı, cevap altında sabitle/kopyala. Ayarlar (dişli) menüsünde model seçimi ile açık/koyu/cihaz teması var. Açılışta **Not defterlerin** ekranı gelir: **Yeni not defteri** karosuna bas, kaynak ekleme penceresi açılır (dosyaları sürükle-bırak ya da seç), sonra not defteri sayfası açılır. Her not defterinin kaynakları, sohbeti ve notları ayrı tutulur; başlığa basıp adını değiştirebilir, ana ekranda karttaki ✕ ile silebilirsin. Not defteri adresi `#nb-…` ile kaydedilir, sayfayı yenileyince kaldığın yerden açılır.
 
 1. Sağ üstten **Model seç** → bir model seç → **Yükle**. İlk seferde Hugging Face'ten iner (birkaç yüz MB – birkaç GB), sonra tarayıcı depolamasında kalır ve bir daha indirilmez.
 2. Soldan **Dosya ekle** / **Metin yapıştır** ile kaynak ekle. Kutuyu işaretleyip kaldırarak hangi kaynakların kullanılacağını seç.
