@@ -451,6 +451,8 @@ $('#gearBtn').onclick = () => {
     { icon: 'sun', label: 'Açık mod', check: th === 'light', run: () => setTheme('light') },
     { icon: 'moon', label: 'Koyu mod', check: th === 'dark', run: () => setTheme('dark') },
     { icon: 'auto', label: 'Cihaz', check: th === 'system', run: () => setTheme('system') },
+    '-',
+    { icon: 'tune', label: 'Klavye ve oyun kolu', sub: 'Kısayollar ve düğme eşleşmeleri', run: () => window.defterHelp?.() },
   ]);
 };
 $('#moreBtn').onclick = () => showMenu($('#moreBtn'), [

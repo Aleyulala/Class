@@ -224,3 +224,12 @@ dialog.vw{width:min(920px,96vw);max-width:none;height:min(86vh,820px);padding:0;
 .vwImgWrap{display:flex;justify-content:center}.vwImg{max-width:100%;height:auto;border-radius:var(--rt);box-shadow:var(--sh)}
 .vwPod{max-width:680px;margin:0 auto;display:flex;flex-direction:column;gap:12px}.vwPod select{background:var(--btn);border:0;border-radius:var(--rb);color:var(--tx);padding:8px 10px}
 .pcList{display:flex;flex-direction:column;gap:8px}.pcLine{display:flex;gap:10px;border-radius:var(--rt);padding:10px 12px;background:var(--p2);border:2px solid transparent;cursor:pointer}.pcLine b{flex:none;width:44px;color:var(--ac)}.pcLine.b b{color:#a78bfa}.pcLine.on{border-color:var(--ac);background:var(--btn)}
+
+/* ===== Klavye / oyun kolu gezinmesi ===== */
+#focusDot{position:fixed;width:14px;height:14px;margin:-7px 0 0 -3px;border-radius:50%;background:var(--ac);border:2px solid var(--acfg);box-shadow:0 0 0 2px var(--ac),0 2px 8px rgba(0,0,0,.45);z-index:2147483000;pointer-events:none;opacity:0;transform:scale(.6);transition:opacity .18s,transform .15s,left .12s cubic-bezier(.2,0,0,1),top .12s cubic-bezier(.2,0,0,1)}
+#focusDot.on{opacity:1;transform:scale(1)}
+@media (prefers-reduced-motion:reduce){#focusDot{transition:none}}
+a:focus-visible,button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible,summary:focus-visible,[tabindex]:focus-visible{outline:2px solid var(--ac);outline-offset:2px}
+.nbCard:focus-visible{outline-offset:-2px}
+.srOnly{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+.helpT{border-collapse:collapse;width:100%;font-size:14px}.helpT th{text-align:left;font-weight:600;padding:7px 10px 7px 0;color:var(--ac);white-space:nowrap;vertical-align:top}.helpT td{padding:7px 0;color:var(--tx)}.helpT tr+tr{border-top:1px solid var(--line)}
