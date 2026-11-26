@@ -199,6 +199,7 @@ function openDrawer() {
             link('speed', 'Hız', 'https://pagespeed.web.dev/analysis')]))),
       el('div', { className: 'drFoot' },
         miniSlider([
+          { icon: 'sms', label: 'İletişim', run: () => { closeDrawer(); window.defterContact?.open(); } },
           { icon: 'verifyf', label: 'Gizlilik', href: 'https://aleyulala.github.io/saved/?view=privacy' },
           { icon: 'verify', label: 'Çerez Politikası', run: () => { closeDrawer(); document.getElementById('cookieDlg')?.showModal(); } },
           { icon: 'sms', label: 'Yorumlar', href: 'https://aleyulala.blogspot.com/p/muhabbet.html' }]),

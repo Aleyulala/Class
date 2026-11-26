@@ -76,6 +76,7 @@ function items() {
   L.push({ t: 'Tema rengi', i: 'palette', run: () => openThemeColors($('.qeT')) });
   L.push({ t: 'Klavye ve oyun kolu', i: 'pad', run: () => window.defterHelp?.() });
   if (!s.standalone?.()) L.push({ t: 'Uygulama olarak kur', i: 'install', run: () => s.install?.() });
+  L.push({ t: 'İletişim', i: 'smile', run: () => window.defterContact?.open() });
   L.push({ t: 'Çerez politikası', i: 'verify', run: () => document.getElementById('cookieDlg')?.showModal() });
   return L.slice(0, 15);
 }
@@ -138,5 +139,24 @@ function moveFilter() {
   const f = $('#filterBtn'), r = $('.hRow'), srt = $('#sortBtn'); if (!f || !r || !srt || f.parentElement === r) return;
   f.classList.add('inRow'); r.insertBefore(f, srt);
 }
-function boot() { applyAccent(); buildThemeBtn(); buildChips(); moveFilter(); buildNtf(); buildFab(); }
+
+/* ---------- Alt bilgi (Blogger footer: profil bloğu, bağlantı satırı, başlıklı sütunlar, Feed) ---------- */
+function buildFooter() {
+  const home = $('.homeIn'); if (!home || $('#ftr')) return;
+  const L = (t, h) => el('a', { href: h, target: '_blank', rel: 'noopener noreferrer', textContent: t });
+  const sec = (title, items) => el('div', { className: 'ftrSec' }, el('b', { textContent: title }), el('ul', {}, ...items.map((x) => el('li', {}, x))));
+  const contact = el('a', { href: '#iletisim', textContent: 'İletişim', onclick: (e) => { e.preventDefault(); window.defterContact?.open(); } });
+  const privacy = L('Gizlilik', 'https://aleyulala.github.io/saved/?view=privacy');
+  const cookie = el('a', { href: '#cerez', textContent: 'Çerez politikası', onclick: (e) => { e.preventDefault(); document.getElementById('cookieDlg')?.showModal(); } });
+  const f = el('footer', { className: 'ftr', id: 'ftr' },
+    el('div', { className: 'ftrBrand' }, el('span', { className: 'ftrAv', textContent: 'C' }), el('div', {}, el('b', { textContent: 'Class' }), el('small', { innerHTML: svg(P.home) + 'NotebookLM tarzı yerel yapay zekâ' }))),
+    el('p', { className: 'ftrLinks' }, L('GitHub', 'https://github.com/Aleyulala/Class'), ' / ', L('Saved', 'https://aleyulala.github.io/saved/'), ' / ', L('Blog', 'https://aleyulala.blogspot.com/')),
+    sec('Proje', [L('Hakkında', 'https://github.com/Aleyulala/Class#readme'), L('İstekler', 'https://github.com/Aleyulala/Class/issues'), L('Topluluk', 'https://github.com/Aleyulala/saved/discussions')]),
+    sec('Servis', [L('Öneriler', 'https://github.com/Aleyulala/Class/issues/new'), L('İçerikler', 'https://aleyulala.github.io/saved/'), L('Döküman', 'https://github.com/Aleyulala/Class/blob/main/docs/README.md')]),
+    sec('Destek', [contact, privacy, cookie]),
+    el('a', { className: 'ftrFeed', href: 'https://github.com/Aleyulala/Class/commits/main.atom', target: '_blank', rel: 'noopener noreferrer', innerHTML: '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M4 11a9 9 0 0 1 9 9M4 4a16 16 0 0 1 16 16"/><circle cx="5" cy="19" r="1"/></svg><span>Feed</span>' }));
+  home.append(f);
+}
+
+function boot() { applyAccent(); buildThemeBtn(); buildChips(); moveFilter(); buildNtf(); buildFooter(); buildFab(); }
 if (window.defterApp) boot(); else document.addEventListener('defter-ready', boot, { once: true });
