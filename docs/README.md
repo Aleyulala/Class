@@ -28,6 +28,26 @@ Telefonda düzen NotebookLM'in mobil web arayüzü gibidir: üstte **Tümü** fi
    Üretilen çıktılar not defterinde **Çıktılar** listesinde kalır. Model, çıktıyı JSON şemasına uyarak üretir; küçük modeller bazen başarısız olur, "tekrar dene" ya da daha büyük model.
 5. **Demo (model yok)** düğmesi modeli indirmeden arayüzü dener (cevap yerine eşleşen kaynak parçalarını gösterir). Adrese `?demo` eklersen doğrudan demo açılır.
 
+## Klavye ve oyun kolu
+
+Blogger şablonundaki TV/oyun kolu gezinmesi gibi çalışır (ayarlar menüsünde **Klavye ve oyun kolu** ile yardım penceresi açılır):
+
+| Giriş | İş |
+|---|---|
+| Oklar, D-pad, sol çubuk | Odağı yakındaki bir sonraki öğeye taşı (odakta nokta görünür) |
+| Tab / Shift+Tab | Sıradaki / önceki öğe |
+| Enter, Boşluk, A | Seç |
+| Esc, Backspace, B | Geri: menü, pencere, sonra not defteri → ana ekran |
+| Y, `/`, `s` | Ara |
+| X, `n` | Yeni not defteri / kaynak ekle |
+| LB / RB, `[` ve `]` | Önceki / sonraki sekme |
+| Start, `m` | Ayarlar menüsü |
+| Select, `d` | Açık / koyu tema |
+| Sağ çubuk | Kaydır |
+| L3, `?` | Yardım |
+
+Xbox, PlayStation ve standart eşlemeli oyun kollarıyla çalışır (tarayıcının Gamepad API'si).
+
 ## Model önerileri (8 GB ekran kartı için)
 
 | Model | Boyut (yaklaşık) | Not |
