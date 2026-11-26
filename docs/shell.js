@@ -111,6 +111,7 @@ let drawer = null;
 function closeDrawer() { if (!drawer) return; const d = drawer; drawer = null; d.classList.remove('in'); setTimeout(() => d.remove(), 200); document.removeEventListener('keydown', drawerKey, true); $('#menuBtn')?.setAttribute('aria-expanded', 'false'); }
 function drawerKey(e) {
   if (e.key === 'Escape') { e.stopPropagation(); closeDrawer(); $('#menuBtn')?.focus(); return; }
+  if ((e.key === 'ArrowDown' || e.key === 'ArrowUp') && drawer) { const f = [...drawer.querySelectorAll('.dwItem')]; const i = f.indexOf(document.activeElement); if (f.length) { e.preventDefault(); f[(i + (e.key === 'ArrowDown' ? 1 : -1) + f.length) % f.length].focus(); } return; }
   if (e.key !== 'Tab' || !drawer) return;
   const f = [...drawer.querySelectorAll('button:not([disabled])')]; if (!f.length) return;
   const i = f.indexOf(document.activeElement);
@@ -133,15 +134,18 @@ function openDrawer() {
       el('div', { className: 'drBody' },
         item('plus', 'Yeni not defteri', () => app.createNb()),
         item('back', 'Tüm not defterleri', () => app.goHome()),
-        el('div', { className: 'dwSec', textContent: 'Not defterleri' }), ...nbs,
-        el('div', { className: 'dwSec', textContent: 'Görünüm' }),
+        el('div', { className: 'dwBr' }), el('div', { className: 'dwSec', textContent: 'Not defterleri' }), ...nbs,
+        el('div', { className: 'dwBr' }), el('div', { className: 'dwSec', textContent: 'Görünüm' }),
         item('sun', 'Açık mod', () => app.setTheme('light'), { on: th === 'light' }),
         item('moon', 'Koyu mod', () => app.setTheme('dark'), { on: th === 'dark' }),
         item('auto', 'Cihaz teması', () => app.setTheme('system'), { on: th === 'system' }),
-        el('div', { className: 'dwSec', textContent: 'Uygulama' }),
+        el('div', { className: 'dwBr' }), el('div', { className: 'dwSec', textContent: 'Uygulama' }),
         item('cpu', 'Model seç', () => app.openModel()),
         ...(wide() ? [item('win', 'Pencere düzeni', () => { setWm(!wm.on); }, { on: wm.on })] : []),
-        ...(standalone() ? [] : [item('install', 'Uygulama olarak kur', () => installSheet(true))]))));
+        ...(standalone() ? [] : [item('install', 'Uygulama olarak kur', () => installSheet(true))])),
+      el('div', { className: 'drFoot' },
+        el('p', { className: 'muted', textContent: 'Her şey bu cihazda çalışır; verilerin dışarı gitmez.' }),
+        el('div', { className: 'drLinks' }, el('button', { type: 'button', textContent: 'Çerez Politikası', onclick: () => { closeDrawer(); document.getElementById('cookieDlg')?.showModal(); } }), el('button', { type: 'button', textContent: 'Klavye ve oyun kolu', onclick: () => { closeDrawer(); window.defterHelp?.(); } })))));
   document.body.append(drawer); $('#menuBtn')?.setAttribute('aria-expanded', 'true');
   requestAnimationFrame(() => drawer?.classList.add('in'));
   document.addEventListener('keydown', drawerKey, true); setTimeout(() => drawer?.querySelector('.dwItem')?.focus(), 60);

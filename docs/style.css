@@ -309,3 +309,18 @@ dialog.fs::backdrop{background:var(--bg)}
 .top .ib svg{opacity:.8}
 .top .pillBtn{background:#282828;color:#fffdfc;border-color:transparent}.top .pillBtn:hover{background:#333}
 .top .nbTitle{color:#fffdfc}.top .nbTitle:hover,.top .nbTitle:focus{background:#282828;border-color:rgba(255,255,255,.08)}
+
+/* ---- Plus UI çekmece ölçüleri (Blogger XML: .mnMen / .mnMn / .mnMob) ---- */
+.drawer{width:min(260px,86vw)}
+.drBody{padding:20px 15px 8px}
+.dwItem{padding:10px 5px;border-radius:8px;gap:12px;font-size:14.5px;background:none!important;transition:color .15s}
+.dwItem:hover,.dwItem:focus-visible{color:var(--ac)}.dwItem:focus-visible{outline:2px solid var(--ac);outline-offset:-2px}
+.dwItem .mi svg{width:18px;height:18px;opacity:.8}.dwItem.on{font-weight:700}
+.dwBr{border-bottom:1px solid var(--line);margin:12px 5px}
+.dwSec{margin:10px 5px 2px;font-size:13px;font-weight:400;letter-spacing:0;text-transform:none;opacity:.7}
+.drFoot{flex:none;position:sticky;bottom:0;background:var(--bg);border-top:1px solid var(--line);padding:15px 20px calc(18px + env(safe-area-inset-bottom,0px));text-align:center}
+.drFoot p{margin:0 0 6px;font-size:12px}
+.drLinks{display:flex;justify-content:center;flex-wrap:wrap;gap:2px 14px;font-size:12.5px}
+.drLinks button{background:none;border:0;color:var(--tx);opacity:.75;cursor:pointer;padding:3px 2px;font:inherit}.drLinks button:hover{text-decoration:underline;opacity:1}
+.menu button:hover,.menu button:focus-visible{background:none;color:var(--ac)}
+.menu button{border-radius:8px}
