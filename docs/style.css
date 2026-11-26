@@ -477,3 +477,37 @@ dialog.spot::backdrop{background:transparent}
 .spEmpty{padding:18px 12px;text-align:center;font-size:13px;color:var(--mu)}
 dialog.spot .fsBar{background:var(--bg)}
 @media (prefers-reduced-motion:reduce){dialog.spot[open]{animation:none}}
+
+/* ---- Plus UI: hızlı menü (.qeF), bildirim şeridi (.ntf), çipler, mobil menüde yalnız simge ---- */
+.qeF{position:fixed;bottom:24px;inset-inline-end:24px;z-index:34;animation:fsIn .3s both}
+.qeF svg{width:18px;height:18px;display:block;stroke-width:1.75;transition:transform .2s ease}
+.qeT,.qeL>*{display:flex;align-items:center;justify-content:center;width:36px;height:36px;background:var(--p);color:var(--tx);border:1px solid var(--line);border-radius:10px;box-shadow:0 4px 12px rgba(0,0,0,.25);cursor:pointer;padding:0}
+:root:not([data-theme="light"]) .qeT,:root:not([data-theme="light"]) .qeL>*{background:#252526;border-color:transparent}
+.qeT span{display:grid;place-items:center}.qeT:hover,.qeL>*:hover,.qeT:focus-visible,.qeL>*:focus-visible{border-color:var(--ac);color:var(--ac);outline:0}
+.qeL>*{position:absolute;bottom:2px;inset-inline-end:2px;width:32px;height:32px;visibility:hidden;opacity:0;transition:inset .25s,bottom .25s,visibility .25s,opacity .25s;z-index:-1}
+.qeL>*::before{content:attr(title);position:absolute;inset-inline-end:38px;padding:3px 8px;background:var(--p);color:var(--tx);font-size:12.5px;border-radius:8px;border:1px solid var(--line);white-space:nowrap;visibility:hidden;opacity:0;transition:opacity .15s;pointer-events:none}
+.qeL>*:hover::before,.qeL>*:focus-visible::before{visibility:visible;opacity:1}
+.qeI:checked~.qeL>*{visibility:visible;opacity:1}
+.qeI:checked~.qeT .g1,.qeI:not(:checked)~.qeT .g2{display:none}.qeI:checked~.qeT svg{transform:rotate(360deg)}
+.fCls{position:fixed;inset:-50%;z-index:-5;background:rgba(0,0,0,.38);-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px);visibility:hidden;opacity:0;pointer-events:none;transition:opacity .2s,visibility .2s}
+.qeI:checked~.fCls{visibility:visible;opacity:1;pointer-events:auto}
+.qeF:has(.qeI:checked){z-index:60}
+.qeI:checked~.qeL>:nth-child(1){bottom:42px}.qeI:checked~.qeL>:nth-child(2){inset-inline-end:42px}.qeI:checked~.qeL>:nth-child(3){bottom:42px;inset-inline-end:42px}
+.qeI:checked~.qeL>:nth-child(4){bottom:80px}.qeI:checked~.qeL>:nth-child(5){inset-inline-end:80px}.qeI:checked~.qeL>:nth-child(6){bottom:80px;inset-inline-end:42px}
+.qeI:checked~.qeL>:nth-child(7){bottom:42px;inset-inline-end:80px}.qeI:checked~.qeL>:nth-child(8){bottom:80px;inset-inline-end:80px}.qeI:checked~.qeL>:nth-child(9){bottom:118px}
+.qeI:checked~.qeL>:nth-child(10){inset-inline-end:118px}.qeI:checked~.qeL>:nth-child(11){bottom:118px;inset-inline-end:42px}.qeI:checked~.qeL>:nth-child(12){bottom:42px;inset-inline-end:118px}
+.qeI:checked~.qeL>:nth-child(13){bottom:118px;inset-inline-end:80px}.qeI:checked~.qeL>:nth-child(14){bottom:80px;inset-inline-end:118px}.qeI:checked~.qeL>:nth-child(15){bottom:118px;inset-inline-end:118px}
+@media (max-width:900px){.qeF{bottom:calc(86px + env(safe-area-inset-bottom,0px));inset-inline-end:70px}body:has(#cols[data-tab=chat]:not([hidden])) .qeF{bottom:calc(176px + env(safe-area-inset-bottom,0px))}.mobM.isHome .mobB span{display:none}.mobM.isHome .mobB{min-width:52px}}
+.ntfBar{position:relative;display:flex;align-items:center;gap:10px;padding:8px;margin:0 0 14px;border-radius:16px;background:rgba(30,30,30,.92);border:1px solid rgba(255,255,255,.08);box-shadow:0 8px 24px rgba(0,0,0,.25)}
+:root[data-theme="light"] .ntfBar{background:#fff;border-color:rgba(0,0,0,.08)}
+.ntfX{flex:none;width:36px;height:36px;display:grid;place-items:center;border:0;border-radius:10px;background:var(--btn);color:var(--tx);cursor:pointer;padding:0}.ntfX:hover{color:var(--ac)}.ntfX svg{width:17px;height:17px}
+.ntfS{position:relative;flex:1;height:36px;min-width:0}
+.ntfSl{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;gap:14px;opacity:0;transform:translateX(-14px);pointer-events:none;transition:all .35s cubic-bezier(.16,1,.3,1)}
+.ntfSl.on{opacity:1;transform:none;pointer-events:auto}
+.ntfSl a{color:var(--tx);text-decoration:none;font-weight:600;font-size:14px;letter-spacing:.28em;text-transform:uppercase;white-space:nowrap}.ntfSl a:hover,.ntfSl a:focus-visible{color:var(--ac)}.ntfAmp{opacity:.6;letter-spacing:0}
+.ntfDots{flex:none;display:flex;align-items:center;gap:6px;padding-right:8px}
+.ntfDots button{width:14px;height:6px;border:0;border-radius:6px;background:rgba(127,127,127,.4);padding:0;cursor:pointer;transition:width .25s,background .25s}.ntfDots button.on{width:28px;background:var(--tx);opacity:.85}
+.chipsRow{display:flex;flex-wrap:wrap;gap:10px;margin:0 0 14px}
+.chipsRow span{display:inline-flex;align-items:center;gap:10px;padding:12px 18px;border-radius:var(--rt,14px);background:var(--p);border:1px solid var(--line);font-size:14px}.chipsRow svg{width:20px;height:20px;opacity:.85}.chipsRow b{font-weight:500}
+@media (max-width:900px){#themeBtn{display:none}body:has(#cols:not([hidden])) #themeBtn{display:none}}
+@media (prefers-reduced-motion:reduce){.qeL>*,.ntfSl,.fCls{transition:none}}

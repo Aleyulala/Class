@@ -216,7 +216,7 @@ function openDrawer() {
 const MI = {
   home: SVG('<path d="M9 2.8 3.6 7C2.7 7.7 2 9.2 2 10.4v7.4C2 20.1 3.9 22 6.2 22h11.6c2.3 0 4.2-1.9 4.2-4.2v-7.3c0-1.2-.8-2.8-1.8-3.5l-6.2-4.3c-1.4-1-3.7-1-5 .1z"/><path d="M12 17.5v-3"/>'),
   search: SVG('<circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/>'),
-  menu: SVG('<path d="M4 6h16M4 12h16M4 18h16"/>'),
+  menu: SVG('<circle cx="7.5" cy="7.5" r="3.5"/><circle cx="16.5" cy="7.5" r="3.5"/><circle cx="7.5" cy="16.5" r="3.5"/><circle cx="16.5" cy="16.5" r="3.5"/>'),
   top: SVG('<path d="M12 19V5M5 12l7-7 7 7"/>'),
   src: SVG('<path d="M5 4h11l3 3v13H5z"/><path d="M8 11h8M8 15h5"/>'),
   chat: SVG('<path d="M21 12a8 8 0 0 1-11.6 7.1L4 20l1-4.6A8 8 0 1 1 21 12z"/>'),
@@ -245,6 +245,7 @@ function buildMobileMenu() {
        { k: 'mode', i: isDark() ? 'sun' : 'moon', t: isDark() ? 'Açık' : 'Koyu', run: () => { A().setTheme(isDark() ? 'light' : 'dark'); render(); } },
        { k: 'top', i: 'top', t: 'Yukarı', run: () => { $('#home').scrollTo?.({ top: 0, behavior: 'smooth' }); } }];
   function render() {
+    bar.classList.toggle('isHome', view() === 'home');
     const ul = bar.firstChild; ul.replaceChildren();
     for (const d of defs()) {
       const b = el('button', { type: 'button', className: 'mobB' + (d.on ? ' on' : ''), 'aria-label': d.t, 'aria-current': d.on ? 'page' : null, innerHTML: MI[d.i] }, el('span', { textContent: d.t }));
@@ -328,6 +329,7 @@ function boot() {
   new MutationObserver(() => renderRail()).observe(cols(), { attributes: true, attributeFilter: ['hidden'] });
   if (wm.on) setWm(true); else cols().dataset.wm = 'off';
   window.defterShell = {
+    toggleWm: () => setWm(!wm.on), install: () => installSheet(true), standalone, wide,
     menuItems: () => [
       '-',
       ...(wide() ? [{ icon: 'win', label: 'Pencere düzeni', sub: wm.on ? 'Açık: sürükle, boyutlandır' : 'Panelleri serbest pencere yap', check: wm.on, run: () => setWm(!wm.on) }] : []),
