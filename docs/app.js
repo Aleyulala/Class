@@ -36,6 +36,7 @@ function applyTheme(t) { const r = document.documentElement; if (t === 'light' |
 const getTheme = () => { try { return localStorage.getItem('defter-theme') || 'dark'; } catch { return 'dark'; } };
 const setTheme = (t) => { try { localStorage.setItem('defter-theme', t); } catch {} applyTheme(t); };
 applyTheme(getTheme());
+try { if (localStorage.getItem('class-dir') === 'rtl') document.documentElement.dir = 'rtl'; } catch {}
 
 let openMenu = null;
 function closeMenu() { document.querySelector('.menuScrim')?.remove(); if (openMenu) { openMenu.el.remove(); openMenu.anchor.setAttribute('aria-expanded', 'false'); document.removeEventListener('pointerdown', openMenu.out, true); document.removeEventListener('keydown', openMenu.key, true); openMenu = null; } }

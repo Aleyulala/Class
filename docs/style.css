@@ -315,7 +315,7 @@ dialog.fs::backdrop{background:var(--bg)}
 .drBody{padding:20px 15px 8px}
 .dwList{list-style:none;margin:0;padding:0;display:flex;flex-direction:column}
 .dwItem{display:flex;align-items:center;gap:12px;width:100%;padding:10px 5px;border:0;border-radius:8px;background:none!important;color:var(--tx);font:inherit;font-size:14.5px;text-align:left;cursor:pointer;transition:color .15s;min-height:40px;box-sizing:border-box}
-.dwItem:hover,.dwItem:focus-visible,.dwGroup input:checked+.dwFolder{color:var(--ac)}.dwItem:focus-visible{outline:2px solid var(--ac);outline-offset:-2px}
+.dwItem:hover,.dwItem:focus-visible{color:var(--ac)}.dwItem:focus-visible{outline:2px solid var(--ac);outline-offset:-2px}
 .dwItem[disabled]{opacity:.5;cursor:default}.dwItem[disabled]:hover{color:var(--tx)}
 .dwItem .mi{display:inline-flex;width:22px;justify-content:center;color:var(--mu);margin:0 5px}.dwItem .mi svg{width:18px;height:18px;opacity:.8}.dwItem.on{font-weight:700}
 .dwItem .ml{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.dwItem .mc{color:var(--ac)}
@@ -511,3 +511,14 @@ dialog.spot .fsBar{background:var(--bg)}
 .chipsRow span{display:inline-flex;align-items:center;gap:10px;padding:12px 18px;border-radius:var(--rt,14px);background:var(--p);border:1px solid var(--line);font-size:14px}.chipsRow svg{width:20px;height:20px;opacity:.85}.chipsRow b{font-weight:500}
 @media (max-width:900px){#themeBtn{display:none}body:has(#cols:not([hidden])) #themeBtn{display:none}}
 @media (prefers-reduced-motion:reduce){.qeL>*,.ntfSl,.fCls{transition:none}}
+
+/* ---- Çekmece: Blogger ile aynı görünüm (rozetler soluk, kayan şeritler çerçevesiz) ---- */
+.dwBadge{color:var(--mu)!important;font-weight:400}
+.dwList>.dwGroup{margin-bottom:2px}
+.drFoot{padding:10px 15px calc(14px + env(safe-area-inset-bottom,0px));gap:4px;border-top:0}
+.plSl{border:0;background:transparent;border-radius:9px}
+.plLink{font-weight:700;font-size:13px}.plLink .plIc svg{width:18px;height:18px}
+.plNext{width:24px;height:24px}.plNext svg{width:15px;height:15px}
+#filterBtn.inRow{margin-inline-start:auto}
+.hRow{gap:10px}
+.dwItem{text-decoration:none}

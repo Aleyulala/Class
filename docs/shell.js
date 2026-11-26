@@ -117,7 +117,7 @@ function drawerKey(e) {
   const i = f.indexOf(document.activeElement);
   if (e.shiftKey && i <= 0) { e.preventDefault(); f[f.length - 1].focus(); } else if (!e.shiftKey && (i < 0 || i === f.length - 1)) { e.preventDefault(); f[0].focus(); }
 }
-const SVG = (p) => `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">${p}</svg>`;
+const SVG = (p) => `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">${p}</svg>`;
 const DI = {
   tree: SVG('<rect x="3" y="3" width="7" height="5" rx="1.5"/><rect x="14" y="16" width="7" height="5" rx="1.5"/><rect x="14" y="3" width="7" height="5" rx="1.5"/><path d="M6.5 8v8.5a1.5 1.5 0 0 0 1.5 1.5H14M6.5 12H14"/>'),
   flash: SVG('<path d="M13 2 4 14h7l-1 8 9-12h-7z"/>'),
@@ -134,13 +134,21 @@ const DI = {
   mx: SVG('<path d="M5 3H3v18h2M19 3h2v18h-2M8 8v8M8 10l4 3 4-3M16 8v8"/>'),
   vk: SVG('<rect x="3" y="3" width="18" height="18" rx="5"/><path d="M7 9c.5 3.5 2.3 6 5 6v-3.5c1.5.3 2.4 1.4 3 3.5h2.5c-.5-2-1.6-3.3-2.8-4 1.2-.7 2.2-2 2.5-3.5h-2.4c-.4 1.4-1.4 2.4-2.8 2.7V8H9.5"/>'),
   plus: SVG('<path d="M12 5v14M5 12h14"/>'),
+  swap: SVG('<circle cx="6" cy="6" r="2.2" fill="currentColor"/><path d="M5 12h14M15 8l4 4-4 4M5 18h14"/>'),
+  pen: SVG('<path d="M4 20h6M14 4l6 6-9.5 9.5H5v-5.5z"/><path d="M13 5l6 6"/>'),
+  users: SVG('<circle cx="9" cy="8" r="3.2"/><path d="M3 20c0-3.3 2.7-6 6-6s6 2.7 6 6"/><path d="M16 4.5a3 3 0 0 1 0 5.5M18 14.5c1.8.7 3 2.5 3 5.5"/>'),
+  sms: SVG('<path d="M21 11V9c0-4-2-6-6-6H9C5 3 3 5 3 9v5c0 4 2 6 6 6h2"/><path d="m8 9 3.4 2.6a2 2 0 0 0 2.4 0L17 9"/><path d="m14 21 2-.5 4.5-4.5a1.4 1.4 0 0 0-2-2L14 18.5z"/>'),
+  labs: SVG('<path d="M9 3h6M10 3v6.5L4.7 18a2 2 0 0 0 1.7 3h11.2a2 2 0 0 0 1.7-3L14 9.5V3"/><path d="M7.5 15h9"/>'),
+  foldercode: SVG('<path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><path d="m10 11-2 2 2 2M14 11l2 2-2 2"/>'),
+  speed: SVG('<circle cx="12" cy="12" r="9"/><circle cx="12" cy="14" r="2"/><path d="m13.4 12.6 3-3"/>'),
+  verifyf: '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l2.4 1.8 3-.2 1 2.8 2.5 1.7-.9 2.9.9 2.9-2.5 1.7-1 2.8-3-.2L12 22l-2.4-1.8-3 .2-1-2.8L3.1 15.9 4 13l-.9-2.9 2.5-1.7 1-2.8 3 .2z"/><path d="m8.6 12 2.3 2.3 4.5-4.6" fill="none" stroke="#1e1e1e" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>',
 };
 const ico = (k) => DI[k] || ic(k);
 const FKEY = 'defter-folders';
 function folder(id, icon, title, badge, items) {
-  const open = (lsGet(FKEY, { nb: true }))[id] === true;
+  const open = (lsGet(FKEY, {}))[id] !== false;
   const input = el('input', { type: 'checkbox', id: 'dwf-' + id, checked: open, hidden: true });
-  input.addEventListener('change', () => { const o = lsGet(FKEY, { nb: true }); o[id] = input.checked; lsSet(FKEY, o); });
+  input.addEventListener('change', () => { const o = lsGet(FKEY, {}); o[id] = input.checked; lsSet(FKEY, o); });
   const label = el('label', { htmlFor: 'dwf-' + id, role: 'button', tabIndex: 0, className: 'dwItem dwFolder', 'aria-label': title },
     el('span', { className: 'mi', innerHTML: ico(icon) }), el('span', { className: 'ml', textContent: title }), badge ? el('span', { className: 'dwBadge', textContent: badge }) : '');
   label.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); input.checked = !input.checked; input.dispatchEvent(new Event('change')); } });
@@ -166,47 +174,41 @@ function miniSlider(slides) {
   const t = setInterval(() => { if (!wrap.isConnected) clearInterval(t); else if (!paused && !matchMedia('(prefers-reduced-motion:reduce)').matches) go(); }, 4500);
   return wrap;
 }
+const link = (icon, label, href) => el('a', { className: 'dwItem', href, target: '_blank', rel: 'noopener noreferrer nofollow', onclick: () => closeDrawer() }, el('span', { className: 'mi', innerHTML: ico(icon) }), el('span', { className: 'ml', textContent: label }));
+/* Blogger şablonundaki sol çekmece (sec_Nav_Widgets_1 / items-mainMenu) ile aynı üç klasör ve dokuz bağlantı */
 function openDrawer() {
   if (drawer) { closeDrawer(); return; }
   const app = A(); if (!app) return; app.closeMenu();
-  const cur = app.current();
-  const recent = [...app.notebooks()].sort((a, b) => (b.updatedAt || 0) - (a.updatedAt || 0)).filter((n) => !cur || n.id !== cur.id)[0];
-  const th = app.getTheme();
+  const mirror = el('button', { type: 'button', className: 'dwItem', onclick: () => { const r = document.documentElement; const on = r.dir !== 'rtl'; r.dir = on ? 'rtl' : 'ltr'; try { localStorage.setItem('class-dir', on ? 'rtl' : 'ltr'); } catch {} closeDrawer(); } }, el('span', { className: 'mi', innerHTML: ico('swap') }), el('span', { className: 'ml', textContent: 'Ayna' }));
   drawer = el('div', { className: 'drWrap' },
     el('div', { className: 'drScrim', onclick: closeDrawer }),
     el('aside', { className: 'drawer', role: 'dialog', 'aria-modal': 'true', 'aria-label': 'Menü' },
-      el('div', { className: 'drHead' }, el('span', { className: 'wm', textContent: 'Class' }), el('button', { className: 'ib', type: 'button', 'aria-label': 'Kapat', innerHTML: ic('close'), onclick: closeDrawer })),
       el('div', { className: 'drBody' },
         el('ul', { className: 'dwList' },
-          item('search', 'Ara  (Ctrl+K)', () => window.defterSearch?.open()),
-          el('div', { className: 'dwBr' }),
-          folder('nb', 'tree', 'Not defterleri', 'Yeni!', [
-            item('plus', 'Yeni not defteri', () => app.createNb()),
-            item('back', 'Tüm not defterleri', () => app.goHome()),
-            recent ? item('note', recent.title, () => app.openNb(recent.id)) : item('note', 'Henüz başka defter yok', () => {}, { disabled: true })]),
-          el('div', { className: 'dwBr' }),
-          folder('tools', 'flash', 'Araçlar', 'Canlı', [
-            item('cpu', 'Model seç', () => app.openModel()),
-            wide() ? item('win', 'Pencere düzeni', () => setWm(!wm.on), { on: wm.on }) : item('gamepad', 'Klavye ve oyun kolu', () => window.defterHelp?.()),
-            standalone() ? item('gamepad', 'Klavye ve oyun kolu', () => window.defterHelp?.()) : item('install', 'Uygulama olarak kur', () => installSheet(true))]),
-          el('div', { className: 'dwBr' }),
-          folder('look', 'tools', 'Görünüm', '', [
-            item('sun', 'Açık mod', () => app.setTheme('light'), { on: th === 'light' }),
-            item('moon', 'Koyu mod', () => app.setTheme('dark'), { on: th === 'dark' }),
-            item('auto', 'Cihaz teması', () => app.setTheme('system'), { on: th === 'system' })]))),
+          folder('apps', 'tree', 'Uygulamalar', 'Yeni!', [
+            link('eye', 'NESCİONE', 'https://aleyulala.github.io/saved/'),
+            link('pen', 'NotebookLM', 'https://notebooklm.google.com/'),
+            link('users', 'Formlar', 'https://docs.google.com/forms/u/0/')]),
+          folder('comm', 'flash', 'Topluluk', 'Canlı', [
+            link('sms', 'Chat', 'https://script.google.com/macros/s/AKfycby2BbaRplWrOLZDiTba4Wnn9LAy6m2IuIBDmhFS6aSYr-fagSGVKbw_PYb9aajK39jZ/exec'),
+            link('users', 'Tartışmalar', 'https://github.com/Aleyulala/saved/discussions/?pli=1'),
+            link('labs', 'Labs', 'https://labs.google.com/')]),
+          folder('tools', 'foldercode', 'Araçlar', '', [
+            mirror,
+            link('search', 'SEO', 'https://search.google.com/test/rich-results'),
+            link('speed', 'Hız', 'https://pagespeed.web.dev/analysis')]))),
       el('div', { className: 'drFoot' },
         miniSlider([
+          { icon: 'verifyf', label: 'Gizlilik', href: 'https://aleyulala.github.io/saved/?view=privacy' },
           { icon: 'verify', label: 'Çerez Politikası', run: () => { closeDrawer(); document.getElementById('cookieDlg')?.showModal(); } },
-          { icon: 'gamepad', label: 'Klavye ve oyun kolu', run: () => { closeDrawer(); window.defterHelp?.(); } },
-          { icon: 'note', label: 'Gizlilik: veri cihazdan çıkmaz', run: () => { closeDrawer(); document.getElementById('cookieDlg')?.showModal(); } }]),
+          { icon: 'sms', label: 'Yorumlar', href: 'https://aleyulala.blogspot.com/p/muhabbet.html' }]),
         miniSlider([
-          { icon: 'github', label: 'GitHub', href: 'https://github.com/Aleyulala/Class' },
-          { icon: 'eye', label: 'Saved', href: 'https://aleyulala.github.io/saved/' },
-          { icon: 'insta', label: 'Instagram', href: 'https://www.instagram.com/aleyul.ala/' },
           { icon: 'tg', label: 'Telegram', href: 'https://t.me/aleyyulala' },
+          { icon: 'insta', label: 'Instagram', href: 'https://www.instagram.com/aleyul.ala/' },
           { icon: 'tt', label: 'TikTok', href: 'https://www.tiktok.com/@Aleyyu.Ala' },
           { icon: 'mx', label: 'Matrix', href: 'https://matrix.to/#/#negronn-show:matrix.org' },
-          { icon: 'vk', label: 'VKontakte', href: 'https://vk.com/negronn' }]))));
+          { icon: 'vk', label: 'VKontakte', href: 'https://vk.com/negronn' },
+          { icon: 'github', label: 'GitHub', href: 'https://github.com/Aleyulala/Class' }]))));
   document.body.append(drawer); $('#menuBtn')?.setAttribute('aria-expanded', 'true');
   requestAnimationFrame(() => drawer?.classList.add('in'));
   document.addEventListener('keydown', drawerKey, true); setTimeout(() => drawer?.querySelector('.dwItem')?.focus(), 60);
