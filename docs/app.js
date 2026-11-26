@@ -1,4 +1,4 @@
-// Defter — tarayıcıda çalışan, kaynaklarla sohbet eden yerel yapay zekâ arayüzü.
+// Class — tarayıcıda çalışan, kaynaklarla sohbet eden yerel yapay zekâ arayüzü.
 // Model: wllama (llama.cpp'nin WASM/WebGPU sürümü). Hiçbir veri sunucuya gönderilmez.
 
 import { TYPES, parseJson, normalize, demo } from './rich.js';
@@ -359,8 +359,8 @@ $('#composer').onsubmit = (e) => { e.preventDefault(); const t = q.value.trim();
 $('#stop').onclick = () => abortCtl?.abort();
 $('#clearChat').onclick = async () => { if (busy) return; chat = []; await DB.set('chat:' + nb.id, []); renderChat(); };
 function download(name, text) { const a = el('a', { href: URL.createObjectURL(new Blob([text], { type: 'text/markdown' })), download: name }); document.body.append(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(a.href), 2000); }
-$('#expChat').onclick = () => download('defter-sohbet.md', '# Defter sohbeti\n\n' + chat.map((m) => (m.role === 'user' ? `**Sen:** ${m.text}` : `**Defter:**\n\n${m.text}`)).join('\n\n---\n\n') + '\n');
-$('#expNotes').onclick = () => download('defter-notlar.md', '# Defter notları\n\n' + notes.slice().sort((a, b) => a.addedAt - b.addedAt).map((n) => `## ${n.title}\n\n${n.text}`).join('\n\n---\n\n') + '\n');
+$('#expChat').onclick = () => download('defter-sohbet.md', '# Class sohbeti\n\n' + chat.map((m) => (m.role === 'user' ? `**Sen:** ${m.text}` : `**Class:**\n\n${m.text}`)).join('\n\n---\n\n') + '\n');
+$('#expNotes').onclick = () => download('defter-notlar.md', '# Class notları\n\n' + notes.slice().sort((a, b) => a.addedAt - b.addedAt).map((n) => `## ${n.title}\n\n${n.text}`).join('\n\n---\n\n') + '\n');
 function setTab(t) { $('#cols').dataset.tab = t; document.querySelectorAll('#tabs button').forEach((b) => b.classList.toggle('on', b.dataset.tab === t)); }
 document.querySelectorAll('#tabs button').forEach((b) => (b.onclick = () => setTab(b.dataset.tab)));
 Object.entries(TYPES).forEach(([k, T]) => { const b = el('button', { className: 'btn tile' }, el('span', { className: 'tIc', textContent: T.emoji }), el('b', { textContent: T.label }), el('small', { textContent: T.sub })); b.onclick = () => makeRich(k); $('#studioBtns').append(b); });
@@ -411,7 +411,7 @@ async function createNb() {
 }
 async function renameNb(n) {
   const t = prompt('Not defteri başlığı', n.title); if (t === null) return;
-  n.title = t.trim() || 'Adsız not defteri'; await DB.put('notebooks', n); if (nb && nb.id === n.id) { $('#nbTitle').value = n.title; document.title = `${n.title} — Defter`; } if (!nb) renderHome();
+  n.title = t.trim() || 'Adsız not defteri'; await DB.put('notebooks', n); if (nb && nb.id === n.id) { $('#nbTitle').value = n.title; document.title = `${n.title} — Class`; } if (!nb) renderHome();
 }
 async function deleteNb(n) {
   if (!confirm(`"${n.title}" not defteri, kaynakları ve notlarıyla birlikte silinsin mi?`)) return;
@@ -431,20 +431,20 @@ async function openNb(id) {
   const n = notebooks.find((x) => x.id === id); if (!n) return goHome();
   if (busy) return; nb = n; closeMenu();
   [sources, notes, outputs, chat] = await Promise.all([DB.all('sources').then((a) => a.filter((x) => x.nbId === id).sort((a, b) => a.addedAt - b.addedAt)), DB.all('notes').then((a) => a.filter((x) => x.nbId === id)), DB.all('outputs').then((a) => a.filter((x) => x.nbId === id)), DB.get('chat:' + id).then((c) => c || [])]);
-  setView('nb'); $('#nbTitle').value = n.title; document.title = `${n.title} — Defter`;
+  setView('nb'); $('#nbTitle').value = n.title; document.title = `${n.title} — Class`;
   if (location.hash !== '#nb-' + id) history.pushState(null, '', '#nb-' + id);
   setTab('chat'); renderSources(); renderNotes(); renderOutputs(); renderChat();
 }
 function goHome() {
   if (busy) return; nb = null; sources = []; notes = []; outputs = []; chat = []; closeMenu();
-  setView('home'); document.title = 'Defter — Tarayıcıda Yerel Yapay Zekâ';
+  setView('home'); document.title = 'Class';
   if (location.hash) history.pushState(null, '', location.pathname + location.search);
   renderHome();
 }
 $('#backBtn').onclick = goHome;
 $('#homeLink').onclick = (e) => { e.preventDefault(); goHome(); };
 $('#newPill').onclick = createNb; $('#newNbBtn').onclick = createNb;
-$('#nbTitle').onchange = async (e) => { if (!nb) return; nb.title = e.target.value.trim() || 'Adsız not defteri'; e.target.value = nb.title; document.title = `${nb.title} — Defter`; await touchNb(); };
+$('#nbTitle').onchange = async (e) => { if (!nb) return; nb.title = e.target.value.trim() || 'Adsız not defteri'; e.target.value = nb.title; document.title = `${nb.title} — Class`; await touchNb(); };
 $('#nbTitle').onkeydown = (e) => { if (e.key === 'Enter') e.target.blur(); };
 window.addEventListener('popstate', () => { const m = location.hash.match(/^#nb-(.+)$/); if (m) openNb(m[1]); else { busy = false; goHome(); } });
 

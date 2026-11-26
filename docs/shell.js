@@ -1,4 +1,4 @@
-/* Defter kabuğu: sol çekmece, pencere düzeni (Krita tarzı), uygulama kurulumu */
+/* Class kabuğu: sol çekmece, pencere düzeni (Krita tarzı), uygulama kurulumu */
 const $ = (s, r = document) => r.querySelector(s);
 const el = (t, p = {}, ...k) => { const e = Object.assign(document.createElement(t), p); e.append(...k); return e; };
 const lsGet = (k, d) => { try { return JSON.parse(localStorage.getItem(k)) ?? d; } catch { return d; } };
@@ -24,7 +24,7 @@ function installSheet(manual) {
     el('div', { className: 'sheetScrim', onclick: no }),
     el('div', { className: 'sheet', role: 'dialog', 'aria-label': 'Uygulamayı kur' },
       el('div', { className: 'sheetIcon' }, el('img', { src: 'icon.svg', alt: '', width: 40, height: 40 })),
-      el('h3', { textContent: 'Defter’i web uygulaması olarak kurmak ister misiniz?' }),
+      el('h3', { textContent: 'Class’ı web uygulaması olarak kurmak ister misiniz?' }),
       el('p', { className: 'muted', textContent: how }),
       el('div', { className: 'row end' },
         el('button', { className: 'btn', type: 'button', textContent: manual ? 'Kapat' : 'Şimdi değil', onclick: no }),
@@ -129,7 +129,7 @@ function openDrawer() {
   drawer = el('div', { className: 'drWrap' },
     el('div', { className: 'drScrim', onclick: closeDrawer }),
     el('aside', { className: 'drawer', role: 'dialog', 'aria-modal': 'true', 'aria-label': 'Menü' },
-      el('div', { className: 'drHead' }, el('span', { className: 'logo', textContent: 'D' }), el('b', { textContent: 'Defter' }), el('button', { className: 'ib', type: 'button', 'aria-label': 'Kapat', innerHTML: ic('close'), onclick: closeDrawer })),
+      el('div', { className: 'drHead' }, el('span', { className: 'wm', textContent: 'CLASS' }), el('button', { className: 'ib', type: 'button', 'aria-label': 'Kapat', innerHTML: ic('close'), onclick: closeDrawer })),
       el('div', { className: 'drBody' },
         item('plus', 'Yeni not defteri', () => app.createNb()),
         item('back', 'Tüm not defterleri', () => app.goHome()),

@@ -295,3 +295,11 @@ dialog.fs::backdrop{background:var(--bg)}
 #cookieDlg .ckOk{display:inline;margin-left:6px;padding:0;background:none;border:0;font:inherit;font-weight:700;color:var(--ac);cursor:pointer;border-radius:4px}
 #cookieDlg .ckOk:hover{text-decoration:underline}
 .dlg .chk input{width:auto;flex:none}.dlg .chk{flex-wrap:nowrap}
+
+/* ---- Saved'deki gibi yazı logosu: büyük harf, geniş harf aralığı, sağında katman simgesi ---- */
+.logoLink{display:inline-flex;align-items:center;text-decoration:none;margin-left:2px;color:var(--tx);user-select:none}
+.wm{font:500 16px/1 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;letter-spacing:.04em;text-transform:uppercase;color:var(--tx);transition:color .3s}
+.wmI{display:inline-flex;margin-left:8px;color:var(--tx);transition:color .3s}.wmI svg{width:14px;height:14px}
+.logoLink:hover .wm,.logoLink:hover .wmI{color:var(--ac)}
+.drHead .wm{flex:1}
+@media (max-width:420px){.wm{font-size:15px}}
