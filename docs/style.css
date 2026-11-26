@@ -155,3 +155,45 @@ body.in-nb .logoLink{display:none}
  .composer textarea{font-size:15.5px;line-height:1.35;height:24px}.composer textarea::placeholder{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}}
 @media (max-width:900px){.nbCard{border:0;border-bottom:1px solid var(--line)}}
 .pillAct{white-space:nowrap;font-size:14px;padding:12px 8px}
+
+/* ================= Plus UI köşe / düğme / fayans dili =================
+   Köşeler: düğme 10, fayans/kart 14, açılır pencere 16. Düğmeler yuvarlak hap değil, yumuşak köşeli kare.
+   Üstüne gelince -2px yükselme ve gölge (Plus UI sayfalama düğmeleriyle aynı). */
+:root{--rb:10px;--rt:14px;--rp:16px;--btn:#282828;--btnh:#333333}
+:root:not([data-theme="dark"]){--btn:#eceef2;--btnh:#e1e4ea}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--btn:#282828;--btnh:#333333}}
+:root[data-theme="dark"]{--btn:#282828;--btnh:#333333}
+.ib{border-radius:var(--rb);background:var(--btn);width:40px;height:40px}
+.ib:hover{background:var(--btnh);transform:translateY(-2px);box-shadow:0 4px 14px rgba(0,0,0,.28)}
+.ib.sm{background:transparent}.ib.sm:hover{background:var(--btn);box-shadow:none;transform:none}
+.top .ib{background:var(--btn)}
+.pillBtn,.newPill,.pillAct,.btn,.menu button,.chk,.sendBtn,.srcBadge{border-radius:var(--rb)}
+.pillBtn{background:var(--btn);padding:10px 14px}.pillBtn:hover{background:var(--btnh);transform:translateY(-2px);box-shadow:0 4px 14px rgba(0,0,0,.28)}
+.newPill{border-radius:12px;padding:13px 22px}
+.pillAct{background:var(--btn);border:0;border-radius:var(--rb);padding:13px 10px}.pillAct:hover{background:var(--btnh);transform:translateY(-2px);box-shadow:0 4px 14px rgba(0,0,0,.28)}
+.btn{background:var(--btn)}.btn:hover{background:var(--btnh);box-shadow:0 4px 14px rgba(0,0,0,.25)}.btn.primary{background:var(--ac)}.btn.primary:hover{background:var(--ac)}
+.sendBtn{width:42px;height:42px;border-radius:var(--rb)}
+.tabs{border-radius:12px}.tabs button{border-radius:var(--rb)}
+@media (max-width:900px){.tabs:not([hidden]){border-radius:12px;background:var(--p)}.tabs button.on{background:var(--btn);box-shadow:0 2px 8px rgba(0,0,0,.2)}}
+.composer{border-radius:var(--rp);background:var(--btn)}
+.searchBar{border-radius:12px;background:var(--btn)}
+.menu{border-radius:var(--rp)}.menu button:hover,.menu button:focus-visible{background:var(--btnh)}
+.panel{border-radius:var(--rp)}
+/* fayans: not defteri kartı, stüdyo düğmeleri, kaynak ve not satırları */
+.grid .btn{border-radius:var(--rt);background:var(--btn);padding:12px}.grid .btn:hover{background:var(--btnh);color:var(--tx)}
+.list.notes li,.preset{border-radius:var(--rt)}
+.nbCard{border-radius:0}
+@media (max-width:900px){
+  .nbGrid{gap:0}
+  .nbCard{border:0;border-bottom:1px solid var(--line)}
+}
+@media (min-width:901px){.nbCard,.nbNew{border-radius:var(--rt)}}
+.nbIco{border-radius:12px}
+.msg.me{border-radius:var(--rt);background:var(--btn)}
+.cite-chip{border-radius:8px;background:var(--btn)}
+.drop,.dropIco{border-radius:var(--rt)}.dropIco{border-radius:12px}
+dialog{border-radius:var(--rp)}
+.logo{border-radius:10px}
+.nbPlus{border-radius:12px;background:var(--btn)}
+.ib.gear .dot{border-color:var(--btn)}
+@media (min-width:901px){.nbT{flex:0 0 auto;margin-top:auto}}
