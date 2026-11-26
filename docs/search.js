@@ -3,7 +3,7 @@
 const $ = (s, r = document) => r.querySelector(s);
 const el = (t, p = {}, ...k) => { const e = document.createElement(t); for (const [n, v] of Object.entries(p)) { if (v == null) continue; if (n.includes('-')) e.setAttribute(n, v); else e[n] = v; } e.append(...k); return e; };
 const A = () => window.defterApp;
-const svg = (p) => `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">${p}</svg>`;
+const svg = (p) => `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">${p}</svg>`;
 const I = {
   search: svg('<circle cx="11" cy="11" r="8"/><path d="m22 22-2-2"/>'),
   x: svg('<path d="M18 6 6 18M6 6l12 12"/>'),
