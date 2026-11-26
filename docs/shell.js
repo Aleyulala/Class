@@ -129,7 +129,7 @@ function openDrawer() {
   drawer = el('div', { className: 'drWrap' },
     el('div', { className: 'drScrim', onclick: closeDrawer }),
     el('aside', { className: 'drawer', role: 'dialog', 'aria-modal': 'true', 'aria-label': 'Menü' },
-      el('div', { className: 'drHead' }, el('span', { className: 'wm', textContent: 'CLASS' }), el('button', { className: 'ib', type: 'button', 'aria-label': 'Kapat', innerHTML: ic('close'), onclick: closeDrawer })),
+      el('div', { className: 'drHead' }, el('span', { className: 'wm', textContent: 'Class' }), el('button', { className: 'ib', type: 'button', 'aria-label': 'Kapat', innerHTML: ic('close'), onclick: closeDrawer })),
       el('div', { className: 'drBody' },
         item('plus', 'Yeni not defteri', () => app.createNb()),
         item('back', 'Tüm not defterleri', () => app.goHome()),

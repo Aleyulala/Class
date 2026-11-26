@@ -296,10 +296,16 @@ dialog.fs::backdrop{background:var(--bg)}
 #cookieDlg .ckOk:hover{text-decoration:underline}
 .dlg .chk input{width:auto;flex:none}.dlg .chk{flex-wrap:nowrap}
 
-/* ---- Saved'deki gibi yazı logosu: büyük harf, geniş harf aralığı, sağında katman simgesi ---- */
-.logoLink{display:inline-flex;align-items:center;text-decoration:none;margin-left:2px;color:var(--tx);user-select:none}
-.wm{font:500 16px/1 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;letter-spacing:.04em;text-transform:uppercase;color:var(--tx);transition:color .3s}
-.wmI{display:inline-flex;margin-left:8px;color:var(--tx);transition:color .3s}.wmI svg{width:14px;height:14px}
-.logoLink:hover .wm,.logoLink:hover .wmI{color:var(--ac)}
-.drHead .wm{flex:1}
-@media (max-width:420px){.wm{font-size:15px}}
+/* ---- Blogger şablonundaki (XML) başlık: .headT + .head-brand-mark ---- */
+.top{background:#1e1e1e!important;border-bottom:1px solid #252526!important;color:#fffdfc;min-height:55px}
+@media (min-width:901px){.top{min-height:60px}}
+.logoLink{display:inline-flex;align-items:center;vertical-align:middle;text-decoration:none;color:#fffdfc;margin-inline-start:5px;user-select:none}
+.wm{font:400 16px/1 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;color:#fffdfc;white-space:nowrap}
+.wmI{display:inline-flex;align-items:center;justify-content:center;margin-inline-start:10px;color:#fffdfc;flex-shrink:0;line-height:1;transition:all .25s cubic-bezier(.16,1,.3,1)}
+.wmI svg{width:14px;height:14px;stroke:currentColor;fill:none;stroke-width:2.2;display:block;opacity:.8}
+.logoLink:hover .wmI{transform:scale(1.08);color:var(--linkC,#60cdff)}
+.drHead .wm{flex:1;color:var(--tx)}
+.top .ib{background:transparent!important;color:#fffdfc}.top .ib:hover,.top .ib:focus-visible{background:rgba(255,255,255,.08)!important;color:var(--linkC,#60cdff)}
+.top .ib svg{opacity:.8}
+.top .pillBtn{background:#282828;color:#fffdfc;border-color:transparent}.top .pillBtn:hover{background:#333}
+.top .nbTitle{color:#fffdfc}.top .nbTitle:hover,.top .nbTitle:focus{background:#282828;border-color:rgba(255,255,255,.08)}
