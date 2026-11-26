@@ -181,7 +181,7 @@ function buildMobileMenu() {
     ? [{ k: 'home', i: 'home', t: 'Ana sayfa', run: () => A().goHome() },
        { k: 'sources', i: 'src', t: 'Kaynaklar', on: tab() === 'sources' || sheet() === 'sources', run: () => press('sources') },
        { k: 'menu', i: 'menu', t: 'Menü', run: openDrawer },
-       { k: 'studio', i: 'studio', t: 'Stüdyo', on: tab() === 'studio' || sheet() === 'studio', run: () => press('studio') },
+       { k: 'studio', i: 'studio', t: 'Stüdyo', on: tab() === 'studio' || sheet() === 'studio' || document.body.dataset.hs === 'studio', run: () => press('studio') },
        { k: 'chat', i: 'chat', t: 'Sohbet', on: tab() === 'chat' && !sheet(), run: () => press('chat') }]
     : [{ k: 'home', i: 'home', t: 'Ana sayfa', on: true, run: () => scrollTo({ top: 0 }) || $('#home').scrollTo?.({ top: 0, behavior: 'smooth' }) },
        { k: 'search', i: 'search', t: 'Ara', run: () => $('#searchBtn').click() },
@@ -198,6 +198,7 @@ function buildMobileMenu() {
   }
   render();
   new MutationObserver(render).observe(cols(), { attributes: true, attributeFilter: ['hidden', 'data-tab', 'data-sheet'] });
+  new MutationObserver(render).observe(document.body, { attributes: true, attributeFilter: ['data-hs'] });
   new MutationObserver(render).observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
   matchMedia('(prefers-color-scheme:dark)').addEventListener?.('change', render);
 }

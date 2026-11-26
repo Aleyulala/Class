@@ -1107,3 +1107,18 @@ html.cpDrag iframe{pointer-events:none!important}html.cpDrag,html.cpDrag *{user-
 html.cpOpen{overflow:hidden}
 .hbP>.hbOff{flex-direction:row;text-align:left}
 #panelStudio .stEmpty span{display:grid;place-items:center;width:44px;height:44px;border-radius:14px;color:var(--ac);background:color-mix(in srgb,var(--ac) 14%,transparent);opacity:1}
+/* telefonda sohbet süzgeçleri mesajların yanında değil, üstünde yatay bir sıra */
+@media (max-width:900px){
+ .chBody{flex-direction:column;gap:6px}
+ .chRail{width:auto;flex-direction:row;align-items:center;gap:6px;padding:0 0 2px;overflow-x:auto;scrollbar-width:none}
+ .chRail::-webkit-scrollbar{display:none}
+ .chRail button{width:auto;height:34px;padding:0 12px 0 10px;gap:6px;display:inline-flex;align-items:center;border:1px solid var(--line);border-radius:999px;font:inherit;font-size:13px;font-weight:600;white-space:nowrap}
+ .chRail button::after{content:attr(data-t)}
+ .chRail button.on{border-color:var(--ac)}
+ .chRail svg{width:16px;height:16px}
+ .chRail b{position:static;min-width:18px;height:18px;line-height:18px;order:3;margin-left:2px}
+}
+/* telefonda Stüdyo: alttan açılan sayfanın "Stüdyo" sekmesi */
+#hubSheet #panelStudio.inSheet{display:flex!important;flex-direction:column;position:static;transform:none;visibility:visible;border:0;background:transparent;padding:0;box-shadow:none;min-height:0;width:auto}
+#panelStudio.inSheet>.ph,#panelStudio.inSheet>#hbStrip{display:none}
+#hubSheet .hsStudio{padding-top:4px}
