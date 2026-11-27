@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Class</title>
 <meta name="description" content="Kaynaklarını yükle, onlarla sohbet et, özet ve çalışma rehberi çıkar. Her şey tarayıcında çalışır, hiçbir veri dışarı gitmez.">
-<link rel="stylesheet" href="style.css?v=46">
+<link rel="stylesheet" href="style.css?v=48">
 <link rel="manifest" href="manifest.webmanifest">
 <meta name="theme-color" content="#1e1e1e">
 <!-- Sekme simgesi: Saved ile birebir aynı (katman logosu, açık/koyu temaya uyar) -->
@@ -111,17 +111,20 @@
     </form>
   </section>
 
-  <!-- STÜDYO + NOTLAR -->
+  <!-- STÜDYO (+ NOTLAR bölümü) -->
   <section class="panel" id="panelStudio" aria-label="Stüdyo">
     <div class="ph"><h2>Stüdyo</h2></div>
     <div class="hbStrip" id="hbStrip" aria-label="Stüdyolar"></div>
     <div class="genBar" id="genBar" hidden><span class="spin" aria-hidden="true"></span><span id="genText" role="status"></span><button class="btn sm" id="genStop" type="button">Durdur</button></div>
     <div class="grid" id="studioBtns"></div>
-    <div class="stDiv" role="separator"></div>
-    <ul class="list outs" id="outList" aria-label="Stüdyo çıktıları ve notlar"></ul>
-    <div class="stEmpty" id="outHint"><span aria-hidden="true"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l1.8 4.7L18.5 9.5l-4.7 1.8L12 16l-1.8-4.7L5.5 9.5l4.7-1.8z"/><path d="M19 15l.8 2.2L22 18l-2.2.8L19 21l-.8-2.2L16 18l2.2-.8z"/></svg></span>Stüdyo çıktıları burada görünür</div>
-    <ul hidden id="noteList"></ul><span hidden id="noteHint"></span><button hidden id="expNotes" type="button"></button>
-    <button class="btn stAdd" id="addNote2" type="button"><i data-ic="plus"></i><span>Not ekle</span></button>
+    <!-- NOTLAR: Stüdyo'nun altında kendi başlığıyla ayrı bölüm (bilgisayarda sütunda, telefonda alttan açılan Stüdyo sayfasında) -->
+    <section class="panel" id="panelNotes" aria-label="Notlar">
+      <div class="ph"><h2>Notlar</h2><span class="muted" id="noteCount">0 not</span></div>
+      <button class="pillAct" id="addNote2" type="button"><i data-ic="plus"></i><span>Not ekle</span></button>
+      <ul class="list outs" id="outList" aria-label="Notlar ve stüdyo çıktıları"></ul>
+      <div class="stEmpty" id="outHint"><span aria-hidden="true"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l1.8 4.7L18.5 9.5l-4.7 1.8L12 16l-1.8-4.7L5.5 9.5l4.7-1.8z"/><path d="M19 15l.8 2.2L22 18l-2.2.8L19 21l-.8-2.2L16 18l2.2-.8z"/></svg></span>Notların ve stüdyo çıktıların burada görünür</div>
+      <ul hidden id="noteList"></ul><span hidden id="noteHint"></span><button hidden id="expNotes" type="button"></button>
+    </section>
   </section>
 </main>
 
@@ -230,19 +233,19 @@
   </form>
 </dialog>
 
-<script type="module" src="app.js?v=46"></script>
-<script type="module" src="nav.js?v=46"></script>
-<script type="module" src="shell.js?v=46"></script>
-<script type="module" src="search.js?v=46"></script>
-<script type="module" src="plus.js?v=46"></script>
-<script type="module" src="authors.js?v=46"></script>
-<script type="module" src="translate.js?v=46"></script>
-<script type="module" src="hero.js?v=46"></script>
-<script type="module" src="contact.js?v=46"></script>
-<script type="module" src="hub.js?v=46"></script>
-<script type="module" src="dock.js?v=46"></script>
-<script type="module" src="slide.js?v=46"></script>
-<script type="module" src="settings.js?v=46"></script>
-<script type="module" src="reveal.js?v=46"></script>
+<script type="module" src="app.js?v=48"></script>
+<script type="module" src="nav.js?v=48"></script>
+<script type="module" src="shell.js?v=48"></script>
+<script type="module" src="search.js?v=48"></script>
+<script type="module" src="plus.js?v=48"></script>
+<script type="module" src="authors.js?v=48"></script>
+<script type="module" src="translate.js?v=48"></script>
+<script type="module" src="hero.js?v=48"></script>
+<script type="module" src="contact.js?v=48"></script>
+<script type="module" src="hub.js?v=48"></script>
+<script type="module" src="dock.js?v=48"></script>
+<script type="module" src="slide.js?v=48"></script>
+<script type="module" src="settings.js?v=48"></script>
+<script type="module" src="reveal.js?v=48"></script>
 </body>
 </html>

@@ -172,6 +172,7 @@ const MI = {
   sun: SVG('<circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/>'),
   moon: SVG('<path d="M21 13a8 8 0 1 1-10-10 7 7 0 0 0 10 10z"/>'),
   back: SVG('<path d="M19 12H5M12 19l-7-7 7-7"/>'),
+  tools: SVG('<rect x="3" y="3" width="7" height="7" rx="2"/><rect x="14" y="3" width="7" height="7" rx="2"/><rect x="3" y="14" width="7" height="7" rx="2"/><path d="M17.5 14v7M14 17.5h7"/>'),
 };
 function buildMobileMenu() {
   if ($('#mobM')) return;
@@ -184,9 +185,10 @@ function buildMobileMenu() {
   const press = (t) => $(`#tabs [data-tab="${t}"]`)?.click();
   const defs = () => view() === 'nb'
     ? [{ k: 'home', i: 'home', t: 'Ana sayfa', run: () => A().goHome() },
-       { k: 'sources', i: 'src', t: 'Kaynaklar', on: tab() === 'sources' || sheet() === 'sources', run: () => press('sources') },
-       { k: 'menu', i: 'menu', t: 'Menü', run: openDrawer },
-       { k: 'studio', i: 'studio', t: 'Stüdyo', on: tab() === 'studio' || sheet() === 'studio' || document.body.dataset.hs === 'studio', run: () => press('studio') },
+       { k: 'sources', i: 'src', t: 'Kaynaklar', on: tab() === 'sources' || document.body.dataset.hs === 'sources', run: () => press('sources') },
+       /* defterde: Menü yerine Araçlar (Menü üst çubuktaki ≡ düğmesinde); Görsel, Ses, Yazıya dök… soldan açılan panelde */
+       ...(window.defterSlide?.active() ? [{ k: 'tools', i: 'tools', t: 'Araçlar', on: sheet() === 'tools' || !['', 'studio', 'sources', undefined].includes(document.body.dataset.hs), run: () => window.defterSlide.toggleTools() }] : [{ k: 'menu', i: 'menu', t: 'Menü', run: openDrawer }]),
+       { k: 'studio', i: 'studio', t: 'Stüdyo', on: tab() === 'studio' || document.body.dataset.hs === 'studio', run: () => press('studio') },
        { k: 'chat', i: 'chat', t: 'Sohbet', on: tab() === 'chat' && !sheet(), run: () => press('chat') }]
     : [{ k: 'home', i: 'home', t: 'Ana sayfa', on: true, run: () => scrollTo({ top: 0 }) || $('#home').scrollTo?.({ top: 0, behavior: 'smooth' }) },
        { k: 'search', i: 'search', t: 'Ara', run: () => $('#searchBtn').click() },

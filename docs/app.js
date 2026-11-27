@@ -897,6 +897,7 @@ function renderOutputs() {
     ul.append(li);
   });
   $('#outHint').hidden = all.length > 0;
+  { const no = outputs.filter((o) => TYPES[o.type]).length; $('#noteCount').textContent = `${notes.length} not` + (no ? ` · ${no} çıktı` : ''); }
 }
 
 let vwCleanup = null;
