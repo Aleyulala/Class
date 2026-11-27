@@ -1193,7 +1193,7 @@ dialog.fs>.dlg:focus,dialog.fs>.dlg:focus-visible,dialog.fs>form.dlg:focus{outli
 @media (max-width:900px) and (prefers-reduced-motion:reduce){.cSheet{animation:none!important}}
 
 /* ---------- Yazarlar (authors.js) — Saved ve Blogger başlığındaki "Yazarlar" kartı, birebir ---------- */
-.ib.auBtn.is-active{border-radius:50%;color:var(--ac);background:color-mix(in srgb,var(--ac) 15%,transparent);box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--ac) 40%,transparent),0 0 10px color-mix(in srgb,var(--ac) 25%,transparent)}
+.ib.auBtn.is-active,.ib.trBtn.is-active{border-radius:50%;color:var(--ac);background:color-mix(in srgb,var(--ac) 15%,transparent);box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--ac) 40%,transparent),0 0 10px color-mix(in srgb,var(--ac) 25%,transparent)}
 .auBd{position:fixed;inset:0;z-index:69;background:rgba(0,0,0,.42);-webkit-backdrop-filter:saturate(180%) blur(10px);backdrop-filter:saturate(180%) blur(10px);animation:fsIn .2s both}
 .popAuthors{position:fixed;top:58px;right:21px;z-index:70;width:min(304px,calc(100vw - 24px));max-height:min(520px,calc(100vh - 130px));display:flex;flex-direction:column;background:#111;color:#fffdfc;border-radius:12px;box-shadow:0 14px 40px rgba(0,0,0,.55);overflow:hidden;font-size:16px;line-height:1.5;animation:menuIn .2s cubic-bezier(.16,1,.3,1) both;transform-origin:top right}
 .popAuthors .popH{flex:none;display:flex;align-items:center;justify-content:space-between;height:83px;padding:0 14px 15px 15px;font-size:14px;font-weight:700;line-height:21px;box-sizing:border-box}
@@ -1262,3 +1262,26 @@ dialog.fs>.dlg:focus,dialog.fs>.dlg:focus-visible,dialog.fs>form.dlg:focus{outli
 /* Avatar yüklenemezse baş harfler (kırık resim simgesi görünmesin) */
 .prfTopRow .imTxt{display:grid;place-items:center;font-size:14px;font-weight:700;color:#fff;background:linear-gradient(135deg,var(--ac),color-mix(in srgb,var(--ac) 45%,#000))}
 .ftrAvTxt{display:grid;place-items:center;font-size:24px;font-weight:800;color:#fff;background:linear-gradient(135deg,var(--ac),color-mix(in srgb,var(--ac) 45%,#000))}
+
+/* ---------- Çeviri (translate.js) — Saved'in sağ üstündeki Çeviri menüsü, birebir ---------- */
+.trBtn .trAc{stroke:var(--ac)}
+.popTrans{position:fixed;top:58px;right:21px;z-index:70;width:min(209px,calc(100vw - 24px));max-height:min(520px,calc(100vh - 130px));display:flex;flex-direction:column;background:#111;color:#fffdfc;border-radius:12px;box-shadow:0 14px 40px rgba(0,0,0,.55);overflow:hidden;font-size:16px;line-height:1.5;animation:menuIn .2s cubic-bezier(.16,1,.3,1) both;transform-origin:top right}
+.popTrans .popH{flex:none;display:flex;align-items:center;padding:14px 21px 6px;font-size:14px;font-weight:400;line-height:21px;opacity:.72}
+.popTrans .popList{display:flex;flex-direction:column;padding:4px 0 8px;overflow-y:auto;overscroll-behavior:contain}
+.popTrans .popItem{display:flex;flex:none;align-items:center;width:100%;height:40px;padding:0 16px 0 0;border:0;border-radius:0;background:transparent;color:inherit;font:inherit;font-size:14px;text-align:start;cursor:pointer}
+.popTrans .popItem:hover,.popTrans .popItem:focus-visible{background:rgba(255,255,255,.06);outline:none}
+.popTrans .popTick{width:38px;flex:none;display:inline-flex;justify-content:center;opacity:.85}
+:root[data-theme="light"] .popTrans{background:#fff;color:#1f1f1f;box-shadow:0 10px 30px rgba(0,0,0,.12)}
+:root[data-theme="light"] .popTrans .popItem:hover{background:rgba(0,0,0,.05)}
+@media (prefers-color-scheme:light){:root:not([data-theme]) .popTrans{background:#fff;color:#1f1f1f;box-shadow:0 10px 30px rgba(0,0,0,.12)}:root:not([data-theme]) .popTrans .popItem:hover{background:rgba(0,0,0,.05)}}
+@media (max-width:900px){
+ .popTrans.cSheet{max-height:min(80dvh,calc(100dvh - 56px))!important}
+ .popTrans.cSheet .popH{padding:2px 21px 6px}
+ .popTrans.cSheet .popItem{height:46px;font-size:15px}
+ .popTrans.cSheet .popList{padding-bottom:calc(8px + env(safe-area-inset-bottom,0px))}
+}
+/* Google Çeviri'nin üst şeridi, ipuçları ve vurguları gizlenir (Saved ile aynı) */
+.skiptranslate,#goog-gt-tt,.goog-te-banner-frame,.goog-tooltip,.goog-tooltip:hover{display:none!important}
+body{top:0!important}
+.goog-text-highlight{background-color:transparent!important;box-shadow:none!important}
+#google_translate_element{display:none!important}

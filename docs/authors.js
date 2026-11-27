@@ -43,7 +43,7 @@ function close() {
 }
 function open() {
   if (pop) { close(); return; }
-  A()?.closeMenu?.();
+  A()?.closeMenu?.(); window.defterTranslate?.close?.();
   bd = el('div', { className: 'auBd', onclick: close });
   pop = el('div', { className: 'popX popAuthors', role: 'dialog', 'aria-label': 'Yazarlar' },
     el('div', { className: 'popH', 'data-drag': '1' }, el('span', { textContent: 'Yazarlar' }),
