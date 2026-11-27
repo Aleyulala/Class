@@ -85,11 +85,13 @@ const DI = {
   verifyf: '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l2.4 1.8 3-.2 1 2.8 2.5 1.7-.9 2.9.9 2.9-2.5 1.7-1 2.8-3-.2L12 22l-2.4-1.8-3 .2-1-2.8L3.1 15.9 4 13l-.9-2.9 2.5-1.7 1-2.8 3 .2z"/><path d="m8.6 12 2.3 2.3 4.5-4.6" fill="none" stroke="#1e1e1e" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>',
 };
 const ico = (k) => (String(k).startsWith('<svg') ? k : DI[k] || ic(k));
-const FKEY = 'defter-folders';
+/* Klasörler Saved ve Blogger'daki gibi kapalı başlar; kullanıcı açar. Açtığı klasör sayfa açık kaldıkça açık kalır,
+   sayfa yenilenince yine kapalı başlar (kalıcı olarak saklanmaz). */
+const FOPEN = {};
+try { localStorage.removeItem('defter-folders'); } catch {}
 function folder(id, icon, title, badge, items) {
-  const open = (lsGet(FKEY, {}))[id] !== false;
-  const input = el('input', { type: 'checkbox', id: 'dwf-' + id, checked: open, hidden: true });
-  input.addEventListener('change', () => { const o = lsGet(FKEY, {}); o[id] = input.checked; lsSet(FKEY, o); });
+  const input = el('input', { type: 'checkbox', id: 'dwf-' + id, checked: FOPEN[id] === true, hidden: true });
+  input.addEventListener('change', () => { FOPEN[id] = input.checked; });
   const label = el('label', { htmlFor: 'dwf-' + id, role: 'button', tabIndex: 0, className: 'dwItem dwFolder', 'aria-label': title },
     el('span', { className: 'mi', innerHTML: ico(icon) }), el('span', { className: 'ml', textContent: title }), badge ? el('span', { className: 'dwBadge', textContent: badge }) : '');
   label.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); input.checked = !input.checked; input.dispatchEvent(new Event('change')); } });
@@ -235,7 +237,7 @@ function railItem([icon, label, run, on]) {
 function closeFly() { if (!railFly) return; railFly.classList.remove('fly'); railFly.querySelector('.rlFolder')?.setAttribute('aria-expanded', 'false'); railFly = null; }
 function renderRail() {
   const app = A(); if (!app || !rail) return;
-  const open = railOpen(); const fo = lsGet(FKEY, { nb: true });
+  const open = railOpen(); const fo = FOPEN;
   rail.classList.toggle('open', open); document.body.style.setProperty('--railW', open ? '230px' : '75px');
   const home = el('button', { type: 'button', className: 'rlItem' + (app.current() ? '' : ' on'), title: 'Ana Sayfa', 'aria-label': 'Ana Sayfa', onclick: () => { closeFly(); app.goHome(); renderRail(); } },
     el('span', { className: 'mi', innerHTML: ico('home') || MI.home }), el('span', { className: 'ml', textContent: 'Ana Sayfa' }));
@@ -247,7 +249,7 @@ function renderRail() {
     const wrap = el('div', { className: 'rlGroup' + (isOpen ? ' x' : '') }, btn, sub);
     btn.onclick = (e) => {
       e.stopPropagation();
-      if (railOpen()) { const o = lsGet(FKEY, { nb: true }); o[g.id] = !wrap.classList.contains('x'); lsSet(FKEY, o); wrap.classList.toggle('x', o[g.id]); btn.setAttribute('aria-expanded', String(o[g.id])); return; }
+      if (railOpen()) { FOPEN[g.id] = !wrap.classList.contains('x'); wrap.classList.toggle('x', FOPEN[g.id]); btn.setAttribute('aria-expanded', String(FOPEN[g.id])); return; }
       const same = railFly === wrap; closeFly(); if (same) return;
       railFly = wrap; wrap.classList.add('fly'); btn.setAttribute('aria-expanded', 'true'); setTimeout(() => sub.querySelector('button:not([disabled])')?.focus(), 30);
     };
