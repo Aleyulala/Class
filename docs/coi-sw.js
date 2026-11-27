@@ -11,24 +11,38 @@ if (typeof window === 'undefined') {
     }
   });
   const CACHE = 'defter-shell-v1';
+  /* Chromium ve Firefox'ta COEP "credentialless": başka sitelerin resimleri (yazar avatarları, alt bilgi fotoğrafı,
+     site simgeleri) CORP başlığı olmadan da yüklenir, sayfa yine çapraz köken yalıtımlı kalır (SharedArrayBuffer çalışır).
+     Safari bunu desteklemez; orada require-corp kalır ve resimler CORS ile istenir. */
+  const UA = self.navigator.userAgent || '';
+  const CRED = /(Chrome|Chromium|Firefox)\//.test(UA) && !/(CriOS|FxiOS|EdgiOS)/.test(UA);
+  const COEP = CRED ? 'credentialless' : 'require-corp';
   self.addEventListener('fetch', (e) => {
-    const r = e.request;
+    let r = e.request;
     if (r.cache === 'only-if-cached' && r.mode !== 'same-origin') return;
     const same = r.method === 'GET' && new URL(r.url).origin === self.location.origin;
-    const wrap = (res) => {
-      if (res.status === 0) return res;
-      const h = new Headers(res.headers);
-      h.set('Cross-Origin-Embedder-Policy', 'require-corp');
-      h.set('Cross-Origin-Opener-Policy', 'same-origin');
-      h.set('Cross-Origin-Resource-Policy', 'cross-origin');
-      return new Response(res.body, { status: res.status, statusText: res.statusText, headers: h });
-    };
+    if (!same && r.mode === 'no-cors') {
+      if (CRED) r = new Request(r, { credentials: 'omit' });
+      else if (r.destination === 'image') {
+        const orig = r;
+        e.respondWith(fetch(r.url, { mode: 'cors', credentials: 'omit' }).then((res) => (res.ok ? wrap(res) : fetch(orig))).catch(() => fetch(orig)));
+        return;
+      }
+    }
     e.respondWith(
       fetch(r)
         .then((res) => { if (same && res.ok) { const c = res.clone(); caches.open(CACHE).then((k) => k.put(r, c)).catch(() => {}); } return wrap(res); })
         .catch(async (err) => { if (same) { const m = await caches.match(r); if (m) return wrap(m); } throw err; })
     );
   });
+  function wrap(res) {
+      if (res.status === 0) return res;
+      const h = new Headers(res.headers);
+      h.set('Cross-Origin-Embedder-Policy', COEP);
+      h.set('Cross-Origin-Opener-Policy', 'same-origin');
+      h.set('Cross-Origin-Resource-Policy', 'cross-origin');
+      return new Response(res.body, { status: res.status, statusText: res.statusText, headers: h });
+  }
 } else {
   (() => {
     if (!window.isSecureContext || !('serviceWorker' in navigator)) return;
