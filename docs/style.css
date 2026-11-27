@@ -1285,3 +1285,6 @@ dialog.fs>.dlg:focus,dialog.fs>.dlg:focus-visible,dialog.fs>form.dlg:focus{outli
 body{top:0!important}
 .goog-text-highlight{background-color:transparent!important;box-shadow:none!important}
 #google_translate_element{display:none!important}
+
+/* Kurulum penceresindeki logo: Saved'deki katman simgesi, temanın yazı renginde */
+.sheetIcon{display:inline-grid;place-items:center;width:56px;height:56px;border-radius:12px;background:var(--p3);color:var(--tx)}

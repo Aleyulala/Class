@@ -23,7 +23,7 @@ function installSheet(manual) {
   sheet = el('div', { className: 'sheetWrap' },
     el('div', { className: 'sheetScrim', onclick: no }),
     el('div', { className: 'sheet', role: 'dialog', 'aria-label': 'Uygulamayı kur' },
-      el('div', { className: 'sheetIcon' }, el('img', { src: 'icon.svg', alt: '', width: 40, height: 40 })),
+      el('div', { className: 'sheetIcon', innerHTML: '<svg viewBox="0 0 24 24" width="40" height="40" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>' }),
       el('h3', { textContent: 'Class’ı web uygulaması olarak kurmak ister misiniz?' }),
       el('p', { className: 'muted', textContent: how }),
       el('div', { className: 'row end' },
