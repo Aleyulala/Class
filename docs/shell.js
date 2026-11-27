@@ -186,9 +186,9 @@ function buildMobileMenu() {
   const defs = () => view() === 'nb'
     ? [{ k: 'home', i: 'home', t: 'Ana sayfa', run: () => A().goHome() },
        { k: 'sources', i: 'src', t: 'Kaynaklar', on: tab() === 'sources' || document.body.dataset.hs === 'sources', run: () => press('sources') },
-       /* defterde: Menü yerine Araçlar (Menü üst çubuktaki ≡ düğmesinde); Görsel, Ses, Yazıya dök… soldan açılan panelde */
-       ...(window.defterSlide?.active() ? [{ k: 'tools', i: 'tools', t: 'Araçlar', on: sheet() === 'tools' || !['', 'studio', 'sources', undefined].includes(document.body.dataset.hs), run: () => window.defterSlide.toggleTools() }] : [{ k: 'menu', i: 'menu', t: 'Menü', run: openDrawer }]),
-       { k: 'studio', i: 'studio', t: 'Stüdyo', on: tab() === 'studio' || document.body.dataset.hs === 'studio', run: () => press('studio') },
+       { k: 'menu', i: 'menu', t: 'Menü', run: openDrawer },
+       /* Stüdyo: telefonda Görsel, Ses, Yazıya dök… soldan açılan çekmecede; Araçlar (Sesli özet…) sohbetin üstündeki satırda */
+       ...(window.defterSlide?.active() ? [{ k: 'tools', i: 'studio', t: 'Stüdyo', on: sheet() === 'tools' || !['', 'studio', 'sources', undefined].includes(document.body.dataset.hs), run: () => window.defterSlide.toggleTools() }] : [{ k: 'studio', i: 'studio', t: 'Stüdyo', on: tab() === 'studio', run: () => press('studio') }]),
        { k: 'chat', i: 'chat', t: 'Sohbet', on: tab() === 'chat' && !sheet(), run: () => press('chat') }]
     : [{ k: 'home', i: 'home', t: 'Ana sayfa', on: true, run: () => scrollTo({ top: 0 }) || $('#home').scrollTo?.({ top: 0, behavior: 'smooth' }) },
        { k: 'search', i: 'search', t: 'Ara', run: () => $('#searchBtn').click() },
