@@ -1359,3 +1359,18 @@ body{top:0!important}
 }
 #hubSheet .hsSrcNotes{display:flex;flex-direction:column}
 #hubSheet #panelNotes.inSheet{display:flex!important;flex-direction:column;position:static;transform:none;visibility:visible;width:auto;min-height:0;overflow:visible;margin:18px 0 0;padding:14px 0 0;background:transparent;border:0;border-top:1px solid var(--line);border-radius:0;box-shadow:none}
+
+/* /Komutlar: üstteki Geçmiş / Tümü / Tepkiler çipleriyle aynı görünüm (boy, çerçeve, yazı, simge) */
+:root #cmdBar{gap:6px;align-items:center}
+:root #cmdBar .cmdTrack{gap:6px;align-items:center;padding:2px}
+:root #cmdBar .cmdToggle,:root #cmdBar .cmdTile{flex:none;box-sizing:border-box;height:34px;min-height:34px;min-width:0;max-width:none;display:inline-flex;flex-direction:row;align-items:center;justify-content:center;gap:6px;padding:0 12px 0 10px;border:1px solid var(--line);border-radius:12px;background:transparent;color:var(--mu);font:inherit;font-size:13px;font-weight:600;line-height:1;white-space:nowrap;cursor:pointer;transform:none;box-shadow:none;transition:color .15s,background .15s,border-color .15s}
+:root #cmdBar .cmdToggle:hover,:root #cmdBar .cmdToggle:focus-visible,:root #cmdBar .cmdTile:hover,:root #cmdBar .cmdTile:focus-visible{color:var(--tx);background:var(--btn);border-color:var(--line);transform:none;box-shadow:none}
+:root #cmdBar .cmdToggle:focus-visible,:root #cmdBar .cmdTile:focus-visible{outline:2px solid var(--ac);outline-offset:1px}
+:root #cmdBar .cmdToggle svg,:root #cmdBar .cmdOrb svg{width:16px;height:16px}
+:root #cmdBar .cmdOrb,:root #cmdBar .cmdTile:hover .cmdOrb,:root #cmdBar .cmdTile:focus-visible .cmdOrb{width:auto;height:auto;border-radius:0;background:none;color:inherit;outline:0}
+:root #cmdBar .cmdLbl{font-size:inherit;font-weight:inherit;opacity:1}
+:root #cmdBar .cmdS{min-width:18px;height:18px;margin-left:2px;padding:0 4px;border-radius:12px;background:var(--btnh);color:var(--tx);font-size:10px;font-weight:600;line-height:18px;text-align:center}
+:root #cmdBar:not(.collapsed) .cmdToggle{color:var(--ac);background:color-mix(in srgb,var(--ac) 14%,transparent);border-color:var(--ac)}
+.cmdSep{flex:none;width:1px;height:20px;margin:0 2px;background:var(--line)}
+#cmdBar.collapsed .cmdSep{display:none}
+@media (max-width:900px){:root #cmdBar .cmdToggle,:root #cmdBar .cmdTile{padding:0 11px 0 9px;font-size:12.5px}}
