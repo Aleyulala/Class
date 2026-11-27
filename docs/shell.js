@@ -128,7 +128,8 @@ function openDrawer() {
         el('ul', { className: 'dwList' },
           folder('apps', 'tree', 'Uygulamalar', 'Yeni!', [
             link('eye', 'NESCİONE', 'https://aleyulala.github.io/saved/'),
-            link('pen', 'NotebookLM', 'https://notebooklm.google.com/'),
+            /* CLASS: kendi adresi; Class'ın içindeyken yeni sekme açmadan ana ekrana döner */
+            el('a', { className: 'dwItem', href: 'https://aleyulala.github.io/Class/', onclick: (e) => { e.preventDefault(); closeDrawer(); A()?.goHome(); } }, el('span', { className: 'mi', innerHTML: ico('pen') }), el('span', { className: 'ml', textContent: 'CLASS' })),
             link('users', 'Formlar', 'https://docs.google.com/forms/u/0/')]),
           folder('comm', 'flash', 'Topluluk', 'Canlı', [
             link('sms', 'Chat', 'https://script.google.com/macros/s/AKfycby2BbaRplWrOLZDiTba4Wnn9LAy6m2IuIBDmhFS6aSYr-fagSGVKbw_PYb9aajK39jZ/exec'),
