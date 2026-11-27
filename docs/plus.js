@@ -27,12 +27,13 @@ const P = {
   smile: '<rect x="3" y="3" width="18" height="18" rx="5"/><path d="M8.5 14.5c1 1.2 2.1 1.8 3.5 1.8s2.5-.6 3.5-1.8M9 9.5h.01M15 9.5h.01"/>',
 };
 /* ---------- Tema rengi (Saved'deki THEME_COLORS ile aynı renk adları) ---------- */
-const COLORS = [['', 'Varsayılan'], ['#ea4335', 'Kırmızı'], ['#1e8e3e', 'Yeşil'], ['#4285f4', 'Mavi'], ['#f9ab00', 'Sarı'], ['#9334e6', 'Mor'], ['#e52592', 'Pembe'], ['#12b5cb', 'Camgöbeği'], ['#fa7b17', 'Turuncu'], ['#00897b', 'Teal'], ['#3949ab', 'İndigo'], ['#1a73e8', 'Google mavi'], ['#188038', 'Koyu yeşil'], ['#1967d2', 'Derin mavi'], ['#8ab4f8', 'Açık mavi']];
+const GRAY = '#9aa0a6'; /* Saved ile aynı: varsayılan tema rengi gri */
+const COLORS = [[GRAY, 'Gri (Varsayılan)'], ['#ea4335', 'Kırmızı'], ['#1e8e3e', 'Yeşil'], ['#4285f4', 'Mavi'], ['#f9ab00', 'Sarı'], ['#9334e6', 'Mor'], ['#e52592', 'Pembe'], ['#12b5cb', 'Camgöbeği'], ['#fa7b17', 'Turuncu'], ['#00897b', 'Teal'], ['#3949ab', 'İndigo'], ['#1a73e8', 'Google Mavi'], ['#188038', 'Koyu Yeşil'], ['#1967d2', 'Derin Mavi'], ['#a142f4', 'Açık Mor'], ['#d93025', 'Koyu Kırmızı'], ['#60cdff', 'Açık Mavi']];
+const curColor = () => lsGet('class-theme-color', '') || GRAY;
 const lum = (h) => { const n = parseInt(h.slice(1), 16); const f = (v) => { v /= 255; return v <= .03928 ? v / 12.92 : ((v + .055) / 1.055) ** 2.4; }; return .2126 * f(n >> 16) + .7152 * f((n >> 8) & 255) + .0722 * f(n & 255); };
 function applyAccent() {
-  const r = document.documentElement.style, c = lsGet('class-theme-color', '');
+  const r = document.documentElement.style, c = curColor();
   ['--ac', '--ac2', '--acfg', '--ca', '--cb'].forEach((k) => r.removeProperty(k));
-  if (!c) return;
   r.setProperty('--ac', c); r.setProperty('--ac2', c); r.setProperty('--acfg', lum(c) > .42 ? '#10131a' : '#ffffff');
   r.setProperty('--ca', `color-mix(in srgb, ${c} 28%, var(--bg))`); r.setProperty('--cb', `color-mix(in srgb, ${c} 14%, var(--bg))`);
 }
@@ -42,20 +43,19 @@ const outPop = (e) => { if (pop && !pop.contains(e.target)) closePop(); };
 const keyPop = (e) => { if (e.key === 'Escape') { e.stopPropagation(); closePop(); } };
 function openThemeColors(anchor) {
   if (pop) { closePop(); return; }
-  const cur = lsGet('class-theme-color', '');
+  const cur = curColor();
   pop = el('div', { className: 'tcPop', role: 'dialog', 'aria-label': 'Tema rengi' }, el('h4', { textContent: 'Tema rengi' }),
     ...COLORS.map(([hex, name]) => {
-      const b = el('button', { type: 'button', className: 'tcDot' + (hex === cur ? ' on' : ''), title: name, 'aria-label': name, style: `background:${hex || 'var(--ac)'}` });
-      if (!hex) b.style.background = isDark() ? '#60cdff' : '#1a73e8';
-      if (hex === cur) b.innerHTML = svg(P.check);
+      const b = el('button', { type: 'button', className: 'tcDot' + (hex === cur ? ' on' : ''), title: name, 'aria-label': name, 'aria-pressed': String(hex === cur) });
+      b.style.setProperty('--c', hex);
       b.onclick = () => { lsSet('class-theme-color', hex); applyAccent(); closePop(); }; return b;
     }));
   document.body.append(pop);
   const r = (anchor || document.body).getBoundingClientRect(), w = pop.offsetWidth, h = pop.offsetHeight;
   pop.style.left = Math.max(8, Math.min(innerWidth - w - 8, r.right - w)) + 'px'; pop.style.top = Math.max(8, Math.min(innerHeight - h - 8, r.top - h - 8)) + 'px';
-  document.addEventListener('pointerdown', outPop, true); document.addEventListener('keydown', keyPop, true); pop.querySelector('button')?.focus();
+  document.addEventListener('pointerdown', outPop, true); document.addEventListener('keydown', keyPop, true); pop.tabIndex = -1; pop.focus({ preventScroll: true });
 }
-window.defterTheme = { open: openThemeColors, apply: applyAccent, colors: COLORS };
+window.defterTheme = { open: openThemeColors, apply: applyAccent, colors: COLORS, current: curColor };
 const isDark = () => { const t = A().getTheme(); return t === 'dark' || (t === 'system' && matchMedia('(prefers-color-scheme:dark)').matches); };
 const nbView = () => $('#cols') && !$('#cols').hidden;
 

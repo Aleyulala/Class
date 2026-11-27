@@ -1163,3 +1163,14 @@ dialog.fs>.dlg:focus,dialog.fs>.dlg:focus-visible,dialog.fs>form.dlg:focus{outli
  .chRail button{padding:0 11px 0 9px;font-size:12.5px}
 }
 @media (max-width:900px){.chRail button,.chRail .chSep{flex:none}}
+/* Tema rengi: Saved'deki .thmP ile aynı — 26px yuvarlak halka, seçilide dış halka, dörtlü ızgara */
+.tcDot{--c:#9aa0a6;position:relative;width:26px;height:26px;border:0;border-radius:50%;background:transparent!important;box-shadow:inset 0 0 0 7px var(--c);outline:none;padding:0;cursor:pointer}
+.tcDot::after{content:'';position:absolute;inset:-4px;border-radius:50%;border:2px solid var(--c);opacity:0;transition:opacity .2s ease}
+.tcDot:hover::after,.tcDot:focus-visible::after{opacity:.6}.tcDot.on::after{opacity:1}
+.tcDot:hover,.tcDot:focus-visible{outline:none}.tcDot.on{border-color:transparent}
+.tcPop{grid-template-columns:repeat(4,26px);gap:12px;padding:18px}
+.stColors{display:grid;grid-template-columns:repeat(auto-fill,26px);gap:14px;padding:4px}
+.stColors{align-content:start;grid-auto-rows:26px;height:auto}
+.tcDot:focus,.tcDot:focus-visible,:root .tcDot:focus-visible{box-shadow:inset 0 0 0 7px var(--c)!important;outline:none!important;background:transparent!important;transform:none!important}
+.stColors{display:flex!important;flex-wrap:wrap;gap:14px;padding:4px}
+.tcPop:focus{outline:none}

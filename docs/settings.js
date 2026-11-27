@@ -122,8 +122,8 @@ function openSettings(section) {
   if (!SET) SET = fsDialog('setDlg', '#Ayarlar');
   const { d, body } = SET; const C = A().CFG;
   const colors = (window.defterTheme?.colors || []).map(([hex, name]) => {
-    const cur = lsGet('class-theme-color', ''); const b = el('button', { type: 'button', className: 'tcDot' + (hex === cur ? ' on' : ''), title: name, 'aria-label': name });
-    b.style.background = hex || (dark() ? '#60cdff' : '#1a73e8');
+    const cur = window.defterTheme?.current?.() || lsGet('class-theme-color', ''); const b = el('button', { type: 'button', className: 'tcDot' + (hex === cur ? ' on' : ''), title: name, 'aria-label': name });
+    b.style.setProperty('--c', hex);
     b.onclick = () => { lsSet('class-theme-color', hex); window.defterTheme?.apply(); body.querySelectorAll('.stColors .tcDot').forEach((x) => x.classList.toggle('on', x === b)); }; return b;
   });
   const est = el('small', { textContent: 'Hesaplanıyor…' });
