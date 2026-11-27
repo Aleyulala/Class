@@ -967,9 +967,6 @@ dialog.hub>.hbWrap{max-width:860px;padding:14px 14px 28px;gap:12px}
  #cols[data-slide=on]>#panelChat{display:flex}
  .slScrim{position:fixed;inset:0;z-index:59;background:rgba(0,0,0,.42);backdrop-filter:blur(3px);-webkit-backdrop-filter:blur(3px);opacity:0;pointer-events:none;transition:opacity .25s}
  .slScrim.on{opacity:1;pointer-events:auto}.slScrim.slDrag{transition:none}
- /* kenar ipucu: panelin olduğunu gösteren ince tutamaçlar */
- #cols[data-slide=on]:not([data-sheet])::before,#cols[data-slide=on]:not([data-sheet])::after{content:"";position:fixed;top:50%;width:4px;height:44px;margin-top:-22px;border-radius:4px;background:var(--mu);opacity:.22;z-index:5;pointer-events:none}
- #cols[data-slide=on]:not([data-sheet])::before{left:3px}#cols[data-slide=on]:not([data-sheet])::after{right:3px}
 }
 /* Stüdyolar docker sayfası (alttan) */
 .hubSheet{position:fixed;left:0;right:0;bottom:0;z-index:70;height:var(--hsH,92dvh);max-height:calc(100dvh - 12px);display:flex;flex-direction:column;background:var(--bg);border-top:1px solid var(--line);border-radius:12px 12px 0 0;box-shadow:0 -18px 40px rgba(0,0,0,.4);transform:translateY(105%);visibility:hidden;transition:transform .32s cubic-bezier(.2,.8,.2,1),height .25s ease,visibility 0s linear .32s}
@@ -1324,8 +1321,7 @@ body{top:0!important}
 @media (prefers-reduced-motion:reduce){.sldA,.sldI{transition:none}}
 
 /* ---------- Notlar: Stüdyo'nun altında kendi başlığıyla ayrı bölüm (index.html #panelNotes) ----------
-   Telefonda: Araçlar (Görsel, Ses, Yazıya dök…) soldan açılan panel (#panelTools, slide.js);
-   Kaynaklar ve Stüdyo alttan açılan sayfada, araç sekmeleri sayfanın üstünde değil soldaki panelde. */
+   Telefonda: Stüdyo (Görsel, Ses, Yazıya dök…) listesi, Kaynaklar ve Notlar alttan açılan sayfada (slide.js). */
 #panelStudio>#panelNotes{display:flex!important;flex-direction:column;flex:none!important;height:auto!important;min-height:0;overflow:visible;margin:14px 0 0;padding:14px 0 0!important;background:transparent!important;border:0!important;border-top:1px solid var(--line)!important;border-radius:0!important;box-shadow:none!important;position:static;transform:none;visibility:visible;width:auto}
 #panelNotes{gap:10px}
 #panelNotes>.ph{margin:0}
@@ -1334,9 +1330,10 @@ body{top:0!important}
 #hubSheet #panelSources.inSheet{display:flex!important;flex-direction:column;position:static;transform:none;visibility:visible;border:0;background:transparent;padding:0;box-shadow:none;min-height:0;width:auto;overflow:visible}
 .hubSheet[data-v=sources] .hsTabs{display:none}
 #hubSheet .hsSources{padding-top:4px}
-#panelTools{gap:10px}
-#panelTools>.ph{margin:0}
-#panelTools{display:none}
+/* Stüdyo listesi: alttan açılan sayfada (slide.js) */
+.tlPanel{display:flex;flex-direction:column;gap:10px}
+.tlPanel>.ph{margin:0}
+#hubSheet .hsTools{padding-top:4px}
 .tlList{display:flex;flex-direction:column;gap:6px;margin:0;padding:0;list-style:none}
 .tlItem{display:flex;align-items:center;gap:12px;width:100%;padding:12px;border-radius:12px;border:1px solid var(--line);background:var(--p2,transparent);color:var(--tx);font:inherit;text-align:start;cursor:pointer;transition:background .15s,border-color .15s}
 .tlItem:hover,.tlItem:focus-visible{background:var(--btnh,rgba(127,127,127,.1));border-color:color-mix(in srgb,var(--ac) 40%,var(--line));outline:none}

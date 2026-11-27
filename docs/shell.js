@@ -181,15 +181,15 @@ function buildMobileMenu() {
   const isDark = () => { const t = A().getTheme(); return t === 'dark' || (t === 'system' && matchMedia('(prefers-color-scheme:dark)').matches); };
   const view = () => (cols().hidden ? 'home' : 'nb');
   const tab = () => cols().dataset.tab;
-  const sheet = () => cols().dataset.sheet || '';
+  const hs = () => document.body.dataset.hs || '';
   const press = (t) => $(`#tabs [data-tab="${t}"]`)?.click();
   const defs = () => view() === 'nb'
     ? [{ k: 'home', i: 'home', t: 'Ana sayfa', run: () => A().goHome() },
        { k: 'sources', i: 'src', t: 'Kaynaklar', on: tab() === 'sources' || document.body.dataset.hs === 'sources', run: () => press('sources') },
        { k: 'menu', i: 'menu', t: 'Menü', run: openDrawer },
-       /* Stüdyo: telefonda Görsel, Ses, Yazıya dök… soldan açılan çekmecede; Araçlar (Sesli özet…) sohbetin üstündeki satırda */
-       ...(window.defterSlide?.active() ? [{ k: 'tools', i: 'studio', t: 'Stüdyo', on: sheet() === 'tools' || !['', 'studio', 'sources', undefined].includes(document.body.dataset.hs), run: () => window.defterSlide.toggleTools() }] : [{ k: 'studio', i: 'studio', t: 'Stüdyo', on: tab() === 'studio', run: () => press('studio') }]),
-       { k: 'chat', i: 'chat', t: 'Sohbet', on: tab() === 'chat' && !sheet(), run: () => press('chat') }]
+       /* Stüdyo: telefonda Görsel, Ses, Yazıya dök… alttan açılan sayfada; Araçlar (Sesli özet…) sohbetin üstündeki satırda */
+       ...(window.defterSlide?.active() ? [{ k: 'tools', i: 'studio', t: 'Stüdyo', on: !['', 'studio', 'sources'].includes(hs()), run: () => window.defterSlide.toggleTools() }] : [{ k: 'studio', i: 'studio', t: 'Stüdyo', on: tab() === 'studio', run: () => press('studio') }]),
+       { k: 'chat', i: 'chat', t: 'Sohbet', on: tab() === 'chat' && !hs(), run: () => press('chat') }]
     : [{ k: 'home', i: 'home', t: 'Ana sayfa', on: true, run: () => scrollTo({ top: 0 }) || $('#home').scrollTo?.({ top: 0, behavior: 'smooth' }) },
        { k: 'search', i: 'search', t: 'Ara', run: () => $('#searchBtn').click() },
        { k: 'menu', i: 'menu', t: 'Menü', run: openDrawer },
@@ -204,7 +204,7 @@ function buildMobileMenu() {
     }
   }
   render();
-  new MutationObserver(render).observe(cols(), { attributes: true, attributeFilter: ['hidden', 'data-tab', 'data-sheet'] });
+  new MutationObserver(render).observe(cols(), { attributes: true, attributeFilter: ['hidden', 'data-tab'] });
   new MutationObserver(render).observe(document.body, { attributes: true, attributeFilter: ['data-hs'] });
   new MutationObserver(render).observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
   matchMedia('(prefers-color-scheme:dark)').addEventListener?.('change', render);
