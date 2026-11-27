@@ -1216,3 +1216,40 @@ dialog.fs>.dlg:focus,dialog.fs>.dlg:focus-visible,dialog.fs>form.dlg:focus{outli
  .menu.cSheet .rxGrid .rxOpt.on{outline:2px solid var(--ac);outline-offset:-2px}
 }
 @media (max-width:900px) and (prefers-reduced-motion:reduce){.cSheet{animation:none!important}}
+
+/* ---------- Yazarlar (authors.js) — Saved ve Blogger başlığındaki "Yazarlar" kartı, birebir ---------- */
+.ib.auBtn.is-active{border-radius:50%;color:var(--ac);background:color-mix(in srgb,var(--ac) 15%,transparent);box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--ac) 40%,transparent),0 0 10px color-mix(in srgb,var(--ac) 25%,transparent)}
+.auBd{position:fixed;inset:0;z-index:69;background:rgba(0,0,0,.42);-webkit-backdrop-filter:saturate(180%) blur(10px);backdrop-filter:saturate(180%) blur(10px);animation:fsIn .2s both}
+.popAuthors{position:fixed;top:58px;right:21px;z-index:70;width:min(304px,calc(100vw - 24px));max-height:min(520px,calc(100vh - 130px));display:flex;flex-direction:column;background:#111;color:#fffdfc;border-radius:12px;box-shadow:0 14px 40px rgba(0,0,0,.55);overflow:hidden;font-size:16px;line-height:1.5;animation:menuIn .2s cubic-bezier(.16,1,.3,1) both;transform-origin:top right}
+.popAuthors .popH{flex:none;display:flex;align-items:center;justify-content:space-between;height:83px;padding:0 14px 15px 15px;font-size:14px;font-weight:700;line-height:21px;box-sizing:border-box}
+.popAuthors .popClose{width:33px;height:33px;flex:none;display:inline-flex;align-items:center;justify-content:center;padding:0;border-radius:12px;border:1px solid rgba(255,255,255,.09);background:rgba(255,255,255,.02);color:inherit;cursor:pointer}
+.popAuthors .popClose:hover{background:rgba(255,255,255,.07)}
+.popAuthors .popClose svg{width:16px!important;height:16px!important;stroke:currentColor;stroke-width:2;fill:none}
+.popAuthors .popBody{display:flex;flex-direction:column;gap:11px;padding:0 13px 14px;overflow-y:auto;overscroll-behavior:contain}
+.prfAuthorBlock{display:block;padding:11px 12px 12px;border-radius:12px;border:1px solid rgba(255,255,255,.07);background:rgba(255,255,255,.015);color:inherit;text-decoration:none;transition:background .2s}
+.prfAuthorBlock:hover,.prfAuthorBlock:focus-visible{background:rgba(255,255,255,.05)}
+.prfTopRow{display:flex;align-items:center;gap:12px}
+.prfTopRow .im{width:39px;height:39px;flex:none;border-radius:50%;object-fit:cover;border:1px solid rgba(255,255,255,.15);background:#2a2a2a}
+.prfHeadMeta{display:flex;flex-direction:column;min-width:0}
+.prfName{display:flex;align-items:center;gap:4px;font-size:15px;font-weight:700;line-height:22.5px;color:#fff}
+.prfVer{display:inline-flex;flex:none;color:var(--ac)}.prfVer svg{width:14px;height:14px;fill:currentColor}
+.prfRole{font-size:12px;font-weight:700;line-height:18px;color:#989b9f}
+.prfBio{margin:5px 0 0;font-size:12.5px;line-height:1.3;color:#989b9f}
+:root[data-theme="light"] .popAuthors{background:#fff;color:#1f1f1f;box-shadow:0 10px 30px rgba(0,0,0,.12)}
+:root[data-theme="light"] .popAuthors .popClose{border-color:rgba(0,0,0,.1)}
+:root[data-theme="light"] .prfAuthorBlock{border-color:rgba(0,0,0,.08);background:transparent}
+:root[data-theme="light"] .prfAuthorBlock:hover{background:rgba(0,0,0,.04)}
+:root[data-theme="light"] .prfName{color:#1f1f1f}
+:root[data-theme="light"] .prfRole,:root[data-theme="light"] .prfBio{color:#5f6368}
+@media (prefers-color-scheme:light){
+ :root:not([data-theme]) .popAuthors{background:#fff;color:#1f1f1f;box-shadow:0 10px 30px rgba(0,0,0,.12)}
+ :root:not([data-theme]) .popAuthors .popClose{border-color:rgba(0,0,0,.1)}
+ :root:not([data-theme]) .prfAuthorBlock{border-color:rgba(0,0,0,.08);background:transparent}
+ :root:not([data-theme]) .prfName{color:#1f1f1f}
+ :root:not([data-theme]) .prfRole,:root:not([data-theme]) .prfBio{color:#5f6368}
+}
+@media (max-width:900px){
+ .popAuthors.cSheet{max-height:min(80dvh,calc(100dvh - 56px))!important}
+ .popAuthors.cSheet .popH{height:auto;padding:4px 14px 14px 18px}
+ .popAuthors.cSheet .popBody{padding:0 14px calc(16px + env(safe-area-inset-bottom,0px))}
+}
