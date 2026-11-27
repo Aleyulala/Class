@@ -7,6 +7,7 @@ import { TYPES, parseJson, normalize, demo } from './rich.js';
 import { renderOutput } from './viewers.js';
 import { card as mediaCard } from './player.js';
 import { sheetize, phone } from './sheet.js';
+import { createAgent } from './agent.js';
 
 const $ = (s, r = document) => r.querySelector(s);
 /* Stüdyo simgeleri: Görsel / Ses şeridiyle aynı çizgi stili */
@@ -165,6 +166,8 @@ async function readPdf(file) {
 /* Yerel sunucu Whisper: ses/video → yazı (gerekirse konuşma motorunu başlatır) */
 async function srvJSON(url, opt) { const r = await fetch(url, opt); const t = await r.text(); let j = {}; try { j = JSON.parse(t || '{}'); } catch { throw new Error('Yerel sunucu yok ya da geçersiz yanıt (Class’ı başlatıcıyla açın).'); } if (!r.ok || j.ok === false) throw new Error(j.error || `HTTP ${r.status}`); return j; }
 async function transcribe(blob, { language = 'auto', name = 'ses.wav', onPhase } = {}) {
+  const H = window.defterHub;
+  if (H?.gen?.apiCaps().stt && !(await H.server()).ok) { onPhase?.('API’de yazıya dökülüyor…'); return H.gen.transcribe(blob, { language, name }); }
   onPhase?.('Ses çözülüyor…'); const wav = await toWav16k(blob);
   let st = {}; try { st = await srvJSON('/api/speech/status'); } catch (e) { throw new Error('Ses ve video için yerel sunucu gerekir (Whisper). Class’ı windows.bat / linux.sh / mac.sh ile açın.'); }
   let model = st.settings?.model || '';
@@ -197,8 +200,8 @@ const PRESETS = [
 ];
 const engine = { kind: 'none', wllama: null, label: '', nctx: 4096 };
 /* Ayarlar (Ayarlar panelinden değişir; yalnızca bu tarayıcıda saklanır) */
-const CFG_DEF = { temperature: 0.3, maxTokens: 700, sys: '', enterSend: true, engine: 'wllama', ctx: 8192, api: { base: '', key: '', model: '' } };
-const CFG = (() => { try { const c = JSON.parse(localStorage.getItem('class-cfg') || '{}'); return { ...CFG_DEF, ...c, api: { ...CFG_DEF.api, ...(c.api || {}) } }; } catch { return { ...CFG_DEF }; } })();
+const CFG_DEF = { temperature: 0.3, maxTokens: 700, sys: '', enterSend: true, engine: 'wllama', ctx: 8192, agent: true, api: { base: '', key: '', model: '', provider: '' }, media: { image: '', tts: '', voice: '', voice2: '', stt: '' } };
+const CFG = (() => { try { const c = JSON.parse(localStorage.getItem('class-cfg') || '{}'); return { ...CFG_DEF, ...c, api: { ...CFG_DEF.api, ...(c.api || {}) }, media: { ...CFG_DEF.media, ...(c.media || {}) } }; } catch { return { ...CFG_DEF, api: { ...CFG_DEF.api }, media: { ...CFG_DEF.media } }; } })();
 function saveCfg() { try { localStorage.setItem('class-cfg', JSON.stringify(CFG)); } catch {} }
 /* OpenAI uyumlu akış (yerel sunucu /api/llm/chat, LM Studio, Ollama, OpenRouter…): SSE "data:" satırları */
 async function streamSSE(url, headers, body, { signal, onToken }) {
@@ -351,7 +354,7 @@ function msgMenu(anchor, m, i) {
   const items = [{ icon: 'star', label: m.pin ? 'Sabitlemeyi kaldır' : 'Sabitle', run: () => { m.pin = !m.pin; if (!m.pin) delete m.pin; renderChat(); persistChat(); } }];
   if (m.text && !m.live) items.push({ icon: 'speak', label: speakingId === m.id ? 'Okumayı durdur' : 'Sesli oku', run: () => speak(m) });
   if (me && m.text) items.push({ icon: 'edit', label: 'Düzenle', sub: 'Metni yazma alanına al', run: () => { $('#q').value = m.text; $('#q').dispatchEvent(new Event('input')); $('#q').focus(); setTab('chat'); } });
-  if (!me && !m.err && !m.live && m.kind !== 'slides' && chat[i - 1]?.role === 'user' && !busy) items.push({ icon: 'refresh', label: 'Yeniden üret', run: () => { const p = chat[i - 1]; chat.splice(i - 1, 2); renderChat(); if (p.cmd) redo(p.text); else ask(p.text); } });
+  if (!me && !m.err && !m.live && m.kind !== 'slides' && chat[i - 1]?.role === 'user' && !busy) items.push({ icon: 'refresh', label: 'Yeniden üret', run: () => { const p = chat[i - 1]; chat.splice(i - 1, 2); renderChat(); if (p.cmd) redo(p.text); else if (agentOn()) agentAsk(p.text); else ask(p.text); } });
   if (m.kind === 'slides') items.push({ icon: 'expand', label: 'Tam ekranda aç', run: () => { const o = outputs.find((x) => x.id === m.outId); if (o) openOutput(o); else toast('Bu çıktı silinmiş.'); } });
   items.push('-', { icon: 'trash', label: 'Mesajı sil', danger: true, run: () => { if (busy && m.live) return; chat.splice(i, 1); renderChat(); persistChat(); } });
   showMenu(anchor, items);
@@ -389,6 +392,7 @@ function msgNode(m, i) {
   const d = el('div', { className: `msg c ${me ? 'me' : ''} ${m.err ? 'err' : ''}` }); d.dataset.mid = m.id;
   d.append(msgHead(m, me, i));
   const bd = el('div', { className: 'mBd' }); d.append(bd);
+  if (m.steps?.length && !m.live) d.insertBefore(el('div', { className: 'agSteps', 'aria-label': 'Asistanın yaptıkları' }, ...m.steps.map((t) => el('span', { className: 'agStep', textContent: t }))), bd);
   const mm = withBlob(m);
   if (mm.audio || mm.video || mm.img) bd.append(mediaCard(mm));
   if (m.kind === 'slides') bd.append(slidesNode(m));
@@ -449,7 +453,7 @@ function addPending(files) {
 async function saveNote(title, text, icon) { const n = { id: uid(), nbId: nb.id, title, text, addedAt: Date.now(), ...(icon ? { icon } : {}) }; notes.push(n); await DB.put('notes', n); renderNotes(); touchNb(); toast('Nota kaydedildi'); }
 function toast(t) { $('#ctxInfo').textContent = t; }
 function setModelUi(state, label) {
-  $('#modelDot').className = `dot ${state}`; $('#modelLabel').textContent = label;
+  $('#modelDot').className = `dot ${state}`; $('#modelLabel').textContent = label; syncAgentBtn();
 }
 
 /* ---------------- Üretim akışı ---------------- */
@@ -578,6 +582,32 @@ async function run({ userText, shownText, messages, cites, title, maxTokens, dem
   renderChat(); persistChat(); return reply;
 }
 
+/* ---------------- Tek sohbet asistanı (agent.js) ----------------
+   Açıkken (yazı kutusundaki "Asistan") model gerektiğinde stüdyoları, kaynakları, web'i ve notları kendisi kullanır.
+   Tek model, araçlar sırayla; her adımın sonucu bu sohbette. Demo kipinde kapalıdır. */
+const agent = createAgent({ CFG, engine, sources: () => enabledSources(), searchMore: (q, k) => search(q, enabledSources(), k), chatStream, chatTask, studyMaterial, saveNote, addSource: (t, x, k) => addSource(t, x, k) });
+const agentOn = () => CFG.agent && ['openai', 'server', 'wllama'].includes(engine.kind);
+async function agentAsk(question, { reply: rq, atts } = {}) {
+  if (busy) return;
+  const full = rq ? `(${rq.who} mesajına yanıt: "${(chat.find((m) => m.id === rq.id)?.text || rq.text).slice(0, 600)}")\n\n${question}` : question;
+  const { messages, cites } = buildChatMessages(full);
+  $('#ctxInfo').textContent = cites.length ? `${cites.length} kaynak parçası kullanıldı · asistan` : '';
+  busy = true; abortCtl = new AbortController(); $('#send').hidden = true; $('#stop').hidden = false;
+  chat.push({ id: uid(), at: Date.now(), role: 'user', text: question, ...(rq ? { reply: rq } : {}), ...(atts?.length ? { atts } : {}) });
+  const node = (m) => $(`#msgs .msg[data-mid="${m.id}"] .mBd`);
+  const onLive = {
+    start: () => { const m = { id: uid(), role: 'assistant', text: '', live: true, at: Date.now() }; chat.push(m); renderChat(); const n = node(m); if (n) n.innerHTML = '<span class="agThink">Düşünüyor…</span>'; return m; },
+    update: (m) => { const n = node(m); if (n) { n.innerHTML = md(m.text); $('#msgs').scrollTop = $('#msgs').scrollHeight; } },
+    close: (m) => { delete m.live; if (!m.text.trim()) { const i = chat.indexOf(m); if (i >= 0) chat.splice(i, 1); } renderChat(); },
+  };
+  let last = null;
+  try { last = await agent.run(question, { messages, cites, signal: abortCtl.signal, onLive }); }
+  catch (e) { last = chat.filter((m) => m.live).pop() || { id: uid(), role: 'assistant', at: Date.now() }; if (!chat.includes(last)) chat.push(last); last.err = true; last.text = `Hata: ${e.message || e}`; }
+  for (const m of chat) if (m.live && m !== last) delete m.live;
+  if (last) { delete last.live; if (!last.err && !last.text.trim()) last.text = abortCtl.signal.aborted ? '(Durduruldu.)' : 'Tamam.'; }
+  busy = false; abortCtl = null; $('#send').hidden = false; $('#stop').hidden = true;
+  renderChat(); persistChat();
+}
 function buildChatMessages(question) {
   const on = enabledSources(); const hist = chat.filter((m) => !m.err).slice(-6).map((m) => ({ role: m.role === 'user' ? 'user' : 'assistant', content: m.text.slice(0, 1200) }));
   const extra = CFG.sys.trim() ? `\n\nKullanıcının ek talimatı: ${CFG.sys.trim().slice(0, 1200)}` : '';
@@ -608,18 +638,20 @@ const STUDIO = [
   { id: 'sss', ic: '❓', label: 'SSS', sub: 'Sık sorulan sorular', p: 'Bu kaynaklardan 6 adet sık sorulan soru ve kısa cevaplarını üret. Biçim: "S:" ve "C:".' },
   { id: 'rehber', ic: '📚', label: 'Çalışma rehberi', sub: 'Kavramlar + sorular', p: 'Bir çalışma rehberi hazırla: (1) Anahtar kavramlar ve kısa tanımları, (2) Tekrar için 5 kısa cevaplı soru, (3) Düşündürücü 2 soru.' },
 ];
+function studioMsgs(t) {
+  const on = enabledSources(); const cap = budgetChars(400); const per = Math.floor(cap / on.length);
+  const body = on.map((s) => `### ${s.title}\n${s.text.slice(0, per)}`).join('\n\n');
+  const sys = `Sen kullanıcının kaynaklarıyla çalışan bir araştırma yardımcısısın. Yalnızca verilen kaynaklara dayan, Türkçe yaz, uydurma.\n\nKAYNAKLAR:\n${body}`;
+  return { messages: [{ role: 'system', content: sys }, { role: 'user', content: t.p }], cut: on.some((s) => s.text.length > per), title: `${t.label} — ${on.map((s) => s.title).join(', ').slice(0, 50)}`,
+    demoText: `Demo kipi — "${t.label}" çıktısı gerçek model ile üretilir.\n\n` + on.map((s) => `- ${s.title}: ${s.text.replace(/\s+/g, ' ').slice(0, 140)}…`).join('\n') };
+}
 async function studio(t) {
   if (busy || needModel()) return;
-  const on = enabledSources();
-  if (!on.length) { toast('Önce en az bir kaynak ekle ve seç.'); setTab('sources'); return; }
-  const cap = budgetChars(400); const per = Math.floor(cap / on.length);
-  const body = on.map((s) => `### ${s.title}\n${s.text.slice(0, per)}`).join('\n\n');
-  const cut = on.some((s) => s.text.length > per);
-  const sys = `Sen kullanıcının kaynaklarıyla çalışan bir araştırma yardımcısısın. Yalnızca verilen kaynaklara dayan, Türkçe yaz, uydurma.\n\nKAYNAKLAR:\n${body}`;
+  if (!enabledSources().length) { toast('Önce en az bir kaynak ekle ve seç.'); setTab('sources'); return; }
+  const { messages, cut, title, demoText } = studioMsgs(t);
   setTab('chat');
   $('#ctxInfo').textContent = cut ? 'Kaynaklar uzun olduğu için her biri baştan kısaltıldı.' : '';
-  const title = `${t.label} — ${on.map((s) => s.title).join(', ').slice(0, 50)}`;
-  const r = await run({ userText: t.label, shownText: t.label, cmd: true, messages: [{ role: 'system', content: sys }, { role: 'user', content: t.p }], cites: [], title, maxTokens: 900, demo: `Demo kipi — "${t.label}" çıktısı gerçek model ile üretilir.\n\n` + on.map((s) => `- ${s.title}: ${s.text.replace(/\s+/g, ' ').slice(0, 140)}…`).join('\n') });
+  const r = await run({ userText: t.label, shownText: t.label, cmd: true, messages, cites: [], title, maxTokens: 900, demo: demoText });
   if (r && !r.err && r.text.trim() && engine.kind !== 'demo') await saveNote(title, r.text, t.ic);
 }
 
@@ -691,9 +723,13 @@ $('#composer').onsubmit = async (e) => {
   const rq = replyTo; cancelReply(); q.value = ''; q.style.height = 'auto'; closeCmds();
   for (const f of files) { if (f.url) URL.revokeObjectURL(f.url); if (f.ok) await ingestFiles([f.file]); }
   if (!t) { chat.push({ id: uid(), at: Date.now(), role: 'user', text: '', atts, ...(rq ? { reply: rq } : {}) }); renderChat(); persistChat(); toast(`${files.filter((f) => f.ok).length} dosya kaynak olarak eklendi.`); return; }
-  ask(t, { reply: rq, atts });
+  if (agentOn()) agentAsk(t, { reply: rq, atts }); else ask(t, { reply: rq, atts });
 };
 $('#attBtn').onclick = () => $('#chatFile').click();
+/* Asistan aç / kapa: açıkken tek model gerektiğinde stüdyoları ve araçları kendisi kullanır */
+function syncAgentBtn() { const b = $('#agentBtn'); if (!b) return; const ok = ['openai', 'server', 'wllama'].includes(engine.kind); b.classList.toggle('on', !!CFG.agent && ok); b.setAttribute('aria-pressed', String(!!CFG.agent)); b.title = !ok ? 'Asistan: bir model seçince çalışır (demo kipinde kapalı)' : CFG.agent ? 'Asistan açık: model gerektiğinde stüdyoları, kaynakları ve web’i kendisi kullanır' : 'Asistan kapalı: yalnızca sohbet'; }
+$('#agentBtn').onclick = () => { CFG.agent = !CFG.agent; saveCfg(); syncAgentBtn(); toast(CFG.agent ? 'Asistan açık: tek sohbette her şeyi kendisi halleder.' : 'Asistan kapalı: yalnızca sohbet.'); };
+syncAgentBtn();
 $('#chatFile').onchange = (e) => { const f = [...e.target.files]; e.target.value = ''; addPending(f); };
 { const pc = $('#panelChat'); let dn = 0;
   pc.addEventListener('dragenter', (e) => { if (e.dataTransfer?.types?.includes('Files')) { dn++; pc.classList.add('dropOn'); } });
@@ -975,6 +1011,27 @@ const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 function showGen(on, text = '') { $('#genBar').hidden = !on; $('#genText').textContent = text; }
 $('#genStop').onclick = () => abortCtl?.abort();
 
+/* Araçlar (Sesli özet, Quiz…) çıktısını üretir; çıktı kaydedilir, sohbete konmaz (çağıran koyar) */
+async function richCore(type, signal, prog = () => {}) {
+  const on = enabledSources(); const T = TYPES[type]; if (!on.length) throw new Error('Önce en az bir kaynak ekle ve seç.');
+  let data;
+  if (engine.kind === 'demo') { await sleep(600); data = demo(type, on); }
+  else {
+    const cap = budgetChars(T.max * 2 + 600); const per = Math.floor(cap / on.length);
+    const body = on.map((s) => `### ${s.title}\n${s.text.slice(0, per)}`).join('\n\n');
+    const messages = [{ role: 'system', content: `Sen kullanıcının kaynaklarıyla çalışan bir araştırma yardımcısısın. Yalnızca verilen kaynaklara dayan, Türkçe yaz, uydurma. Yalnızca geçerli JSON döndür.\n\nKAYNAKLAR:\n${body}` }, { role: 'user', content: T.prompt }];
+    let last = null;
+    for (const rf of [{ type: 'json_schema', json_schema: { name: type, schema: T.schema, strict: true } }, { type: 'json_object' }, undefined]) {
+      let text = '';
+      try { await chatStream(messages, { maxTokens: T.max, temperature: 0.4, signal, responseFormat: rf, onToken: (t) => { text += t; prog(`${T.label} hazırlanıyor… ${text.length} karakter`); } }); data = parseJson(text); break; }
+      catch (e) { if (signal?.aborted) throw e; last = e; data = null; }
+    }
+    if (!data) throw last || new Error('Çıktı alınamadı');
+  }
+  const out = { id: uid(), nbId: nb.id, type, title: '', data: normalize(type, data), createdAt: Date.now() }; out.title = out.data.title;
+  outputs.push(out); await DB.put('outputs', out); touchNb(); renderOutputs(); return out;
+}
+const richMsg = (out) => ({ kind: 'slides', outId: out.id, text: `${TYPES[out.type].emoji} ${out.title} (${TYPES[out.type].label})` });
 async function makeRich(type) {
   if (busy || needModel()) return;
   const on = enabledSources(); const T = TYPES[type];
@@ -982,22 +1039,8 @@ async function makeRich(type) {
   busy = true; abortCtl = new AbortController(); showGen(true, `${T.label} hazırlanıyor…`);
   chat.push({ id: uid(), at: Date.now(), role: 'user', cmd: true, text: T.label }); renderChat(); setTab('chat');
   try {
-    let data;
-    if (engine.kind === 'demo') { await sleep(600); data = demo(type, on); }
-    else {
-      const cap = budgetChars(T.max * 2 + 600); const per = Math.floor(cap / on.length);
-      const body = on.map((s) => `### ${s.title}\n${s.text.slice(0, per)}`).join('\n\n');
-      const messages = [{ role: 'system', content: `Sen kullanıcının kaynaklarıyla çalışan bir araştırma yardımcısısın. Yalnızca verilen kaynaklara dayan, Türkçe yaz, uydurma. Yalnızca geçerli JSON döndür.\n\nKAYNAKLAR:\n${body}` }, { role: 'user', content: T.prompt }];
-      let last = null;
-      for (const rf of [{ type: 'json_schema', json_schema: { name: type, schema: T.schema, strict: true } }, { type: 'json_object' }, undefined]) {
-        let text = '';
-        try { await chatStream(messages, { maxTokens: T.max, temperature: 0.4, signal: abortCtl.signal, responseFormat: rf, onToken: (t) => { text += t; $('#genText').textContent = `${T.label} hazırlanıyor… ${text.length} karakter`; } }); data = parseJson(text); break; }
-        catch (e) { if (abortCtl.signal.aborted) throw e; last = e; data = null; }
-      }
-      if (!data) throw last || new Error('Çıktı alınamadı');
-    }
-    const out = { id: uid(), nbId: nb.id, type, title: '', data: normalize(type, data), createdAt: Date.now() }; out.title = out.data.title;
-    outputs.push(out); await DB.put('outputs', out); touchNb(); renderOutputs(); chat.push({ id: uid(), role: 'assistant', kind: 'slides', outId: out.id, text: `${T.emoji} ${out.title} (${T.label})`, at: Date.now() }); renderChat(); persistChat(); setTab('chat'); toast(`${T.label} hazır.`);
+    const out = await richCore(type, abortCtl.signal, (t) => { $('#genText').textContent = t; });
+    chat.push({ id: uid(), role: 'assistant', at: Date.now(), ...richMsg(out) }); renderChat(); persistChat(); setTab('chat'); toast(`${T.label} hazır.`);
     studioFollow(out);
   } catch (e) {
     const msg = abortCtl?.signal.aborted ? 'Üretim durduruldu.' : `${T.label} üretilemedi: ${e.message || e}. Tekrar dene ya da daha büyük bir model seç.`;
@@ -1005,11 +1048,22 @@ async function makeRich(type) {
   }
   finally { busy = false; abortCtl = null; showGen(false); }
 }
+/* asistan için: Araçlar'ın tümü (metin olanlar dahil) tek yerden; dönen nesne sohbet mesajına yazılır */
+async function studyMaterial(id, signal, set) {
+  if (TYPES[id]) { const out = await richCore(id, signal, set); setTimeout(() => studioFollow(out), 0); return { ...richMsg(out), title: out.title }; }
+  const t = STUDIO.find((x) => x.id === id); if (!t) throw new Error('Bilinmeyen araç: ' + id);
+  const { messages, title, demoText } = studioMsgs(t); let text = '';
+  await chatStream(messages, { maxTokens: 900, signal, demo: demoText, onToken: (x) => { text += x; set(`${t.label} yazılıyor… ${text.length} karakter`); } });
+  if (!text.trim()) throw new Error('Boş çıktı geldi.');
+  if (engine.kind !== 'demo') await saveNote(title, text, t.ic);
+  return { text: `**${t.label}**\n\n${text}`, title };
+}
 /* Araçlar → Stüdyo: Sesli özet Ses stüdyosunda iki sesli dosyaya, Görsel özet Görsel stüdyosunda resme dönüşür; sonuç sohbete düşer.
-   Yerel sunucu yoksa atlanır (Sesli özet yine tarayıcının sesiyle dinlenebilir). */
+   Yerel sunucu da API modeli de yoksa atlanır (Sesli özet yine tarayıcının sesiyle dinlenebilir). */
 async function studioFollow(out) {
   const H = window.defterHub; if (!H?.gen) return;
-  if (!(await H.server()).ok) return;
+  const srv = !!(await H.server()).ok, api = H.gen.apiCaps();
+  if (out.type === 'podcast' ? !(srv || api.tts) : out.type === 'infographic' ? !(srv || api.image) : true) return;
   if (out.type === 'podcast' && out.data.turns?.length) {
     chatTask({ via: 'Ses', label: 'Ses stüdyosu seslendiriyor', run: async (set) => { const blob = await H.gen.podcast(out.data.turns, {}, set); out.audioBlob = blob; await DB.put('outputs', out); return { blob, text: `${out.title} · Sesli özet` }; } }).catch(() => {});
   } else if (out.type === 'infographic') {
@@ -1128,5 +1182,5 @@ async function complete(messages, opts = {}) { if (needModel()) throw new Error(
 async function addSourceExt(title, text, kind) { if (!nb) throw new Error('Önce bir not defteri açın.'); await addSource(title, text, kind); }
 async function addChatMedia(m) { if (!nb) throw new Error('Önce bir not defteri açın.'); chat.push({ id: uid(), role: 'assistant', at: Date.now(), ...m }); renderChat(); await persistChat(); }
 function setEngine(kind, label, nctx) { engine.kind = kind; engine.label = label; if (nctx) engine.nctx = nctx; setModelUi(kind === 'none' ? '' : 'ok', label || 'Model yüklenmedi'); }
-window.defterApp = { chatTask, chatFiles, lastAnswer: () => lastAnswer(), md, putOutput: async (o) => { await DB.put('outputs', o); }, openOutput, complete, addSource: addSourceExt, addChatMedia, transcribe, enabledSources: () => enabledSources(), toast, CFG, saveCfg, engine, setEngine, exportAll, importAll, diagnose, setTab, searchData: async () => ({ notebooks, sources: await DB.all('sources'), notes: await DB.all('notes') }), notebooks: () => notebooks, current: () => nb, openNb, createNb, goHome, showMenu, closeMenu, setTheme, getTheme, IC, openModel: () => $('#modelDlg').showModal() };
+window.defterApp = { agent, agentOn, syncAgentBtn: () => syncAgentBtn(), chatTask, chatFiles, lastAnswer: () => lastAnswer(), md, putOutput: async (o) => { await DB.put('outputs', o); }, openOutput, complete, addSource: addSourceExt, addChatMedia, transcribe, enabledSources: () => enabledSources(), toast, CFG, saveCfg, engine, setEngine, exportAll, importAll, diagnose, setTab, searchData: async () => ({ notebooks, sources: await DB.all('sources'), notes: await DB.all('notes') }), notebooks: () => notebooks, current: () => nb, openNb, createNb, goHome, showMenu, closeMenu, setTheme, getTheme, IC, openModel: () => $('#modelDlg').showModal() };
 document.dispatchEvent(new Event('defter-ready'));

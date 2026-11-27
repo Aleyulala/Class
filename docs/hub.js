@@ -43,9 +43,10 @@ function bar() { const b = el('div', { className: 'hbBar', hidden: true }, el('i
 const offBar = () => el('div', { className: 'hbOff', role: 'note' }, el('i', { 'aria-hidden': 'true' }),
   el('span', {}, el('b', { textContent: OFF }), el('small', { textContent: 'Ayarlar hazır; üretim sunucu açılınca çalışır.' })));
 const needSrv = (what) => el('div', { className: 'hbList' }, offBar(), el('p', { className: 'muted', textContent: `${what} sunucu bağlanınca çalışır.` }));
-async function gate(root, what, build) {
+async function gate(root, what, build, viaApi) {
   const s = await server(); const ui = build();
   if (s.ok) { root.replaceChildren(ui); return; }
+  if (viaApi?.()) { root.replaceChildren(el('div', { className: 'hbOff hbApi', role: 'note' }, el('i', { 'aria-hidden': 'true' }), el('span', {}, el('b', { textContent: 'API ile çalışıyor' }), el('small', { textContent: 'Yerel sunucu yok; bu stüdyo Ayarlar › Yapay zekâ’daki API modeliyle çalışır.' }))), ui); return; }
   ui.querySelectorAll('.btn.primary').forEach((b) => { b.disabled = true; b.title = OFF; });
   ui.querySelectorAll('select').forEach((x) => { if (x.options.length === 1 && /yükleniyor/i.test(x.options[0].textContent)) x.options[0].textContent = 'Sunucu bağlanınca listelenir'; });
   ui.querySelectorAll('.hbList:empty, .hbKV:empty').forEach((x) => x.append(el('p', { className: 'muted', textContent: 'Sunucu bağlanınca görünür.' })));
@@ -63,10 +64,43 @@ async function task(cmd, via, label, run, st, pb) {
   return run(local);
 }
 const done = (st, msg = 'Hazır') => st.set(A()?.current?.() ? `${msg} · sonuç sohbete eklendi.` : `${msg}. Sonucun sohbete düşmesi için bir not defteri aç.`, 'ok');
-async function need(what) { const s = await server(); if (!s.ok) throw Object.assign(new Error(`Yerel sunucu bağlı değil — ${what} Class yerel sunucuyla (başlatıcı) açılınca çalışır.`), { off: true }); }
+async function need(what, api) { const s = await server(); if (!s.ok) throw Object.assign(new Error(`Yerel sunucu bağlı değil — ${what} Class yerel sunucuyla (başlatıcı) açılınca${api ? ' ya da Ayarlar › Yapay zekâ’da API için bir model seçilince' : ''} çalışır.`), { off: true }); }
+/* ---------- API üzerinden stüdyolar (yerel sunucu yokken): OpenAI uyumlu /images, /audio uçları ---------- */
+const apiC = () => { const C = A()?.CFG || {}; return { base: String(C.api?.base || '').replace(/\/+$/, ''), key: C.api?.key || '', m: C.media || {} }; };
+export function apiCaps() { const a = apiC(); return { image: !!(a.base && a.m.image), tts: !!(a.base && a.m.tts), stt: !!(a.base && a.m.stt) }; }
+async function apiFetch(path, body, form) {
+  const a = apiC(); const h = a.key ? { Authorization: 'Bearer ' + a.key } : {};
+  const r = await fetch(a.base + path, { method: 'POST', headers: form ? h : { 'Content-Type': 'application/json', ...h }, body: form || JSON.stringify(body) });
+  if (!r.ok) { let m = `HTTP ${r.status}`; try { const j = await r.json(); m = j.error?.message || j.error || j.message || m; if (typeof m !== 'string') m = JSON.stringify(m); } catch {} throw new Error(`API: ${m}`); }
+  return r;
+}
+const srvOk = async () => !!(await server()).ok;
+async function apiSpeech(text, voice) {
+  const a = apiC(); const r = await apiFetch('/audio/speech', { model: a.m.tts, input: text, voice: voice || a.m.voice || 'alloy', response_format: 'mp3' });
+  const b = await r.blob(); return /^audio\//.test(b.type) ? b : new Blob([b], { type: 'audio/mpeg' });
+}
+export async function apiTranscribe(blob, { language = 'auto', name = 'ses.wav' } = {}) {
+  const a = apiC(); const fd = new FormData(); fd.append('file', blob, name); fd.append('model', a.m.stt); if (language && language !== 'auto') fd.append('language', language);
+  const j = await (await apiFetch('/audio/transcriptions', null, fd)).json(); return String(j.text || '').trim();
+}
+/* bir web sayfasının metni: yerel sunucu her siteyi okur; yoksa tarayıcı dener (CORS izin verirse) */
+export async function fetchPage(u) {
+  if (await srvOk()) { const j = await J('/api/fetch-url', { method: 'POST', body: { url: u } }); if (!j.text) throw new Error('Sayfada okunabilir metin bulunamadı.'); return { title: j.title || u, text: j.text }; }
+  let html; try { html = await (await fetch(u)).text(); } catch { throw new Error('Tarayıcı bu siteyi doğrudan okuyamadı (CORS). Yerel sunucuyla açınca her site okunur.'); }
+  const h = new DOMParser().parseFromString(html, 'text/html'); h.querySelectorAll('script,style,nav,footer,header,aside,noscript').forEach((n) => n.remove());
+  const text = (h.body?.innerText || h.body?.textContent || '').replace(/[ \t]+\n/g, '\n').replace(/\n{3,}/g, '\n\n').trim(); if (!text) throw new Error('Sayfada okunabilir metin bulunamadı.');
+  return { title: (h.title || u).trim(), text };
+}
 async function firstModel(url, what, ok = (m) => m.installed !== false) { const ms = (await J(url)).models || []; const m = ms.find(ok); if (!m) throw new Error(`${what} modeli yok — Stüdyo › Modeller’den indir.`); return m; }
 
 export async function genImage({ prompt, neg = '', model, w = 512, h = 512, steps = 20, cfg = 7, seed = -1 }, set = () => {}) {
+  if (!(await srvOk())) {
+    if (!apiCaps().image) await need('Görsel stüdyosu', true);
+    set('API’de görsel üretiliyor…'); const m = apiC().m.image; const body = { model: m, prompt, n: 1 }; if (/^dall-e/i.test(m)) body.response_format = 'b64_json';
+    const it = (await (await apiFetch('/images/generations', body)).json()).data?.[0] || {};
+    const img = it.b64_json ? 'data:image/png;base64,' + it.b64_json : it.url; if (!img) throw new Error('API görsel döndürmedi.');
+    return { img, text: prompt };
+  }
   await need('Görsel stüdyosu');
   if (!model) { const m = await firstModel('/api/models', 'Görsel', () => true); model = m.filename || m.name; }
   set('Görsel motoru hazırlanıyor…', 0);
@@ -86,6 +120,7 @@ export async function imagePrompt(text) {
   return t.trim().replace(/^"|"$/g, '');
 }
 export async function genSpeech({ text, voice, model, speed = 1 }, set = () => {}) {
+  if (!(await srvOk())) { if (!apiCaps().tts) await need('Ses stüdyosu', true); set('API’de seslendiriliyor…'); return { blob: await apiSpeech(text), text: cut(text, 120), name: 'class-ses.mp3' }; }
   await need('Ses stüdyosu'); set('Seslendiriliyor…');
   const o = await speak(text, { voice: voice || undefined, model: model || undefined, speed });
   return { audio: o.url, text: cut(text, 120), name: o.audioFile || 'class-ses.wav' };
@@ -123,7 +158,14 @@ export function podVoices(vs) {
   return [fem, mal];
 }
 export async function podcastAudio(turns, { va, vb } = {}, set = () => {}) {
-  await need('Ses stüdyosu');
+  if (!(await srvOk()) && apiCaps().tts) {
+    const m = apiC().m, urls = [];
+    try {
+      for (const [k, t] of turns.entries()) { set(`API’de seslendiriliyor… ${k + 1}/${turns.length}`, ((k + 1) / turns.length) * 100); urls.push(URL.createObjectURL(await apiSpeech(t.text, t.speaker === 'Can' ? m.voice2 || 'onyx' : m.voice || 'nova'))); }
+      set('Sesler birleştiriliyor…'); return await window.ClassExtract.joinAudio(urls, 0.35);
+    } finally { urls.forEach((u) => URL.revokeObjectURL(u)); }
+  }
+  await need('Ses stüdyosu', true);
   if (!va || !vb) { const [f, m] = podVoices((await ttsVoices()).voices || []); va = va || f; vb = vb || m; }
   const urls = [];
   for (const [k, t] of turns.entries()) { set(`Ses stüdyosu seslendiriyor… ${k + 1}/${turns.length}`, ((k + 1) / turns.length) * 100); urls.push((await speak(t.text, { voice: t.speaker === 'Can' ? vb : va })).url); }
@@ -144,7 +186,7 @@ function pImage() {
       st.set('İstem yazılıyor…'); try { prompt.value = await imagePrompt(on.map((s) => s.text.slice(0, 1500)).join('\n\n')); st.set(''); } catch (e) { st.set(e.message, 'err'); }
     });
     const go = btn('Üret', async () => {
-      if (!prompt.value.trim()) { st.set('Bir istem yazın.', 'err'); return; } if (!model.value) { st.set('Önce bir görsel modeli indirin.', 'err'); return; }
+      if (!prompt.value.trim()) { st.set('Bir istem yazın.', 'err'); return; } if (!model.value && srvState?.ok) { st.set('Önce bir görsel modeli indirin.', 'err'); return; }
       const [w, h] = wh(), cap = prompt.value.trim(); go.disabled = true; pb.set(0);
       try {
         const r = await task(`/ciz ${cut(cap)}`, 'Görsel', 'Görsel üretiliyor', (set) => genImage({ prompt: cap, neg: neg.value.trim(), model: model.value, w, h, steps, cfg, seed: +seed.value }, set), st, pb);
@@ -156,7 +198,7 @@ function pImage() {
       sec('Boyut ve kalite', field('Oran', chips([['1:1', '1:1 Kare'], ['4:3', '4:3'], ['16:9', '16:9 Yatay'], ['9:16', '9:16 Dikey']], ratio, (v) => (ratio = v))), field('Çözünürlük', chips([[512, '512'], [768, '768'], [1024, '1024 HD']], base, (v) => (base = v))),
         field('Adım', rangeF(4, 50, 1, steps, (v) => v + ' adım', (v) => (steps = v))), field('İstem bağlılığı (CFG)', rangeF(1, 15, 0.5, cfg, (v) => v.toFixed(1), (v) => (cfg = v))), field('Tohum', seed, '-1 rastgele')),
       el('div', { className: 'stBtns' }, go), pb, st, grid);
-  });
+  }, () => apiCaps().image);
   return root;
 }
 
@@ -177,11 +219,11 @@ function pTts() {
     const go = btn('Seslendir', async () => {
       if (!text.value.trim()) { st.set('Metin yazın.', 'err'); return; } go.disabled = true; st.set('Ses üretiliyor…');
       const t = text.value.trim();
-      try { const r = await task(`/seslendir ${cut(t)}`, 'Ses', 'Seslendiriliyor', (set) => genSpeech({ text: t, voice: voice.value, model: model.value, speed }, set), st); out.replaceChildren(el('audio', { controls: true, src: r.audio }), el('div', { className: 'stBtns' }, saveBlobLink(r.audio, r.name))); done(st); }
+      try { const r = await task(`/seslendir ${cut(t)}`, 'Ses', 'Seslendiriliyor', (set) => genSpeech({ text: t, voice: voice.value, model: model.value, speed }, set), st); const u = r.audio || URL.createObjectURL(r.blob); out.replaceChildren(el('audio', { controls: true, src: u }), el('div', { className: 'stBtns' }, saveBlobLink(u, r.name))); done(st); }
       catch (e) { st.set('Seslendirilemedi: ' + e.message, 'err'); } finally { go.disabled = false; }
     }, 'primary');
     return el('div', {}, sec('Ses', field('Ses', voice), field('Model', model), field('Hız', rangeF(0.5, 1.6, 0.05, 1, (v) => v.toFixed(2) + '×', (v) => (speed = v)))), sec('Metin', text, el('div', { className: 'stBtns' }, go)), st, out);
-  });
+  }, () => apiCaps().tts);
   return root;
 }
 
@@ -209,7 +251,7 @@ function pStt() {
     const add = btn('Kaynak olarak ekle', async () => { if (!out.value.trim()) return; try { await A().addSource(name.replace(/\.[^.]+$/, '') + ' (yazıya döküm)', out.value, 'Ses/Video'); st.set('Kaynak eklendi.', 'ok'); } catch (e) { st.set(e.message, 'err'); } });
     const copy = btn('Kopyala', () => navigator.clipboard?.writeText(out.value));
     return el('div', {}, sec('Ses ya da video', file, el('div', { className: 'stBtns' }, micB), field('Dil', lang)), el('div', { className: 'stBtns' }, go), st, sec('Sonuç', out, el('div', { className: 'stBtns' }, add, copy)));
-  });
+  }, () => apiCaps().stt);
   return root;
 }
 
@@ -377,7 +419,7 @@ export function openHub(id) {
   if (window.defterSlide?.openHub(t)) return; /* telefonda kayan modda alttan docker sayfası */
   const h = hubDialog(); h.show(t); if (!h.d.open) h.d.showModal();
 }
-window.defterHub = { open: openHub, panelEl, PANELS, speak, server, ttsVoices, gen: { need, image: genImage, imagePrompt, speech: genSpeech, music: genMusic, video: genVideo, web: webSearch, webMsg, podcast: podcastAudio, podVoices } };
+window.defterHub = { open: openHub, panelEl, PANELS, speak, server, ttsVoices, gen: { need, apiCaps, transcribe: apiTranscribe, page: fetchPage, image: genImage, imagePrompt, speech: genSpeech, music: genMusic, video: genVideo, web: webSearch, webMsg, podcast: podcastAudio, podVoices } };
 
 /* Stüdyo panelinin üstündeki şerit ve kaynak düğmeleri */
 function wire() {

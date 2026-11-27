@@ -61,6 +61,17 @@ async function restoreEngine() {
   if (C.engine === 'openai' && C.api.base) A().setEngine('openai', `API · ${C.api.model || new URL(C.api.base, location.href).host}`, C.ctx);
   else if (C.engine === 'server') { const s = await serverStatus(); if (s?.ready) A().setEngine('server', 'Yerel sunucu · ' + String(s.settings?.model || '').split(/[\\/]/).pop(), C.ctx); }
 }
+/* API sağlayıcıları: OpenAI uyumlu adres, önerilen model ve (varsa) görsel / ses / yazıya dök modelleri.
+   Model adları öneridir; "Modelleri getir" sağlayıcının güncel listesini gösterir. */
+const PROVIDERS = [
+  { id: 'gemini', name: 'Gemini', base: 'https://generativelanguage.googleapis.com/v1beta/openai', model: 'gemini-2.5-flash', key: 'aistudio.google.com/apikey', media: {} },
+  { id: 'openai', name: 'OpenAI', base: 'https://api.openai.com/v1', model: 'gpt-4o-mini', key: 'platform.openai.com/api-keys', media: { image: 'gpt-image-1', tts: 'tts-1', voice: 'nova', voice2: 'onyx', stt: 'whisper-1' } },
+  { id: 'openrouter', name: 'OpenRouter', base: 'https://openrouter.ai/api/v1', model: 'google/gemini-2.5-flash', key: 'openrouter.ai/keys', media: {} },
+  { id: 'groq', name: 'Groq', base: 'https://api.groq.com/openai/v1', model: 'llama-3.3-70b-versatile', key: 'console.groq.com/keys', media: { stt: 'whisper-large-v3' } },
+  { id: 'ollama', name: 'Ollama (çevrimdışı)', base: 'http://localhost:11434/v1', model: 'qwen2.5:7b', key: '', media: {} },
+  { id: 'lmstudio', name: 'LM Studio (çevrimdışı)', base: 'http://localhost:1234/v1', model: '', key: '', media: {} },
+  { id: 'other', name: 'Diğer', base: '', model: '', key: '', media: {} },
+];
 function engineCard(onDone) {
   const C = A().CFG; const st = el('p', { className: 'stNote', id: 'engNote' });
   const upd = () => { const e = A().engine; st.textContent = e.kind === 'none' ? 'Şu an model yüklü değil.' : `Etkin: ${e.label || e.kind}`; };
@@ -75,20 +86,36 @@ function engineCard(onDone) {
     srvBox);
   if (isLocalHost()) srvBox.append(el('div', { className: 'stBtns' }, btn('Sunucuya bağlan', () => connectServer(srvBox, upd)), btn('Model Merkezi', () => window.defterHub?.open('models'))));
   /* OpenAI uyumlu */
-  const base = el('input', { className: 'stIn', placeholder: 'http://localhost:1234/v1', value: C.api.base, 'aria-label': 'API adresi' });
+  const base = el('input', { className: 'stIn', placeholder: 'https://… /v1 adresi', value: C.api.base, 'aria-label': 'API adresi' });
   const key = el('input', { className: 'stIn', type: 'password', placeholder: 'Anahtar (gerekmiyorsa boş)', value: C.api.key, autocomplete: 'off', 'aria-label': 'API anahtarı' });
   const model = el('input', { className: 'stIn', placeholder: 'model adı (ör. qwen2.5-7b-instruct)', value: C.api.model, 'aria-label': 'Model adı', list: 'apiModels' });
   const dl = el('datalist', { id: 'apiModels' }); const apiMsg = el('small', { className: 'stMsg' });
-  const api = el('div', { className: 'stOpt' }, el('b', { textContent: 'OpenAI uyumlu API (LM Studio, Ollama, OpenRouter…)' }),
-    el('small', { textContent: 'LM Studio: http://localhost:1234/v1 · Ollama: http://localhost:11434/v1 (OLLAMA_ORIGINS gerekir). Anahtar yalnızca bu tarayıcıda saklanır.' }),
-    base, key, model, dl,
+  /* görsel / ses / yazıya dök: yerel sunucu yokken stüdyolar bu API modelleriyle çalışır */
+  const M = C.media || {}; const mf = (k, ph, lbl) => el('input', { className: 'stIn', placeholder: ph, value: M[k] || '', 'aria-label': lbl });
+  const mImg = mf('image', 'Görsel modeli (ör. gpt-image-1) · boşsa kapalı', 'Görsel modeli'), mTts = mf('tts', 'Ses modeli (ör. tts-1) · boşsa kapalı', 'Ses modeli'),
+    mV1 = mf('voice', 'Ses (ör. nova) · Ayşe', 'Birinci ses'), mV2 = mf('voice2', 'İkinci ses (ör. onyx) · Can', 'İkinci ses'), mStt = mf('stt', 'Yazıya dök modeli (ör. whisper-1) · boşsa kapalı', 'Yazıya dök modeli');
+  const keyHint = el('small', { className: 'stMsg' });
+  const pick = (p) => {
+    C.api.provider = p.id; if (p.base) base.value = p.base; if (p.model) model.value = p.model;
+    [[mImg, 'image'], [mTts, 'tts'], [mV1, 'voice'], [mV2, 'voice2'], [mStt, 'stt']].forEach(([i, k]) => (i.value = p.media[k] || ''));
+    keyHint.textContent = p.key ? `Anahtarı buradan al: ${p.key} · anahtar yalnızca bu tarayıcıda saklanır.` : p.id === 'other' ? 'OpenAI uyumlu herhangi bir adres (…/v1) yazabilirsin.' : 'Bilgisayarında çalışır; internet gerekmez, anahtar gerekmez.';
+    dl.replaceChildren(); apiMsg.textContent = '';
+  };
+  const provs = seg('Sağlayıcı', PROVIDERS.map((p) => [p.id, p.name]), C.api.provider || '', (v) => pick(PROVIDERS.find((p) => p.id === v)));
+  const api = el('div', { className: 'stOpt stApi' }, el('b', { textContent: 'API’deki yapay zekâlar (Gemini, OpenAI, OpenRouter, Groq…) ya da çevrimdışı Ollama / LM Studio' }),
+    el('small', { textContent: 'Bir sağlayıcı seç, anahtarını yaz, modeli seç. Asistan açıkken bu model tek sohbette stüdyoları, kaynakları ve web’i kendisi kullanır. Ollama için OLLAMA_ORIGINS gerekir.' }),
+    provs, keyHint, base, key, model, dl,
+    el('details', { className: 'stMedia' }, el('summary', { textContent: 'Görsel, ses ve yazıya dök modelleri (yerel sunucu yokken)' }),
+      el('small', { textContent: 'Yerel sunucu bağlı değilken Görsel, Ses ve Yazıya dök stüdyoları (ve asistan) bu API modellerini kullanır. Boş bırakılan kapalı kalır. Müzik ve video için yerel sunucu gerekir.' }),
+      mImg, mTts, el('div', { className: 'stTwo' }, mV1, mV2), mStt),
     el('div', { className: 'stBtns' }, btn('Modelleri getir', async () => {
       apiMsg.textContent = 'Bağlanılıyor…';
       try { const j = await getJSON(base.value.replace(/\/+$/, '') + '/models', { headers: key.value ? { Authorization: 'Bearer ' + key.value } : {} }); const ids = (j.data || j.models || []).map((m) => m.id || m.name).filter(Boolean); dl.replaceChildren(...ids.map((i) => el('option', { value: i }))); if (!model.value && ids[0]) model.value = ids[0]; apiMsg.textContent = `${ids.length} model bulundu.`; }
       catch (e) { apiMsg.textContent = 'Bağlanılamadı: ' + e.message + ' (adres, CORS ayarı ya da anahtar).'; }
     }), btn('Kaydet ve kullan', () => {
       if (!base.value.trim()) { apiMsg.textContent = 'Önce API adresini yaz.'; return; }
-      C.engine = 'openai'; C.api = { base: base.value.trim(), key: key.value.trim(), model: model.value.trim() }; A().saveCfg();
+      C.engine = 'openai'; C.api = { base: base.value.trim(), key: key.value.trim(), model: model.value.trim(), provider: C.api.provider || '' };
+      C.media = { image: mImg.value.trim(), tts: mTts.value.trim(), voice: mV1.value.trim(), voice2: mV2.value.trim(), stt: mStt.value.trim() }; A().saveCfg();
       A().setEngine('openai', `API · ${C.api.model || new URL(C.api.base, location.href).host}`, C.ctx); upd(); apiMsg.textContent = 'Kaydedildi. Sohbet artık bu API ile çalışır.'; onDone?.();
     }, 'primary')), apiMsg);
   return [st, browser, server, api];
@@ -152,7 +179,8 @@ function openSettings(section) {
       row('Bağlam (sunucu / API)', seg('Bağlam', [[4096, '4K'], [8192, '8K'], [16384, '16K'], [32768, '32K']], C.ctx, (v) => { C.ctx = v; A().saveCfg(); if (['server', 'openai'].includes(A().engine.kind)) A().engine.nctx = v; }), 'Daha çok kaynak parçası sığar; model desteklemeli'),
       el('div', { className: 'stRow stCol' }, el('span', { className: 'stL' }, el('b', { textContent: 'Ek talimat (sistem)' }), el('small', { textContent: 'Her cevapta uygulanır. Ör. “Kısa cevap ver, madde madde yaz.”' })),
         (() => { const t = el('textarea', { className: 'stIn', rows: 3, value: C.sys, maxLength: 1200, placeholder: 'İsteğe bağlı' }); t.oninput = () => { C.sys = t.value; A().saveCfg(); }; return t; })()),
-      sw('Enter ile gönder', C.enterSend, (on) => { C.enterSend = on; A().saveCfg(); }, 'Kapalıyken Ctrl+Enter gönderir, Enter yeni satır açar')),
+      sw('Enter ile gönder', C.enterSend, (on) => { C.enterSend = on; A().saveCfg(); }, 'Kapalıyken Ctrl+Enter gönderir, Enter yeni satır açar'),
+      sw('Asistan (tek sohbet)', C.agent, (on) => { C.agent = on; A().saveCfg(); A().syncAgentBtn?.(); }, 'Açıkken tek model gerektiğinde stüdyoları (görsel, ses, müzik, video), Araçlar’ı, kaynakları, web’i ve notları kendisi, sırayla kullanır; hepsi bu sohbette görünür. Aynı anda birden çok modele gönderilmez.')),
     card('data', ICO.data, 'Veri ve yedek',
       row('Depolama', est),
       el('div', { className: 'stBtns' },
