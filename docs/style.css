@@ -1347,3 +1347,15 @@ body{top:0!important}
 .tlTx b{font-size:15px;font-weight:600}
 .tlTx small{font-size:12px;color:var(--mu);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .hubSheet .hsTabs{display:none}
+
+/* ---------- Araçlar çipleri (sohbet satırı) ve Kaynaklar sayfasındaki Notlar ---------- */
+.chRail .chGen,.chRail .chGenSep,.chRail .chLbl{display:none}
+@media (max-width:900px){
+ .chRail .chGen{display:inline-flex;order:1}
+ .chRail .chGenSep{display:block;order:1}
+ .chRail .chLbl{display:inline-flex;align-items:center;order:1;flex:none;padding:0 2px;font-size:12px;font-weight:600;color:var(--mu);white-space:nowrap}
+ .chRail .chGen svg{color:var(--ac)}
+ .chBody>#genBar{margin:0}
+}
+#hubSheet .hsSrcNotes{display:flex;flex-direction:column}
+#hubSheet #panelNotes.inSheet{display:flex!important;flex-direction:column;position:static;transform:none;visibility:visible;width:auto;min-height:0;overflow:visible;margin:18px 0 0;padding:14px 0 0;background:transparent;border:0;border-top:1px solid var(--line);border-radius:0;box-shadow:none}

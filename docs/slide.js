@@ -1,7 +1,9 @@
 /* Class: telefonda Krita mobil tarzı kayan paneller.
-   - Sohbet her zaman ana alan; Araçlar (Görsel, Ses, Yazıya dök, Müzik…) soldan kayarak gelir
-     (alt menüdeki Araçlar düğmesi ya da sol kenardan kaydır); bir araca dokununca alttan açılan sayfada açılır.
-   - Kaynaklar ve Stüdyo (Notlar bölümüyle) alttan açılan sayfada açılır (tutamaç, altta #Kaynaklar / #Stüdyo çubuğu).
+   - Sohbet her zaman ana alan; Stüdyo (Görsel, Ses, Yazıya dök, Müzik…) soldan kayarak gelir
+     (alt menüdeki Stüdyo düğmesi ya da sol kenardan kaydır); birine dokununca alttan açılan sayfada açılır.
+   - Kaynaklar ve Notlar alttan açılan sayfada (tutamaç, altta #Kaynaklar çubuğu).
+   - Araçlar (Sesli özet, Zihin haritası, Quiz…) sohbetin üstündeki Tümü / Geçmiş / Tepkiler satırında kayan çipler;
+     üretim çubuğu da telefonda sohbetin üstüne taşınır.
    - Açık paneli kenarına doğru kaydırınca kapanır; arka plana dokununca ya da Esc ile de kapanır.
    - Stüdyolar (Görsel, Ses, Dönüştür…) alttan açılan, tutamaçla boyu ayarlanan sekmeli bir “docker” sayfasında açılır.
    Geniş ekranda dock.js (pencere düzeni) devreye girer; bu dosya yalnızca dar ekranda çalışır. */
@@ -17,15 +19,20 @@ const enabled = () => lsGet(KEY, 'on') !== 'off';
 const active = () => enabled() && narrow() && !!cols() && !cols().hidden;
 const SIDES = { tools: 'panelTools' }; /* Kaynaklar ve Stüdyo telefonda yan panel değil, alttan açılan sayfada açılır */
 const LEFT = 'tools';
-const LBL = { tools: 'Araçlar', sources: 'Kaynaklar', studio: 'Stüdyo' };
-const focusMob = (k) => $(`#mobM .mobB[aria-label="${LBL[k] || 'Araçlar'}"]`)?.focus();
+const LBL = { tools: 'Stüdyo', sources: 'Kaynaklar', studio: 'Kaynaklar' };
+const focusMob = (k) => $(`#mobM .mobB[aria-label="${LBL[k] || 'Stüdyo'}"]`)?.focus();
+/* üretim çubuğu (… hazırlanıyor · Durdur): telefonda sohbet satırının altına, geniş ekranda Stüdyo'ya */
+function placeGen(on) {
+  const g = document.getElementById('genBar'), rail = document.getElementById('chRail'), st = document.getElementById('hbStrip'); if (!g || !rail || !st) return;
+  if (on && g.previousElementSibling !== rail) rail.after(g); else if (!on && g.previousElementSibling !== st) st.after(g);
+}
 const DESC = { image: 'Stable Diffusion ile görsel üret', tts: 'Metni seslendir', stt: 'Ses ya da videoyu metne çevir', music: 'Müzik ve ses efekti üret', video: 'Metinden video üret', convert: 'Görsel, PDF, ses, video, belge', web: 'Web araması, adresten kaynak', models: 'Model indir, ara, sil', system: 'Güncelleme, temizlik, anahtarlar' };
-/* Araçlar paneli (yalnızca kayan modda): Kaynaklar panelinin eski yerinde, soldan açılır */
+/* Stüdyo paneli (Görsel, Ses, Yazıya dök…; yalnızca kayan modda): Kaynaklar panelinin eski yerinde, soldan açılır */
 function toolsPanel() {
   const ex = document.getElementById('panelTools'); if (ex) return ex;
   const P = window.defterHub?.PANELS || []; const c = cols(); if (!P.length || !c) return null;
-  const p = el('section', { className: 'panel', id: 'panelTools', 'aria-label': 'Araçlar' },
-    el('div', { className: 'ph' }, el('h2', { textContent: 'Araçlar' }), el('span', { className: 'muted', textContent: `${P.length} araç` })),
+  const p = el('section', { className: 'panel', id: 'panelTools', 'aria-label': 'Stüdyo' },
+    el('div', { className: 'ph' }, el('h2', { textContent: 'Stüdyo' }), el('span', { className: 'muted', textContent: `${P.length} stüdyo` })),
     el('ul', { className: 'tlList' }, ...P.map((t) => el('li', {}, el('button', { type: 'button', className: 'tlItem', 'data-id': t.id, onclick: () => { close(); hubSheet().show(t.id); } },
       el('span', { className: 'tlIc', innerHTML: t.icon }), el('span', { className: 'tlTx' }, el('b', { textContent: t.title }), el('small', { textContent: DESC[t.id] || '' })))))));
   c.append(p); return p;
@@ -38,8 +45,9 @@ function sync() {
   const on = enabled() && narrow();
   if (on) c.dataset.slide = 'on'; else { delete c.dataset.slide; if (c.dataset.sheet) close(); }
   if (on) toolsPanel();
+  placeGen(on);
   if (on && c.dataset.tab !== 'chat' && SIDES[c.dataset.tab]) { const t = c.dataset.tab; c.dataset.tab = 'chat'; open(t); }
-  if (on && (c.dataset.tab === 'studio' || c.dataset.tab === 'sources')) { const t = c.dataset.tab; c.dataset.tab = 'chat'; showSheet(t); }
+  if (on && (c.dataset.tab === 'studio' || c.dataset.tab === 'sources')) { c.dataset.tab = 'chat'; showSheet('sources'); }
   if (!on && (H?.cur === 'studio' || H?.cur === 'sources')) H.hide();
   const top = $('#top'), mob = $('#mobM');
   c.style.setProperty('--slTop', Math.round(top?.getBoundingClientRect().bottom || 56) + 'px');
@@ -63,6 +71,7 @@ export function close() {
 /* app.js setTab buraya sorar: kayan modda Kaynaklar/Stüdyo alttan sayfa, Araçlar soldan panel olur */
 function take(t) {
   if (!active()) return false;
+  if (t === 'studio') t = 'sources'; /* telefonda Stüdyo üretim sayfası yok: Araçlar sohbet satırında, notlar Kaynaklar sayfasında */
   if (t === 'studio' || t === 'sources') { if (H?.sheet.classList.contains('on') && H.cur === t) H.hide(); else showSheet(t); return true; }
   if (SIDES[t]) { H?.hide(); if (cols().dataset.sheet === t) close(); else open(t); return true; }
   close(); H?.hide(); return false;
@@ -156,7 +165,7 @@ function hubSheet() {
     barT.textContent = src ? '#Kaynaklar' : id === 'studio' ? '#Stüdyo' : '#' + (P().find((x) => x.id === id)?.title || 'Stüdyolar');
     let pe;
     if (id === 'studio') pe = lend('panelStudio');
-    else if (src) pe = lend('panelSources');
+    else if (src) pe = el('div', { className: 'hsSrcNotes' }, lend('panelSources'), lend('panelNotes'));
     else { pe = window.defterHub.panelEl(id); const d = document.getElementById('hubDlg'); if (d?.open && d.contains(pe)) d.close(); }
     body.replaceChildren(el('div', { className: 'dlg hsIn' + (id === 'studio' ? ' hsStudio' : src ? ' hsSources' : '') }, pe)); body.scrollTop = 0;
     if (!sheet.classList.contains('on')) { close(); sheet.classList.add('on'); back.classList.add('on'); document.addEventListener('keydown', key, true); setTimeout(() => (src ? pe.querySelector('button:not([disabled])') : tabs.querySelector('.on'))?.focus({ preventScroll: true }), 60); }
@@ -188,6 +197,6 @@ function boot() {
   const c = cols(); if (!c) return;
   new MutationObserver(() => { if (c.hidden) { close(); H?.hide(); } sync(); }).observe(c, { attributes: true, attributeFilter: ['hidden'] });
   /* sekme başka yoldan Kaynaklar / Stüdyo yapılırsa (eski kod, eklenti, test) kayan panele çevir */
-  new MutationObserver(() => { const t = c.dataset.tab; if (active() && SIDES[t]) { c.dataset.tab = 'chat'; open(t); } else if (active() && (t === 'studio' || t === 'sources')) { c.dataset.tab = 'chat'; showSheet(t); } }).observe(c, { attributes: true, attributeFilter: ['data-tab'] });
+  new MutationObserver(() => { const t = c.dataset.tab; if (active() && SIDES[t]) { c.dataset.tab = 'chat'; open(t); } else if (active() && (t === 'studio' || t === 'sources')) { c.dataset.tab = 'chat'; showSheet('sources'); } }).observe(c, { attributes: true, attributeFilter: ['data-tab'] });
 }
 if (window.defterApp) boot(); else document.addEventListener('defter-ready', boot, { once: true });
