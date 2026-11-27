@@ -102,6 +102,7 @@ function tool(intro, pick, opts, label, run) {
     try {
       await run({ files: [...pick.files], st, pb, out });
       const n = out.items.length, warn = st.dataset.k === 'err' ? st.textContent : '';
+      if (n) window.defterApp?.chatFiles?.(label, out.items.map((x) => ({ ...x }))); /* sonuç dosyaları sohbete de düşer */
       if (warn) st.set(n ? `${n} dosya hazır · Uyarı: ${warn}` : warn, 'err'); else st.set(n ? `Hazır: ${n} dosya. Dosyalar yalnızca bu cihazda işlendi.` : 'Bitti.', 'ok');
     }
     catch (e) { console.error(e); st.set(e.message || String(e), 'err'); }

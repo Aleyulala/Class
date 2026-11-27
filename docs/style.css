@@ -1371,3 +1371,16 @@ body{top:0!important}
 .cmdSep{flex:none;width:1px;height:20px;margin:0 2px;background:var(--line)}
 #cmdBar.collapsed .cmdSep{display:none}
 @media (max-width:900px){:root #cmdBar .cmdToggle,:root #cmdBar .cmdTile{padding:0 11px 0 9px;font-size:12.5px}}
+
+/* ---------- Stüdyo sonuçları sohbette: web sonuçları ve dosya listesi (app.js webNode / filesNode) ---------- */
+.webMsg,.filesMsg{display:flex;flex-direction:column;gap:8px;min-width:0}
+.webList,.fileList{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:6px}
+.webRes{display:flex;flex-direction:column;gap:3px;padding:10px 12px;border:1px solid var(--line);border-radius:12px;background:var(--p2,transparent);min-width:0}
+.webRes>a{font-weight:600;color:var(--ac);text-decoration:none;overflow-wrap:anywhere}.webRes>a:hover{text-decoration:underline}
+.webRes>small{color:var(--mu);font-size:11.5px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.webRes>span{font-size:13px;color:var(--tx);opacity:.9}
+.webAct{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-top:4px}.webAct em{font-size:11.5px;color:var(--mu);font-style:normal}
+.fileRow{display:flex;align-items:center;gap:10px;padding:8px 10px;border:1px solid var(--line);border-radius:12px;background:var(--p2,transparent);min-width:0}
+.fileTh{flex:none;width:40px;height:40px;border-radius:12px;object-fit:cover;background:var(--btn)}
+.fileExt{display:grid;place-items:center;font-size:10.5px;font-weight:700;color:var(--mu)}
+.fileNm{flex:1;min-width:0;display:flex;flex-direction:column}.fileNm b{font-size:13.5px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.fileNm small{font-size:11.5px;color:var(--mu)}
