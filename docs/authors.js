@@ -26,6 +26,13 @@ const PRF = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke=
 const VER = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="m21.56 10.739-1.36-1.58c-.26-.3-.47-.86-.47-1.26v-1.7c0-1.06-.87-1.93-1.93-1.93h-1.7c-.39 0-.96-.21-1.26-.47l-1.58-1.36c-.69-.59-1.82-.59-2.52 0l-1.57 1.37c-.3.25-.87.46-1.26.46H6.18c-1.06 0-1.93.87-1.93 1.93v1.71c0 .39-.21.95-.46 1.25l-1.35 1.59c-.58.69-.58 1.81 0 2.5l1.35 1.59c.25.3.46.86.46 1.25v1.71c0 1.06.87 1.93 1.93 1.93h1.73c.39 0 .96.21 1.26.47l1.58 1.36c.69.59 1.82.59 2.52 0l1.58-1.36c.3-.26.86-.47 1.26-.47h1.7c1.06 0 1.93-.87 1.93-1.93v-1.7c0-.39.21-.96.47-1.26l1.36-1.58c.58-.69.58-1.83-.01-2.52Zm-5.4-.63-4.83 4.83a.75.75 0 0 1-1.06 0l-2.42-2.42a.754.754 0 0 1 0-1.06c.29-.29.77-.29 1.06 0l1.89 1.89 4.3-4.3c.29-.29.77-.29 1.06 0 .29.29.29.77 0 1.06Z"/></svg>';
 const X = '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg>';
 
+/* Avatar yüklenemezse kırık resim yerine baş harf gösterilir */
+const initials = (n) => n.split(/\s+/).map((w) => w[0]).join('').slice(0, 2).toLocaleUpperCase('tr');
+function avatar(a) {
+  const img = el('img', { className: 'im', src: a.avatar, alt: '', width: 39, height: 39, loading: 'eager', referrerPolicy: 'no-referrer', decoding: 'async' });
+  img.onerror = () => img.replaceWith(el('span', { className: 'im imTxt', 'aria-hidden': 'true', textContent: initials(a.name) }));
+  return img;
+}
 let btn = null, pop = null, bd = null;
 function key(e) { if (e.key === 'Escape') { e.stopPropagation(); close(); btn?.focus(); } }
 function close() {
@@ -43,7 +50,7 @@ function open() {
       el('button', { type: 'button', className: 'popClose', 'aria-label': 'Kapat', title: 'Kapat', innerHTML: X, onclick: close })),
     el('div', { className: 'popBody' }, ...AUTHORS.map((a) => el('a', { className: 'prfAuthorBlock', href: a.url, target: '_blank', rel: 'noreferrer' },
       el('div', { className: 'prfTopRow' },
-        el('img', { className: 'im', src: a.avatar, alt: a.name, width: 39, height: 39, loading: 'lazy', referrerPolicy: 'no-referrer', decoding: 'async' }),
+        avatar(a),
         el('div', { className: 'prfHeadMeta' },
           el('span', { className: 'prfName' }, a.name, el('span', { className: 'prfVer', innerHTML: VER, title: 'Doğrulanmış yazar' })),
           el('span', { className: 'prfRole', textContent: a.role }))),

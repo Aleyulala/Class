@@ -1258,3 +1258,7 @@ dialog.fs>.dlg:focus,dialog.fs>.dlg:focus-visible,dialog.fs>form.dlg:focus{outli
 
 /* Sol başlıktaki ad Blogger'daki "ALİ YILDIZ" gibi büyük harflerle */
 .wm{text-transform:uppercase}
+
+/* Avatar yüklenemezse baş harfler (kırık resim simgesi görünmesin) */
+.prfTopRow .imTxt{display:grid;place-items:center;font-size:14px;font-weight:700;color:#fff;background:linear-gradient(135deg,var(--ac),color-mix(in srgb,var(--ac) 45%,#000))}
+.ftrAvTxt{display:grid;place-items:center;font-size:24px;font-weight:800;color:#fff;background:linear-gradient(135deg,var(--ac),color-mix(in srgb,var(--ac) 45%,#000))}

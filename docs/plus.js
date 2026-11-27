@@ -167,7 +167,7 @@ function buildFooter() {
   const f = el('footer', { className: 'ftr', id: 'ftr' },
     el('div', { className: 'ftrW ftrAbt' },
       el('div', { className: 'ftrBrand' },
-        el('img', { className: 'ftrAv', src: FT.avatar, alt: FT.title, width: 70, height: 70, loading: 'lazy', decoding: 'async', referrerPolicy: 'no-referrer' }),
+        (() => { const i = el('img', { className: 'ftrAv', src: FT.avatar, alt: FT.title, width: 70, height: 70, loading: 'lazy', decoding: 'async', referrerPolicy: 'no-referrer' }); i.onerror = () => i.replaceWith(el('span', { className: 'ftrAv ftrAvTxt', 'aria-hidden': 'true', textContent: 'AY' })); return i; })(),
         el('div', { className: 'ftrT' }, el('h2', { className: 'ftrTl', textContent: FT.title }),
           el('p', { className: 'ftrD' }, el('a', { className: 'ftrFollow', href: FT.follow, target: '_blank', rel: 'nofollow noreferrer noopener', title: 'Blogger Takip Et', innerHTML: BLOGGER + `<span>${FT.caption}</span>` })))),
       el('ul', { className: 'ftrSL' }, ...FT.social.map(([t, h]) => el('li', {}, L(t, h))))),
