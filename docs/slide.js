@@ -96,14 +96,16 @@ function hubSheet() {
   const tabs = el('div', { className: 'hsTabs', role: 'tablist', 'aria-label': 'Stüdyolar' });
   const body = el('div', { className: 'hsBody' });
   const grip = el('button', { type: 'button', className: 'hsGrip', title: 'Sürükleyerek boyutlandır', 'aria-label': 'Paneli büyüt / küçült' }, el('span'));
-  const bar = el('div', { className: 'fsBar hsBar' }, el('b', { textContent: '#Stüdyolar' }),
+  const homeB = el('button', { type: 'button', className: 'hsHome', title: 'Stüdyo', 'aria-label': 'Stüdyo’ya dön', hidden: true, innerHTML: sv('<path d="M15 18l-6-6 6-6"/>'), onclick: () => show('studio') });
+  const barT = el('b', { textContent: '#Stüdyolar' });
+  const bar = el('div', { className: 'fsBar hsBar' }, homeB, barT,
     el('button', { type: 'button', title: 'Kapat (Esc)', 'aria-label': 'Kapat (Esc)', innerHTML: sv('<path d="M18 6 6 18M6 6l12 12"/>'), onclick: () => hide() }));
   const sheet = el('section', { className: 'hubSheet', id: 'hubSheet', role: 'dialog', 'aria-modal': 'true', 'aria-label': 'Stüdyolar' }, grip, tabs, body, bar);
   const back = el('div', { className: 'slScrim hsScrim', 'aria-hidden': 'true' }); back.onclick = () => hide();
   document.body.append(back, sheet);
-  const STUDIO = { id: 'studio', title: 'Stüdyo', icon: sv('<path d="M12 3l1.8 4.7L18.5 9.5l-4.7 1.8L12 16l-1.8-4.7L5.5 9.5l4.7-1.8z"/><path d="M19 15l.8 2.2L22 18l-2.2.8L19 21l-.8-2.2L16 18l2.2-.8z"/>') };
-  const P = () => [STUDIO, ...(window.defterHub?.PANELS || [])];
-  /* Stüdyo sekmesi: #panelStudio sayfanın içine taşınır, kapanınca yerine döner */
+  const P = () => window.defterHub?.PANELS || [];
+  /* Stüdyo ana görünümü (sekme düğmesi yok): #panelStudio sayfanın içine taşınır, kapanınca yerine döner.
+     Bir araca (Görsel, Ses…) girilince alttaki ‹ ile, aynı sekmeye tekrar dokununca ya da geri/Esc ile Stüdyo'ya dönülür. */
   const studioEl = () => document.getElementById('panelStudio');
   let mark = null;
   const lend = () => { const st = studioEl(); if (!st) return null; if (!mark) { mark = document.createComment('panelStudio'); st.before(mark); } st.classList.add('inSheet'); return st; };
@@ -126,10 +128,13 @@ function hubSheet() {
     grip.addEventListener('pointermove', mv); grip.addEventListener('pointerup', up); grip.addEventListener('pointercancel', up);
   });
   function show(id) {
-    if (!tabs.childElementCount) P().forEach((p) => { const b = el('button', { type: 'button', className: 'hbTab', role: 'tab', 'data-id': p.id, innerHTML: p.icon }, el('span', { textContent: p.title })); b.onclick = () => show(p.id); tabs.append(b); });
+    if (!tabs.childElementCount) P().forEach((p) => { const b = el('button', { type: 'button', className: 'hbTab', role: 'tab', 'data-id': p.id, innerHTML: p.icon }, el('span', { textContent: p.title })); b.onclick = () => show(H.cur === p.id && H.home ? 'studio' : p.id); tabs.append(b); });
     try { localStorage.setItem('class-hub-tab', id); } catch {}
     tabs.querySelectorAll('.hbTab').forEach((b) => { const on = b.dataset.id === id; b.classList.toggle('on', on); b.setAttribute('aria-selected', on); if (on) b.scrollIntoView({ block: 'nearest', inline: 'center' }); });
+    if (!sheet.classList.contains('on')) H.home = id === 'studio'; else if (id === 'studio') H.home = true;
     giveBack(); H.cur = id; document.body.dataset.hs = id;
+    homeB.hidden = !(H.home && id !== 'studio');
+    barT.textContent = id === 'studio' ? '#Stüdyo' : '#' + (P().find((x) => x.id === id)?.title || 'Stüdyolar');
     let pe;
     if (id === 'studio') pe = lend();
     else { pe = window.defterHub.panelEl(id); const d = document.getElementById('hubDlg'); if (d?.open && d.contains(pe)) d.close(); }
@@ -137,8 +142,11 @@ function hubSheet() {
     if (!sheet.classList.contains('on')) { close(); sheet.classList.add('on'); back.classList.add('on'); document.addEventListener('keydown', key, true); setTimeout(() => tabs.querySelector('.on')?.focus({ preventScroll: true }), 60); }
   }
   function hide() { sheet.classList.remove('on'); back.classList.remove('on'); document.removeEventListener('keydown', key, true); giveBack(); H.cur = ''; delete document.body.dataset.hs; }
-  const key = (e) => { if (e.key === 'Escape' && !document.querySelector('dialog[open]')) { e.stopPropagation(); hide(); } };
-  H = { show, hide, sheet, cur: '' }; return H;
+  const key = (e) => { if (e.key === 'Escape' && !document.querySelector('dialog[open]')) { e.stopPropagation(); back1(); } };
+  /* geri: araçtaysa önce Stüdyo ana görünümüne, oradaysa kapat */
+  let lastBack = 0; /* aynı Esc hem bu dinleyiciye hem nav.js'e ulaşır: tek adım say */
+  const back1 = () => { const t = performance.now(); if (t - lastBack < 120) return; lastBack = t; if (H.home && H.cur !== 'studio') show('studio'); else hide(); };
+  H = { show, hide, back1, sheet, cur: '', home: false }; return H;
 }
 
 window.defterSlide = {
@@ -147,7 +155,7 @@ window.defterSlide = {
   /* hub.js sorar: telefonda kayan mod açıksa stüdyo alttan açılır */
   openHub: (id) => { if (!enabled() || !narrow() || !window.defterHub) return false; hubSheet().show(id); return true; },
   hideHub: () => H?.hide(),
-  back: () => { if (H?.sheet.classList.contains('on')) { H.hide(); $('#mobM .mobB[aria-label="Stüdyo"]')?.focus(); return true; } if (cols()?.dataset.sheet) { const s = cols().dataset.sheet; close(); $(`#mobM .mobB[aria-label="${s === 'sources' ? 'Kaynaklar' : 'Stüdyo'}"]`)?.focus(); return true; } return false; },
+  back: () => { if (H?.sheet.classList.contains('on')) { const was = H.cur; H.back1(); if (!H.cur || was === 'studio') $('#mobM .mobB[aria-label="Stüdyo"]')?.focus(); return true; } if (cols()?.dataset.sheet) { const s = cols().dataset.sheet; close(); $(`#mobM .mobB[aria-label="${s === 'sources' ? 'Kaynaklar' : 'Stüdyo'}"]`)?.focus(); return true; } return false; },
 };
 document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && cols()?.dataset.sheet && !document.querySelector('dialog[open]') && !$('#hubSheet.on')) { e.stopPropagation(); const s = cols().dataset.sheet; close(); $(`#mobM .mobB[aria-label="${s === 'sources' ? 'Kaynaklar' : 'Stüdyo'}"]`)?.focus(); } }, true);
 document.addEventListener('touchstart', onStart, { passive: true });
