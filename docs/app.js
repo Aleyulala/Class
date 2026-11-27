@@ -291,7 +291,7 @@ function noteToChat(n) { chat.push({ id: uid(), role: 'assistant', text: `**${n.
 function outToChat(o) { chat.push({ id: uid(), role: 'assistant', kind: 'slides', outId: o.id, text: `${TYPES[o.type].emoji} ${o.title} (${TYPES[o.type].label})`, at: Date.now() }); renderChat(); persistChat(); setTab('chat'); }
 function renderChat() {
   const box = $('#msgs'); box.replaceChildren();
-  if (!chat.length) box.append(el('div', { className: 'welcome', innerHTML: '<h3>Kaynaklarınla sohbet et</h3><p>Soldan PDF/metin ekle, bir model seç, sonra soru sor ya da sağdaki Stüdyo düğmeleriyle özet ve çalışma rehberi çıkar.</p>' }));
+  if (!chat.length) box.append(el('div', { className: 'welcome', innerHTML: '<h3>Kaynaklarınla sohbet et</h3><p>' + (matchMedia('(max-width:900px)').matches ? 'Kaynaklar’dan PDF/metin ekle, bir model seç, sonra soru sor ya da yukarıdaki Araçlar’la (Sesli özet, Özet, Quiz…) özet ve çalışma rehberi çıkar.' : 'Soldan PDF/metin ekle, bir model seç, sonra soru sor ya da sağdaki Stüdyo düğmeleriyle özet ve çalışma rehberi çıkar.') + '</p>' }));
   chat.forEach((m, i) => { const n = msgNode(m, i); n.hidden = !chatVisible(m); box.append(n); });
   box.scrollTop = box.scrollHeight; updateChatRail();
 }
@@ -710,6 +710,14 @@ function setTab(t) { if (window.defterSlide?.take(t)) return; $('#cols').dataset
 document.querySelectorAll('#tabs button').forEach((b) => (b.onclick = () => setTab(b.dataset.tab)));
 Object.entries(TYPES).forEach(([k, T]) => { const b = el('button', { className: 'btn tile' }, el('span', { className: 'tIc', innerHTML: SIC[k] || '' }), el('b', { textContent: T.label })); b.title = T.sub; b.onclick = () => makeRich(k); $('#studioBtns').append(b); });
 STUDIO.forEach((t) => { const b = el('button', { className: 'btn tile' }, el('span', { className: 'tIc', innerHTML: SIC[t.id] || '' }), el('b', { textContent: t.label })); b.title = t.sub; b.onclick = () => studio(t); $('#studioBtns').append(b); });
+/* Araçlar (Sesli özet, Zihin haritası, Quiz…): telefonda sohbetin üstündeki Tümü / Geçmiş / Tepkiler satırında kayan çipler */
+{
+  const rail = $('#chRail'), chip = (label, sub, ic, run) => { const b = el('button', { type: 'button', className: 'chGen', title: sub, ariaLabel: label, innerHTML: ic || '', onclick: run }); b.dataset.t = label; return b; };
+  const sep = el('span', { className: 'chSep chGenSep' }); sep.setAttribute('aria-hidden', 'true');
+  rail.append(sep, el('span', { className: 'chLbl', textContent: 'Araçlar' }),
+    ...Object.entries(TYPES).map(([k, T]) => chip(T.label, T.sub, SIC[k], () => makeRich(k))),
+    ...STUDIO.map((t) => chip(t.label, t.sub, SIC[t.id], () => studio(t))));
+}
 
 /* ---------------- Not defterleri (ana ekran) ---------------- */
 const ICONS = ['📘', '🔬', '📚', '🧪', '🌍', '💡', '📊', '🎓'];
