@@ -33,7 +33,7 @@ const svg = (d, extra = '') => `<svg viewBox="0 0 24 24" width="22" height="22" 
 const IC = {
   speak: svg('<path d="M11 5 6 9H3v6h3l5 4z"/><path d="M15.5 8.5a5 5 0 0 1 0 7M18.5 6a9 9 0 0 1 0 12"/>'), refresh: svg('<path d="M20 11a8 8 0 0 0-14.9-3M4 5v4h4M4 13a8 8 0 0 0 14.9 3M20 19v-4h-4"/>'), star: svg('<path d="m12 3 2.7 5.6 6.1.9-4.4 4.3 1 6.1L12 17l-5.4 2.9 1-6.1L3.2 9.5l6.1-.9z"/>'), expand: svg('<path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7"/>'),
   menu: svg('<polyline points="2 17 7 12 2 7"/><path d="M8 5h14M12 12h10M8 19h14"/>'), install: svg('<path d="M12 3v12M7 10l5 5 5-5M5 19h14"/>'), win: svg('<rect x="3" y="4" width="18" height="16" rx="3"/><path d="M3 9h18"/>'), min: svg('<path d="M6 12h12"/>'), max: svg('<rect x="5" y="5" width="14" height="14" rx="2"/>'),
-  back: svg('<path d="M19 12H5M12 19l-7-7 7-7"/>'), search: svg('<circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/>'), plus: svg('<path d="M12 5v14M5 12h14"/>'),
+  back: svg('<path d="M19 12H5M12 19l-7-7 7-7"/>'), search: svg('<circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/>'), plus: svg('<path d="M12 5v14M5 12h14"/>'), chat: svg('<path d="M21 12a8 8 0 0 1-11.6 7.1L4 20l1-4.4A8 8 0 1 1 21 12z"/>'),
   share: svg('<path d="M12 16V4M7 9l5-5 5 5M5 14v5a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-5"/>'), more: svg('<circle cx="12" cy="5" r="1.4" fill="currentColor"/><circle cx="12" cy="12" r="1.4" fill="currentColor"/><circle cx="12" cy="19" r="1.4" fill="currentColor"/>'),
   gear: svg('<circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/>'),
   caret: svg('<path d="M6 9l6 6 6-6"/>', 'width="16" height="16"'), sort: svg('<path d="M4 7h16M7 12h10M10 17h4"/>'), close: svg('<path d="M18 6L6 18M6 6l12 12"/>'),
@@ -301,7 +301,7 @@ function updateChatRail() {
   const c = $('#chCount'); if (c) c.textContent = String(chat.length);
 }
 function applyChatFilter() { [...$('#msgs').children].forEach((n, i) => { if (chat[i] && n.classList.contains('msg')) n.hidden = !chatVisible(chat[i]); }); updateChatRail(); }
-$('#chRail').addEventListener('click', (e) => { const b = e.target.closest('button[data-f]'); if (!b) return; chatF.f = b.dataset.f; applyChatFilter(); });
+$('#chRail').addEventListener('click', (e) => { const a = e.target.closest('button[data-act]'); if (a) { if (a.dataset.act === 'new') newChat(); else openHist(); return; } const b = e.target.closest('button[data-f]'); if (!b) return; chatF.f = b.dataset.f; applyChatFilter(); });
 $('#chSearch').addEventListener('input', (e) => { chatF.q = e.target.value.trim(); applyChatFilter(); });
 const RX = ['👍', '❤️', '🔥', '😂', '🎉', '🚀', '👀', '💯'];
 const fmtSize = (b) => (b < 1024 ? b + ' B' : b < 1048576 ? Math.round(b / 1024) + ' KB' : (b / 1048576).toFixed(1) + ' MB');
@@ -447,6 +447,57 @@ function setModelUi(state, label) {
 function needModel() {
   if (['wllama', 'demo', 'server', 'openai'].includes(engine.kind)) return false;
   $('#modelDlg').showModal(); return true;
+}
+/* ---------------- Sohbet geçmişi: defter başına önceki sohbetler ----------------
+   Açık sohbet 'chat:<defter>' anahtarında kalır; "Yeni sohbet" onu 'chats:<defter>' arşivine taşır,
+   arşivden seçilen sohbet yeniden açık sohbet olur. */
+const histKey = (id) => 'chats:' + id;
+const loadHist = async (id) => (await DB.get(histKey(id))) || [];
+const chatTitle = (msgs) => { const u = msgs.find((m) => m.role === 'user' && m.text) || msgs.find((m) => m.text); return ((u && u.text) || 'Sohbet').replace(/\s+/g, ' ').trim().slice(0, 80); };
+async function archiveCurrent() {
+  const msgs = chat.filter((m) => !m.live);
+  if (!nb || !msgs.length) return;
+  const h = await loadHist(nb.id);
+  h.unshift({ id: uid(), title: chatTitle(msgs), at: msgs[msgs.length - 1].at || Date.now(), n: msgs.length, msgs: msgs.slice(-60) });
+  await DB.set(histKey(nb.id), h.slice(0, 50));
+}
+async function updateHistN() { const b = $('#histN'); if (!b || !nb) return; const n = (await loadHist(nb.id)).length; b.textContent = n; b.hidden = !n; }
+async function newChat() {
+  if (busy || !nb) return; if (!chat.some((m) => !m.live)) { setTab('chat'); $('#q').focus(); return; }
+  await archiveCurrent(); chat = []; cancelReply(); await DB.set('chat:' + nb.id, []); renderChat(); updateHistN(); setTab('chat'); toast('Yeni sohbet başladı. Öncekine Geçmiş’ten dönebilirsin.');
+}
+let HD = null;
+function histDlg() {
+  if (HD) return HD;
+  const list = el('ul', { className: 'list histList' });
+  const nw = el('button', { type: 'button', className: 'btn primary histNew', innerHTML: IC.plus || '+' }, el('span', { textContent: 'Yeni sohbet' }));
+  nw.onclick = () => { HD.d.close(); newChat(); };
+  const d = el('dialog', { className: 'fs hist', id: 'histDlg' }); d.dataset.title = '#Sohbet geçmişi';
+  d.append(el('div', { className: 'dlg' }, el('h2', { textContent: 'Sohbet geçmişi' }), el('p', { className: 'muted histSub' }), nw, list));
+  document.body.append(d); fsInit(d); fsGrip(d);
+  HD = { d, list, sub: d.querySelector('.histSub') }; return HD;
+}
+async function openHist() {
+  if (!nb) return; const H = histDlg(); const h = await loadHist(nb.id);
+  H.sub.textContent = `${nb.title || 'Bu defter'} · ${h.length ? h.length + ' eski sohbet' : 'henüz eski sohbet yok'}`;
+  const cur = chat.filter((m) => !m.live);
+  const rows = [];
+  if (cur.length) rows.push(el('li', { className: 'histItem on' }, el('span', { className: 'hiIc', innerHTML: IC.chat || '' }), el('span', { className: 't' }, el('b', { textContent: chatTitle(cur) }), el('small', { textContent: `Açık sohbet · ${cur.length} mesaj` }))));
+  h.forEach((it, k) => {
+    const del = el('button', { type: 'button', className: 'x', title: 'Sil', ariaLabel: `${it.title} sohbetini sil`, innerHTML: IC.trash || '×' });
+    del.onclick = async (e) => { e.stopPropagation(); const a = await loadHist(nb.id); a.splice(k, 1); await DB.set(histKey(nb.id), a); updateHistN(); openHist(); };
+    const li = el('li', { className: 'histItem', tabIndex: 0, role: 'button' }, el('span', { className: 'hiIc', innerHTML: IC.chat || '' }), el('span', { className: 't' }, el('b', { textContent: it.title }), el('small', { textContent: `${fmtDate(it.at)} · ${it.n} mesaj` })), del);
+    const go = async () => {
+      if (busy) return; const a = await loadHist(nb.id); const pick = a.splice(k, 1)[0]; if (!pick) return;
+      await DB.set(histKey(nb.id), a); await archiveCurrent();
+      chat = pick.msgs || []; cancelReply(); await persistChat(); renderChat(); updateHistN(); H.d.close(); setTab('chat');
+    };
+    li.onclick = go; li.onkeydown = (e) => { if (e.target === li && (e.key === 'Enter' || e.key === ' ')) { e.preventDefault(); go(); } };
+    rows.push(li);
+  });
+  if (!rows.length) rows.push(el('li', { className: 'histEmpty muted', textContent: 'Burada önceki sohbetlerin listelenir. “Yeni sohbet” ile başladığında açık sohbet buraya taşınır.' }));
+  H.list.replaceChildren(...rows);
+  if (!H.d.open) H.d.showModal();
 }
 async function persistChat() { if (nb) { await DB.set('chat:' + nb.id, chat.filter((m) => !m.live).slice(-60)); touchNb(); } }
 
@@ -719,7 +770,7 @@ async function deleteNb(n) {
   for (const x of (await DB.all('sources')).filter((x) => x.nbId === n.id)) await DB.del('sources', x.id);
   for (const x of (await DB.all('notes')).filter((x) => x.nbId === n.id)) await DB.del('notes', x.id);
   for (const x of (await DB.all('outputs')).filter((x) => x.nbId === n.id)) await DB.del('outputs', x.id);
-  await DB.del('notebooks', n.id); await DB.set('chat:' + n.id, []); notebooks = notebooks.filter((x) => x.id !== n.id);
+  await DB.del('notebooks', n.id); await DB.set('chat:' + n.id, []); await DB.set(histKey(n.id), []); notebooks = notebooks.filter((x) => x.id !== n.id);
   if (nb && nb.id === n.id) { busy = false; goHome(); } else renderHome();
 }
 function setView(v) {
@@ -735,7 +786,7 @@ async function openNb(id) {
   setView('nb'); $('#nbTitle').value = n.title; document.title = `${n.title} — Class`;
   if (location.hash !== '#nb-' + id) history.pushState(null, '', '#nb-' + id);
   cancelReply(); pending.forEach((f) => f.url && URL.revokeObjectURL(f.url)); pending = []; renderPending();
-  setTab('chat'); renderSources(); renderNotes(); renderOutputs(); renderChat();
+  setTab('chat'); renderSources(); renderNotes(); renderOutputs(); renderChat(); updateHistN();
 }
 function goHome() {
   if (busy) return; nb = null; sources = []; notes = []; outputs = []; chat = []; closeMenu();
@@ -774,6 +825,8 @@ $('#moreBtn').onclick = () => showMenu($('#moreBtn'), [
   { icon: 'edit', label: 'Başlığı düzenle', run: () => { $('#nbTitle').focus(); $('#nbTitle').select(); } },
   { icon: 'share', label: 'Notları indir (.md)', run: () => $('#expNotes').click() },
   { icon: 'share', label: 'Sohbeti indir (.md)', run: () => $('#expChat').click() },
+  { icon: 'plus', label: 'Yeni sohbet', sub: 'Açık sohbet geçmişe taşınır', run: () => newChat() },
+  { icon: 'chat', label: 'Sohbet geçmişi', run: () => openHist() },
   { icon: 'trash', label: 'Sohbeti temizle', run: () => $('#clearChat').click() },
   '-', { icon: 'trash', label: 'Not defterini sil', danger: true, run: () => nb && deleteNb(nb) },
 ]);
@@ -869,14 +922,30 @@ $('#diagCopy').onclick = async () => { const t = diagnose(); try { await navigat
 $('#loadBtn').addEventListener('click', () => { if (typeof WebAssembly === 'undefined') { $('#diagBox').open = true; } });
 
 /* ---------------- Tam ekran pencereler + çerez bildirimi ---------------- */
-document.querySelectorAll('dialog.fs').forEach((d) => {
+function fsInit(d) {
+  if (d.querySelector(':scope > .fsBar')) return;
   const bar = document.createElement('div'); bar.className = 'fsBar';
   bar.innerHTML = '<b></b><button type="button" title="Kapat (Esc)" aria-label="Kapat (Esc)"><svg viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg></button>';
   bar.firstChild.textContent = d.dataset.title || '';
   bar.lastChild.onclick = () => d.close();
   d.append(bar);
   d.addEventListener('click', (e) => { if (e.target === d || e.target.classList.contains('dlg')) d.close(); });
-});
+}
+document.querySelectorAll('dialog.fs').forEach(fsInit);
+/* Telefonda tam ekran pencereler Stüdyo sayfası şablonunda: üstte tutamaç (aşağı çekince kapanır), altta kapat çubuğu */
+function fsGrip(d) {
+  if (d.querySelector(':scope > .fsGrip')) return;
+  const g = el('button', { type: 'button', className: 'fsGrip', title: 'Aşağı çekerek kapat', ariaLabel: 'Aşağı çekerek kapat' }, el('span'));
+  g.addEventListener('pointerdown', (e) => {
+    const y0 = e.clientY; let dy = 0; try { g.setPointerCapture(e.pointerId); } catch {} d.classList.add('fsDrag');
+    const mv = (v) => { dy = Math.max(0, v.clientY - y0); d.style.transform = `translateY(${dy}px)`; };
+    const up = () => { g.removeEventListener('pointermove', mv); g.removeEventListener('pointerup', up); g.removeEventListener('pointercancel', up); d.classList.remove('fsDrag'); d.style.transform = ''; if (dy > Math.min(160, d.offsetHeight * 0.25)) d.close(); };
+    g.addEventListener('pointermove', mv); g.addEventListener('pointerup', up); g.addEventListener('pointercancel', up);
+  });
+  d.prepend(g);
+}
+document.querySelectorAll('dialog.fs').forEach(fsGrip);
+new MutationObserver((ms) => { for (const m of ms) for (const n of m.addedNodes) if (n.nodeType === 1 && n.matches?.('dialog.fs')) { fsGrip(n); n.querySelector(':scope > .fsBar') || fsInit(n); } }).observe(document.body, { childList: true });
 const CK = 'defter_cookie_ok_v1';
 (() => {
   let seen = false; try { seen = localStorage.getItem(CK) === '1'; } catch {}
