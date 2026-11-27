@@ -6,6 +6,7 @@ import { readDoc, toWav16k, DOC_RX, MEDIA_RX } from './extract.js';
 import { TYPES, parseJson, normalize, demo } from './rich.js';
 import { renderOutput } from './viewers.js';
 import { card as mediaCard } from './player.js';
+import { sheetize, phone } from './sheet.js';
 
 const $ = (s, r = document) => r.querySelector(s);
 /* Stüdyo simgeleri: Görsel / Ses şeridiyle aynı çizgi stili */
@@ -60,14 +61,16 @@ try { if (localStorage.getItem('class-dir') === 'rtl') document.documentElement.
 
 let openMenu = null;
 function closeMenu() { document.querySelector('.menuScrim')?.remove(); if (openMenu) { openMenu.el.remove(); openMenu.anchor.setAttribute('aria-expanded', 'false'); document.removeEventListener('pointerdown', openMenu.out, true); document.removeEventListener('keydown', openMenu.key, true); openMenu = null; } }
-function showMenu(anchor, items, { align = 'right' } = {}) {
+function showMenu(anchor, items, { align = 'right', title, body } = {}) {
   const same = openMenu && openMenu.anchor === anchor; closeMenu(); if (same) return;
   const m = el('div', { className: 'menu', role: 'menu' });
+  if (phone()) sheetize(m, { title: title || anchor.getAttribute('aria-label') || anchor.title || '', close: () => { if (openMenu?.el === m) closeMenu(); } });
   items.forEach((it) => {
     if (it === '-') { m.append(el('hr')); return; }
     const b = el('button', { type: 'button', role: 'menuitem', className: it.danger ? 'danger' : '' }, el('span', { className: 'mi', innerHTML: it.icon ? IC[it.icon] : '' }), el('span', { className: 'ml' }, it.label, it.sub ? el('small', { textContent: it.sub }) : ''), it.check ? el('span', { className: 'mc', innerHTML: IC.check }) : '');
     b.onclick = () => { closeMenu(); it.run(); }; m.append(b);
   });
+  if (body) m.append(body);
   document.body.append(el('div', { className: 'menuScrim' }), m);
   const r = anchor.getBoundingClientRect(); const w = m.offsetWidth;
   m.style.top = Math.min(r.bottom + 6, innerHeight - m.offsetHeight - 8) + 'px';
@@ -76,7 +79,7 @@ function showMenu(anchor, items, { align = 'right' } = {}) {
   const out = (e) => { if (!m.contains(e.target) && !anchor.contains(e.target)) closeMenu(); };
   const key = (e) => { if (e.key === 'Escape') { e.stopPropagation(); closeMenu(); anchor.focus(); } };
   document.addEventListener('pointerdown', out, true); document.addEventListener('keydown', key, true);
-  openMenu = { el: m, anchor, out, key }; m.querySelector('button')?.focus();
+  openMenu = { el: m, anchor, out, key }; (m.querySelector('button') || m).focus?.();
 }
 
 /* ---------------- Depolama (IndexedDB) ---------------- */
@@ -397,7 +400,10 @@ function msgNode(m, i) {
   if (m.rx) rxWrap.append(el('button', { type: 'button', className: 'rxPill', title: 'Tepkiyi kaldır', ariaLabel: 'Tepkiyi kaldır', onclick: () => setRx(m, m.rx) }, el('span', { className: 'rxEmo', textContent: m.rx }), el('span', { className: 'rxCount', textContent: '1' })));
   const trig = el('button', { type: 'button', className: 'rxBtn', title: 'Tepki Ekle', ariaLabel: 'Tepki ekle', innerHTML: IC.smile, ariaExpanded: 'false' });
   const pop = el('div', { className: 'rxPop', role: 'menu' }, ...RX.map((e) => el('button', { type: 'button', className: 'rxOpt' + (m.rx === e ? ' on' : ''), textContent: e, ariaLabel: 'Tepki: ' + e, onclick: () => setRx(m, e) })));
-  trig.onclick = (e) => { e.stopPropagation(); const open = !pop.classList.contains('open'); closeRx(); pop.classList.toggle('open', open); trig.setAttribute('aria-expanded', open); if (open) pop.firstChild.focus(); };
+  trig.onclick = (e) => {
+    e.stopPropagation();
+    if (phone()) { closeRx(); showMenu(trig, [], { title: 'Tepki ekle', body: el('div', { className: 'rxGrid' }, ...RX.map((x) => el('button', { type: 'button', className: 'rxOpt' + (m.rx === x ? ' on' : ''), textContent: x, ariaLabel: 'Tepki: ' + x, onclick: () => { closeMenu(); setRx(m, x); } }))) }); return; }
+    const open = !pop.classList.contains('open'); closeRx(); pop.classList.toggle('open', open); trig.setAttribute('aria-expanded', open); if (open) pop.firstChild.focus(); };
   rxWrap.append(trig, pop);
   const reply = el('button', { type: 'button', className: 'rxBtn ghost', title: 'Yanıtla', ariaLabel: 'Yanıtla', innerHTML: IC.reply, onclick: () => startReply(m) });
   const lnk = el('button', { type: 'button', className: 'rxBtn ghost', title: 'Mesaj bağlantısını kopyala', ariaLabel: 'Mesaj bağlantısını kopyala', innerHTML: LK });

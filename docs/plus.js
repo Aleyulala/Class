@@ -38,7 +38,7 @@ function applyAccent() {
   r.setProperty('--ca', `color-mix(in srgb, ${c} 28%, var(--bg))`); r.setProperty('--cb', `color-mix(in srgb, ${c} 14%, var(--bg))`);
 }
 let pop = null;
-function closePop() { if (!pop) return; pop.remove(); pop = null; document.removeEventListener('pointerdown', outPop, true); document.removeEventListener('keydown', keyPop, true); }
+function closePop() { if (!pop) return; pop.remove(); pop = null; document.querySelector('.tcScrim')?.remove(); document.removeEventListener('pointerdown', outPop, true); document.removeEventListener('keydown', keyPop, true); }
 const outPop = (e) => { if (pop && !pop.contains(e.target)) closePop(); };
 const keyPop = (e) => { if (e.key === 'Escape') { e.stopPropagation(); closePop(); } };
 function openThemeColors(anchor) {
@@ -50,6 +50,7 @@ function openThemeColors(anchor) {
       b.style.setProperty('--c', hex);
       b.onclick = () => { lsSet('class-theme-color', hex); applyAccent(); closePop(); }; return b;
     }));
+  if (window.defterSheet?.phone()) { window.defterSheet.sheetize(pop, { close: closePop }); pop.querySelector('h4').dataset.drag = '1'; document.body.append(el('div', { className: 'menuScrim tcScrim' })); }
   document.body.append(pop);
   const r = (anchor || document.body).getBoundingClientRect(), w = pop.offsetWidth, h = pop.offsetHeight;
   pop.style.left = Math.max(8, Math.min(innerWidth - w - 8, r.right - w)) + 'px'; pop.style.top = Math.max(8, Math.min(innerHeight - h - 8, r.top - h - 8)) + 'px';
