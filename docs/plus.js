@@ -163,7 +163,7 @@ function buildFooter() {
 
 
 /* ---------- Yukarı / aşağı düğmesi (Blogger .tTb ile birebir: ilerleme halkası, en üstte aşağı iner) ----------
-   Dişli menüyle birlikte yalnızca kaydırılan alanın en üstünde ve en altında görünür. */
+   Sayfanın ortasında dişli menü gizlenir, bu düğme ise kaydırma boyunca görünür kalır. */
 const TTB = "<svg viewBox='0 0 34 34' aria-hidden='true'><g transform='translate(0, 34) rotate(-90)' stroke-width='2.2' stroke='currentColor' stroke-linecap='round'><circle cx='17' cy='17' r='15.92'></circle><circle cx='17' cy='17' r='15.92' fill='none' stroke-dasharray='100, 100'></circle><path transform='translate(34, 34) rotate(180)' d='M15.07,21.06,19.16,17l-4.09-4.06' fill='none' stroke-width='1.25'></path></g></svg>";
 const FL_SKIP = 'dialog,.drawer,.sldTrack,.cmdTrack,.spPills,.hsTabs,.hbStrip,.qeF,#panelChat,.dkPane .msgs';
 function buildToTop() {
