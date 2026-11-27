@@ -29,6 +29,7 @@ function installSheet(manual) {
       el('div', { className: 'row end' },
         el('button', { className: 'btn', type: 'button', textContent: manual ? 'Kapat' : 'Şimdi değil', onclick: no }),
         deferred ? el('button', { className: 'btn primary', type: 'button', textContent: 'Kur', onclick: async () => { const d = deferred; deferred = null; closeSheet(); d.prompt(); await d.userChoice.catch(() => {}); } }) : '')));
+  if (window.defterSheet?.phone()) window.defterSheet.sheetize(sheet.querySelector('.sheet'), { close: no });
   document.body.append(sheet); sheet.querySelector('.btn.primary, .btn')?.focus();
 }
 function maybeAsk() {
