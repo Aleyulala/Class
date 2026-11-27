@@ -151,15 +151,14 @@ function realAudio(d, out) {
     if (!s.ok) { box.append(el('p', { className: 'hint small', textContent: 'Gerçek insan sesiyle podcast dosyası için Class’ı yerel sunucuyla (başlatıcı) aç.' })); return; }
     let vs = []; try { vs = (await H.ttsVoices()).voices || []; } catch {}
     const opt = (sel) => vs.map((v) => el('option', { value: v.id, selected: v.id === sel, textContent: `${v.name || v.id}${v.language ? ' · ' + v.language : ''}` }));
-    const fem = (vs.find((v) => /ema_kadin|^tr.*f|female/i.test(v.id + ' ' + v.gender)) || vs[0])?.id, mal = (vs.find((v) => /ema_erkek|antalia|^tr.*m|male/i.test(v.id + ' ' + v.gender) && !/female/i.test(v.gender || '')) || vs[1] || vs[0])?.id;
+    const [fem, mal] = H.gen.podVoices(vs);
     const va = el('select', { ariaLabel: 'Ayşe’nin sesi' }, ...opt(fem)), vb = el('select', { ariaLabel: 'Can’ın sesi' }, ...opt(mal));
     const st = el('div', { className: 'muted pcSt' }); const slot = el('div');
     const go = el('button', { className: 'btn primary', type: 'button', textContent: out?.audioBlob ? 'Yeniden oluştur' : '🎙 Gerçek sesle oluştur' });
     go.onclick = async () => {
-      go.disabled = true; const urls = [];
+      go.disabled = true;
       try {
-        for (const [k, t] of d.turns.entries()) { st.textContent = `Seslendiriliyor ${k + 1}/${d.turns.length}…`; const o = await H.speak(t.text, { voice: t.speaker === 'Can' ? vb.value : va.value }); urls.push(o.url); }
-        st.textContent = 'Birleştiriliyor…'; const blob = await X.joinAudio(urls, 0.35);
+        const blob = await H.gen.podcast(d.turns, { va: va.value, vb: vb.value }, (t) => (st.textContent = t));
         if (out) { out.audioBlob = blob; await window.defterApp?.putOutput?.(out); }
         slot.replaceChildren(player(blob)); st.textContent = 'Hazır. Dosya bu çıktıyla birlikte saklandı.';
       } catch (e) { st.textContent = 'Oluşturulamadı: ' + (e.message || e); } finally { go.disabled = false; }

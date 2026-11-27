@@ -52,7 +52,83 @@ async function gate(root, what, build) {
   root.classList.add('isOff'); root.replaceChildren(offBar(), ui);
 }
 function saveBlobLink(url, name) { const a = el('a', { className: 'btn', href: url, download: name, textContent: 'İndir' }); return a; }
-const toChat = async (m, st) => { try { await A().addChatMedia(m); st?.set('Sohbete eklendi.', 'ok'); } catch (e) { st?.set(e.message, 'err'); } };
+
+/* ---------- Stüdyo işleri: paneller, sohbet /komutları ve Araçlar aynı fonksiyonları kullanır ----------
+   Not defteri açıksa her iş sohbete düşer: komut balonu → canlı ilerleme → sonuç (görsel / ses / video / metin). */
+const cut = (t, n = 140) => { t = String(t || '').replace(/\s+/g, ' ').trim(); return t.length > n ? t.slice(0, n - 1) + '…' : t; };
+async function task(cmd, via, label, run, st, pb) {
+  const local = (t, pct) => { st?.set(t); if (pct != null) pb?.set(pct); };
+  const app = A();
+  if (app?.current?.() && app.chatTask) return app.chatTask({ cmd, via, label, run: (chatSet) => run((t, pct) => { local(t, pct); chatSet(t); }) });
+  return run(local);
+}
+const done = (st, msg = 'Hazır') => st.set(A()?.current?.() ? `${msg} · sonuç sohbete eklendi.` : `${msg}. Sonucun sohbete düşmesi için bir not defteri aç.`, 'ok');
+async function need(what) { const s = await server(); if (!s.ok) throw Object.assign(new Error(`Yerel sunucu bağlı değil — ${what} Class yerel sunucuyla (başlatıcı) açılınca çalışır.`), { off: true }); }
+async function firstModel(url, what, ok = (m) => m.installed !== false) { const ms = (await J(url)).models || []; const m = ms.find(ok); if (!m) throw new Error(`${what} modeli yok — Stüdyo › Modeller’den indir.`); return m; }
+
+export async function genImage({ prompt, neg = '', model, w = 512, h = 512, steps = 20, cfg = 7, seed = -1 }, set = () => {}) {
+  await need('Görsel stüdyosu');
+  if (!model) { const m = await firstModel('/api/models', 'Görsel', () => true); model = m.filename || m.name; }
+  set('Görsel motoru hazırlanıyor…', 0);
+  await J('/api/restart-backend', { method: 'POST', body: { model, width: w, height: h, steps, cfgScale: cfg, sampler: 'euler_a', backend_type: 'auto', autoSwap: true } });
+  for (let i = 0; i < 300; i++) { const b = await J('/api/backend-status'); if (b.ready) break; if (b.error) throw new Error(b.error); await sleep(1000); }
+  set('Görsel üretiliyor…', 0); let over = false;
+  const poll = setInterval(async () => { try { const g = await J('/api/generation-progress'); if (over) return; const p = g.totalSteps ? (g.step / g.totalSteps) * 100 : g.progress; set(g.step ? `Görsel üretiliyor… ${g.step}/${g.totalSteps || steps}` : 'Görsel üretiliyor…', p); } catch {} }, 800);
+  try {
+    const j = await J('/sdapi/v1/txt2img', { method: 'POST', body: { prompt, negative_prompt: neg, width: w, height: h, steps, cfg_scale: cfg, seed: seed >= 0 ? seed : Math.floor(Math.random() * 1e6), sampler_name: 'euler_a', batch_size: 1 } });
+    const b64 = String(j.images?.[0] || j.data?.[0]?.b64_json || '').replace(/^data:[^;]+;base64,/, ''); if (!b64) throw new Error('Sunucu görsel döndürmedi.');
+    return { img: 'data:image/png;base64,' + b64, text: prompt };
+  } finally { over = true; clearInterval(poll); }
+}
+/* kaynaklardan ya da verilen metinden tek bir İngilizce görsel istemi */
+export async function imagePrompt(text) {
+  const t = await A().complete([{ role: 'system', content: 'Write ONE vivid, concise English prompt (max 60 words) for a Stable Diffusion illustration that represents the main idea of the text. Output only the prompt.' }, { role: 'user', content: String(text).slice(0, 3500) }], { maxTokens: 160, temperature: 0.7 });
+  return t.trim().replace(/^"|"$/g, '');
+}
+export async function genSpeech({ text, voice, model, speed = 1 }, set = () => {}) {
+  await need('Ses stüdyosu'); set('Seslendiriliyor…');
+  const o = await speak(text, { voice: voice || undefined, model: model || undefined, speed });
+  return { audio: o.url, text: cut(text, 120), name: o.audioFile || 'class-ses.wav' };
+}
+export async function genMusic({ prompt, model, duration = 10, mode = 'music' }, set = () => {}) {
+  await need('Müzik stüdyosu');
+  if (!model) model = (await firstModel('/api/music/models', 'Müzik')).id;
+  set('Müzik üretiliyor… (modele göre 1-5 dakika)');
+  const j = await J('/api/audio/music', { method: 'POST', body: { prompt, model, duration, mode } });
+  return { audio: j.audioUrl || j.url, text: prompt, name: j.filename || 'class-muzik.wav', note: j.message };
+}
+export async function genVideo({ prompt, engine, duration = 3, res = '512x512' }, set = () => {}) {
+  await need('Video stüdyosu');
+  if (!engine) engine = (await firstModel('/api/video/models', 'Video')).id;
+  set('Video hazırlanıyor…', 0);
+  await J('/api/video/generate', { method: 'POST', body: { prompt, mode: 't2v', engine, duration, fps: 16, resolution: res } });
+  for (let i = 0; i < 3600; i++) {
+    await sleep(1500); const s = await J('/api/video/status');
+    set(`${s.phase || 'Video üretiliyor'}${s.step ? ` · ${s.step}/${s.totalSteps || '?'}` : ''}${s.progress != null ? ` · %${Math.round(s.progress)}` : ''}`, s.progress);
+    if (s.error) throw new Error(s.error);
+    if (!s.active) { const url = s.video?.url; if (!url) throw new Error('Video adresi gelmedi.'); return { video: url, text: prompt, name: s.video?.name || 'class-video.mp4' }; }
+  }
+  throw new Error('Video çok uzun sürdü.');
+}
+export async function webSearch(query, set = () => {}) {
+  await need('Web araması'); set('Aranıyor ve sayfalar okunuyor…');
+  const j = await J('/api/web-search', { method: 'POST', body: { query, resultLimit: 6, fetchLimit: 4 } }); return j.sources || [];
+}
+/* web sonuçları sohbet mesajı olarak (içerik kısaltılarak saklanır; "Kaynak ekle" düğmesiyle eklenir) */
+export const webMsg = (q, src) => ({ kind: 'web', web: src.map((r) => ({ title: r.title, url: r.url, snippet: r.snippet || '', content: (r.content || '').slice(0, 8000) })), text: src.length ? `**“${q}”** için ${src.length} sonuç` : `“${q}” için sonuç bulunamadı.` });
+/* iki sesli sesli özet: Ayşe kadın, Can erkek sesiyle; sesler birleştirilip tek WAV olur */
+export function podVoices(vs) {
+  const fem = (vs.find((v) => /ema_kadin|^tr.*f|female/i.test(v.id + ' ' + v.gender)) || vs[0])?.id;
+  const mal = (vs.find((v) => /ema_erkek|antalia|^tr.*m|male/i.test(v.id + ' ' + v.gender) && !/female/i.test(v.gender || '')) || vs[1] || vs[0])?.id;
+  return [fem, mal];
+}
+export async function podcastAudio(turns, { va, vb } = {}, set = () => {}) {
+  await need('Ses stüdyosu');
+  if (!va || !vb) { const [f, m] = podVoices((await ttsVoices()).voices || []); va = va || f; vb = vb || m; }
+  const urls = [];
+  for (const [k, t] of turns.entries()) { set(`Ses stüdyosu seslendiriyor… ${k + 1}/${turns.length}`, ((k + 1) / turns.length) * 100); urls.push((await speak(t.text, { voice: t.speaker === 'Can' ? vb : va })).url); }
+  set('Sesler birleştiriliyor…'); return window.ClassExtract.joinAudio(urls, 0.35);
+}
 
 /* ---------- Görsel (Stable Diffusion) ---------- */
 function pImage() {
@@ -65,25 +141,16 @@ function pImage() {
     const wh = () => { const [a, b] = ratio.split(':').map(Number); const k = Math.sqrt(a / b); return [Math.round((base * k) / 64) * 64, Math.round(base / k / 64) * 64]; };
     const suggest = btn('Kaynaklardan istem öner', async () => {
       const on = A().enabledSources(); if (!on.length) { st.set('Önce bir not defterinde kaynak seçin.', 'err'); return; }
-      st.set('İstem yazılıyor…'); try {
-        const t = await A().complete([{ role: 'system', content: 'Write ONE vivid, concise English prompt (max 60 words) for a Stable Diffusion illustration that represents the main idea of the text. Output only the prompt.' }, { role: 'user', content: on.map((s) => s.text.slice(0, 1500)).join('\n\n').slice(0, 3500) }], { maxTokens: 160, temperature: 0.7 });
-        prompt.value = t.trim().replace(/^"|"$/g, ''); st.set('');
-      } catch (e) { st.set(e.message, 'err'); }
+      st.set('İstem yazılıyor…'); try { prompt.value = await imagePrompt(on.map((s) => s.text.slice(0, 1500)).join('\n\n')); st.set(''); } catch (e) { st.set(e.message, 'err'); }
     });
     const go = btn('Üret', async () => {
       if (!prompt.value.trim()) { st.set('Bir istem yazın.', 'err'); return; } if (!model.value) { st.set('Önce bir görsel modeli indirin.', 'err'); return; }
-      const [w, h] = wh(); go.disabled = true; pb.set(0); let poll = 0;
+      const [w, h] = wh(), cap = prompt.value.trim(); go.disabled = true; pb.set(0);
       try {
-        st.set('Görsel motoru hazırlanıyor…');
-        await J('/api/restart-backend', { method: 'POST', body: { model: model.value, width: w, height: h, steps, cfgScale: cfg, sampler: 'euler_a', backend_type: 'auto', autoSwap: true } });
-        for (let i = 0; i < 300; i++) { const b = await J('/api/backend-status'); if (b.ready) break; if (b.error) throw new Error(b.error); await sleep(1000); }
-        st.set('Üretiliyor…'); poll = setInterval(async () => { try { const g = await J('/api/generation-progress'); const p = g.totalSteps ? (g.step / g.totalSteps) * 100 : g.progress; pb.set(p); if (g.step) st.set(`Üretiliyor… ${g.step}/${g.totalSteps || steps}`); } catch {} }, 800);
-        const s = +seed.value; const j = await J('/sdapi/v1/txt2img', { method: 'POST', body: { prompt: prompt.value.trim(), negative_prompt: neg.value.trim(), width: w, height: h, steps, cfg_scale: cfg, seed: s >= 0 ? s : Math.floor(Math.random() * 1e6), sampler_name: 'euler_a', batch_size: 1 } });
-        const b64 = String(j.images?.[0] || j.data?.[0]?.b64_json || '').replace(/^data:[^;]+;base64,/, ''); if (!b64) throw new Error('Sunucu görsel döndürmedi.');
-        const url = 'data:image/png;base64,' + b64; const cap = prompt.value.trim();
-        grid.prepend(el('figure', { className: 'hbImg' }, el('img', { src: url, alt: cap }), el('figcaption', {}, el('small', { textContent: `${w}×${h} · ${steps} adım` }), el('span', { className: 'stBtns' }, saveBlobLink(url, `class-gorsel-${Date.now()}.png`), btn('Sohbete ekle', () => toChat({ img: url, text: cap }, st))))));
-        st.set('Hazır.', 'ok');
-      } catch (e) { st.set('Üretilemedi: ' + e.message, 'err'); } finally { clearInterval(poll); pb.set(null); go.disabled = false; }
+        const r = await task(`/ciz ${cut(cap)}`, 'Görsel', 'Görsel üretiliyor', (set) => genImage({ prompt: cap, neg: neg.value.trim(), model: model.value, w, h, steps, cfg, seed: +seed.value }, set), st, pb);
+        grid.prepend(el('figure', { className: 'hbImg' }, el('img', { src: r.img, alt: cap }), el('figcaption', {}, el('small', { textContent: `${w}×${h} · ${steps} adım` }), el('span', { className: 'stBtns' }, saveBlobLink(r.img, `class-gorsel-${Date.now()}.png`)))));
+        done(st);
+      } catch (e) { st.set('Üretilemedi: ' + e.message, 'err'); } finally { pb.set(null); go.disabled = false; }
     }, 'primary');
     return el('div', {}, sec('İstem', field('Model', model), prompt, el('div', { className: 'stBtns' }, suggest), field('Olumsuz istem', neg)),
       sec('Boyut ve kalite', field('Oran', chips([['1:1', '1:1 Kare'], ['4:3', '4:3'], ['16:9', '16:9 Yatay'], ['9:16', '9:16 Dikey']], ratio, (v) => (ratio = v))), field('Çözünürlük', chips([[512, '512'], [768, '768'], [1024, '1024 HD']], base, (v) => (base = v))),
@@ -109,7 +176,8 @@ function pTts() {
     const text = area({ rows: 6, placeholder: 'Seslendirilecek metin' });
     const go = btn('Seslendir', async () => {
       if (!text.value.trim()) { st.set('Metin yazın.', 'err'); return; } go.disabled = true; st.set('Ses üretiliyor…');
-      try { const o = await speak(text.value.trim(), { voice: voice.value || undefined, model: model.value || undefined, speed }); out.replaceChildren(el('audio', { controls: true, src: o.url }), el('div', { className: 'stBtns' }, saveBlobLink(o.url, (o.audioFile || 'class-ses.wav')), btn('Sohbete ekle', () => toChat({ audio: o.url, text: text.value.trim().slice(0, 120) }, st)))); st.set('Hazır.', 'ok'); }
+      const t = text.value.trim();
+      try { const r = await task(`/seslendir ${cut(t)}`, 'Ses', 'Seslendiriliyor', (set) => genSpeech({ text: t, voice: voice.value, model: model.value, speed }, set), st); out.replaceChildren(el('audio', { controls: true, src: r.audio }), el('div', { className: 'stBtns' }, saveBlobLink(r.audio, r.name))); done(st); }
       catch (e) { st.set('Seslendirilemedi: ' + e.message, 'err'); } finally { go.disabled = false; }
     }, 'primary');
     return el('div', {}, sec('Ses', field('Ses', voice), field('Model', model), field('Hız', rangeF(0.5, 1.6, 0.05, 1, (v) => v.toFixed(2) + '×', (v) => (speed = v)))), sec('Metin', text, el('div', { className: 'stBtns' }, go)), st, out);
@@ -132,7 +200,10 @@ function pStt() {
     const out = area({ rows: 8, placeholder: 'Metin burada görünecek', readOnly: false });
     const go = btn('Yazıya dök', async () => {
       if (!blob) { st.set('Önce bir ses/video dosyası seçin ya da kaydedin.', 'err'); return; } go.disabled = true;
-      try { out.value = await A().transcribe(blob, { language: lang.value, name, onPhase: (t) => st.set(t) }); st.set(out.value ? 'Hazır.' : 'Konuşma bulunamadı.', out.value ? 'ok' : 'err'); }
+      try {
+        await task(`/dok ${name}`, 'Yazıya dök', 'Yazıya dökülüyor', async (set) => { out.value = await A().transcribe(blob, { language: lang.value, name, onPhase: (t) => set(t) }); return { text: out.value ? `**Yazıya döküm · ${name}**\n\n${out.value}` : `${name}: konuşma bulunamadı.` }; }, st);
+        if (out.value) done(st); else st.set('Konuşma bulunamadı.', 'err');
+      }
       catch (e) { st.set(e.message, 'err'); } finally { go.disabled = false; }
     }, 'primary');
     const add = btn('Kaynak olarak ekle', async () => { if (!out.value.trim()) return; try { await A().addSource(name.replace(/\.[^.]+$/, '') + ' (yazıya döküm)', out.value, 'Ses/Video'); st.set('Kaynak eklendi.', 'ok'); } catch (e) { st.set(e.message, 'err'); } });
@@ -152,7 +223,8 @@ function pMusic() {
     const prompt = area({ rows: 4, placeholder: 'ör. calm lo-fi piano with soft rain, 80 bpm' });
     const go = btn('Üret', async () => {
       if (!prompt.value.trim()) { st.set('Bir istem yazın.', 'err'); return; } go.disabled = true; st.set('Üretiliyor… (modele göre 1-5 dakika)');
-      try { const j = await J('/api/audio/music', { method: 'POST', body: { prompt: prompt.value.trim(), model: model.value, duration: dur, mode } }); const url = j.audioUrl || j.url; out.replaceChildren(el('audio', { controls: true, src: url }), el('div', { className: 'stBtns' }, saveBlobLink(url, j.filename || 'class-muzik.wav'), btn('Sohbete ekle', () => toChat({ audio: url, text: prompt.value.trim().slice(0, 120) }, st)))); st.set(j.message || 'Hazır.', 'ok'); }
+      const p = prompt.value.trim();
+      try { const r = await task(`/muzik ${cut(p)}`, 'Müzik', 'Müzik üretiliyor', (set) => genMusic({ prompt: p, model: model.value, duration: dur, mode }, set), st); out.replaceChildren(el('audio', { controls: true, src: r.audio }), el('div', { className: 'stBtns' }, saveBlobLink(r.audio, r.name))); done(st, r.note || 'Hazır'); }
       catch (e) { st.set(e.message, 'err'); } finally { go.disabled = false; }
     }, 'primary');
     return el('div', {}, sec('Müzik', field('Model', model), field('Tür', chips([['music', 'Müzik'], ['sfx', 'Ses efekti']], mode, (v) => (mode = v))), field('Süre', chips([[5, '5 sn'], [10, '10 sn'], [20, '20 sn'], [30, '30 sn']], dur, (v) => (dur = v))), prompt), el('div', { className: 'stBtns' }, go), st, out);
@@ -169,10 +241,10 @@ function pVideo() {
     J('/api/video/models').then((j) => { const ms = j.models || []; model.replaceChildren(...ms.map((m) => el('option', { value: m.id, textContent: `${m.name}${m.tierLabel ? ' · ' + m.tierLabel : ''}${m.installed === false ? ' (indirilmemiş)' : ''}` }))); }).catch((e) => st.set(e.message, 'err'));
     const prompt = area({ rows: 4, placeholder: 'ör. a paper boat drifting on a calm lake at sunset' });
     const go = btn('Üret', async () => {
-      if (!prompt.value.trim()) { st.set('Bir istem yazın.', 'err'); return; } go.disabled = true; pb.set(0);
+      if (!prompt.value.trim()) { st.set('Bir istem yazın.', 'err'); return; } go.disabled = true; pb.set(0); const p = prompt.value.trim();
       try {
-        await J('/api/video/generate', { method: 'POST', body: { prompt: prompt.value.trim(), mode: 't2v', engine: model.value, duration: dur, fps: 16, resolution: res } });
-        for (let i = 0; i < 3600; i++) { await sleep(1500); const s = await J('/api/video/status'); pb.set(s.progress); st.set(`${s.phase || 'Üretiliyor'}${s.step ? ` · ${s.step}/${s.totalSteps || '?'}` : ''}`); if (s.error) throw new Error(s.error); if (!s.active) { const url = s.video?.url; if (!url) throw new Error('Video adresi gelmedi.'); out.replaceChildren(el('video', { controls: true, src: url, playsInline: true }), el('div', { className: 'stBtns' }, saveBlobLink(url, s.video?.name || 'class-video.mp4'), btn('Sohbete ekle', () => toChat({ video: url, text: prompt.value.trim().slice(0, 120) }, st)))); st.set('Hazır.', 'ok'); break; } }
+        const r = await task(`/video ${cut(p)}`, 'Video', 'Video üretiliyor', (set) => genVideo({ prompt: p, engine: model.value, duration: dur, res }, set), st, pb);
+        out.replaceChildren(el('video', { controls: true, src: r.video, playsInline: true }), el('div', { className: 'stBtns' }, saveBlobLink(r.video, r.name))); done(st);
       } catch (e) { st.set(e.message, 'err'); } finally { pb.set(null); go.disabled = false; }
     }, 'primary');
     return el('div', {}, sec('Video', field('Motor', model), field('Süre', chips([[2, '2 sn'], [3, '3 sn'], [5, '5 sn']], dur, (v) => (dur = v))), field('Çözünürlük', chips([['512x512', 'Kare'], ['768x432', 'Yatay'], ['432x768', 'Dikey']], res, (v) => (res = v))), prompt), el('div', { className: 'stBtns' }, go), pb, st, out);
@@ -187,12 +259,15 @@ function pWeb() {
   const url = input({ placeholder: 'https://… sayfa adresi', type: 'url' });
   const search = btn('Ara', async () => {
     if (!q.value.trim()) return; const s = await server(); if (!s.ok) { list.replaceChildren(needSrv('Web araması')); return; }
-    search.disabled = true; st.set('Aranıyor ve sayfalar okunuyor…');
+    search.disabled = true; const qq = q.value.trim();
     try {
-      const j = await J('/api/web-search', { method: 'POST', body: { query: q.value.trim(), resultLimit: 6, fetchLimit: 4 } }); const src = j.sources || [];
-      list.replaceChildren(...src.map((r) => { const cb = el('input', { type: 'checkbox', checked: !!r.content }); const row = el('label', { className: 'hbRes' }, cb, el('span', {}, el('b', { textContent: r.title || r.url }), el('small', { textContent: r.url }), el('span', { textContent: (r.snippet || '').slice(0, 220) }), el('em', { textContent: r.content ? `${r.content.length} karakter içerik okundu` : 'yalnızca özet' }))); row._r = r; row._cb = cb; return row; }));
-      if (src.length) list.append(el('div', { className: 'stBtns' }, btn('Seçilenleri kaynak ekle', async () => { let n = 0; for (const row of list.querySelectorAll('.hbRes')) if (row._cb.checked) { const r = row._r; await A().addSource(r.title || r.url, `Kaynak: ${r.url}\n\n${r.content || r.snippet || ''}`, 'Web'); n++; } st.set(`${n} kaynak eklendi.`, 'ok'); }, 'primary')));
-      st.set(src.length ? `${src.length} sonuç.` : 'Sonuç bulunamadı.', src.length ? 'ok' : 'err');
+      await task(`/ara ${cut(qq)}`, 'Web', 'Aranıyor', async (set) => {
+        const src = await webSearch(qq, set);
+        list.replaceChildren(...src.map((r) => { const cb = el('input', { type: 'checkbox', checked: !!r.content }); const row = el('label', { className: 'hbRes' }, cb, el('span', {}, el('b', { textContent: r.title || r.url }), el('small', { textContent: r.url }), el('span', { textContent: (r.snippet || '').slice(0, 220) }), el('em', { textContent: r.content ? `${r.content.length} karakter içerik okundu` : 'yalnızca özet' }))); row._r = r; row._cb = cb; return row; }));
+        if (src.length) list.append(el('div', { className: 'stBtns' }, btn('Seçilenleri kaynak ekle', async () => { let n = 0; for (const row of list.querySelectorAll('.hbRes')) if (row._cb.checked) { const r = row._r; await A().addSource(r.title || r.url, `Kaynak: ${r.url}\n\n${r.content || r.snippet || ''}`, 'Web'); n++; } st.set(`${n} kaynak eklendi.`, 'ok'); }, 'primary')));
+        st.set(src.length ? `${src.length} sonuç.` : 'Sonuç bulunamadı.', src.length ? 'ok' : 'err');
+        return webMsg(qq, src);
+      }, st);
     } catch (e) { st.set(e.message, 'err'); } finally { search.disabled = false; }
   }, 'primary');
   q.addEventListener('keydown', (e) => { if (e.key === 'Enter') search.click(); });
@@ -207,6 +282,7 @@ function pWeb() {
       else { const r = await fetch(u); const h = new DOMParser().parseFromString(await r.text(), 'text/html'); h.querySelectorAll('script,style,nav,footer,header,aside').forEach((n) => n.remove()); title = h.title || u; text = (h.body?.innerText || h.body?.textContent || '').replace(/\n{3,}/g, '\n\n').trim(); }
       if (!text) throw new Error('Sayfada okunabilir metin bulunamadı.');
       await A().addSource(title, `Kaynak: ${u}\n\n${text}`, 'Web'); st.set(`“${title}” kaynak olarak eklendi.`, 'ok'); url.value = '';
+      if (A()?.current?.()) A().chatTask({ via: 'Web', label: 'Kaynak eklendi', run: async () => ({ text: `**Kaynak eklendi:** [${title.replace(/[[\]]/g, '')}](${u}) · ${text.length} karakter` }) }).catch(() => {});
     } catch (e) { st.set(srvState?.ok ? 'Eklenemedi: ' + e.message : 'Tarayıcı bu siteyi doğrudan okuyamadı (CORS). Yerel sunucuyla açınca her site eklenebilir.', 'err'); }
     finally { addUrl.disabled = false; }
   }, 'primary');
@@ -301,7 +377,7 @@ export function openHub(id) {
   if (window.defterSlide?.openHub(t)) return; /* telefonda kayan modda alttan docker sayfası */
   const h = hubDialog(); h.show(t); if (!h.d.open) h.d.showModal();
 }
-window.defterHub = { open: openHub, panelEl, PANELS, speak, server, ttsVoices };
+window.defterHub = { open: openHub, panelEl, PANELS, speak, server, ttsVoices, gen: { need, image: genImage, imagePrompt, speech: genSpeech, music: genMusic, video: genVideo, web: webSearch, webMsg, podcast: podcastAudio, podVoices } };
 
 /* Stüdyo panelinin üstündeki şerit ve kaynak düğmeleri */
 function wire() {
